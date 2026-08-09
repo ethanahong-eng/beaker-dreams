@@ -37,6 +37,27 @@ function Index() {
         </p>
       </header>
 
+      <section className="mb-10 grid gap-6 rounded-2xl border border-border bg-card p-8 md:grid-cols-3">
+        <div className="md:col-span-1">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+            About this demo
+          </span>
+          <h2 className="mt-3 text-xl font-bold">What you're looking at</h2>
+        </div>
+        <div className="space-y-4 text-sm leading-relaxed text-muted-foreground md:col-span-2">
+          <p>
+            The vessel holds N₂O₄ and NO₂ interconverting continuously. Nothing ever stops: every particle you
+            see is still reacting, but the forward and reverse rates have matched, so the counts hold steady.
+            That is what makes equilibrium <em>dynamic</em> rather than static.
+          </p>
+          <p>
+            Each control disturbs the balance in a different way. Concentration and pressure move Qc and let the
+            system relax back to the same Kc; temperature moves Kc itself, because the reaction absorbs heat in
+            one direction and releases it in the other. Watch the readouts, not just the particles.
+          </p>
+        </div>
+      </section>
+
       <div id="simulation">
         <EquilibriumSim />
       </div>
