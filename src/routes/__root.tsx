@@ -125,8 +125,66 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="min-h-screen bg-background font-sans text-foreground selection:bg-accent/30">
+        <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-card/80 px-6 py-4 backdrop-blur-sm">
+          <Link to="/" className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary font-bold text-primary-foreground">
+              V
+            </span>
+            <span className="font-mono text-lg font-bold uppercase tracking-tighter">Valence.lab</span>
+          </Link>
+          <div className="hidden gap-8 text-sm font-medium md:flex">
+            <Link to="/" className="transition-colors hover:text-accent" activeProps={{ className: "text-accent" }}>
+              Equilibrium
+            </Link>
+            <Link
+              to="/kinetics"
+              className="transition-colors hover:text-accent"
+              activeProps={{ className: "text-accent" }}
+            >
+              Kinetics
+            </Link>
+            <Link
+              to="/acid-base"
+              className="transition-colors hover:text-accent"
+              activeProps={{ className: "text-accent" }}
+            >
+              Acid–Base
+            </Link>
+          </div>
+          <a
+            href="#simulation"
+            className="bg-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent"
+          >
+            Launch Lab
+          </a>
+        </nav>
+
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+
+        <footer className="mt-24 border-t border-border bg-card py-12">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 px-6 md:flex-row">
+            <div className="flex items-center gap-2">
+              <span className="h-6 w-6 rounded-sm bg-primary" />
+              <span className="font-mono text-sm font-bold uppercase tracking-tighter">
+                Valence Laboratory © 2026
+              </span>
+            </div>
+            <div className="flex gap-8 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <Link to="/" className="transition-colors hover:text-foreground">
+                Equilibrium
+              </Link>
+              <Link to="/kinetics" className="transition-colors hover:text-foreground">
+                Kinetics
+              </Link>
+              <Link to="/acid-base" className="transition-colors hover:text-foreground">
+                Acid–Base
+              </Link>
+            </div>
+          </div>
+        </footer>
+      </div>
     </QueryClientProvider>
   );
 }
