@@ -151,6 +151,13 @@ function RootComponent() {
             >
               Acid–Base
             </Link>
+            <Link
+              to="/everyday"
+              className="transition-colors hover:text-accent"
+              activeProps={{ className: "text-accent" }}
+            >
+              Daily Life
+            </Link>
           </div>
           <a
             href="#simulation"
@@ -180,6 +187,9 @@ function RootComponent() {
               </Link>
               <Link to="/acid-base" className="transition-colors hover:text-foreground">
                 Acid–Base
+              </Link>
+              <Link to="/everyday" className="transition-colors hover:text-foreground">
+                Daily Life
               </Link>
             </div>
           </div>

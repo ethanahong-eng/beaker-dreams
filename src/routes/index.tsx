@@ -37,6 +37,27 @@ function Index() {
         </p>
       </header>
 
+      <section className="mb-10 grid gap-6 rounded-2xl border border-border bg-card p-8 md:grid-cols-3">
+        <div className="md:col-span-1">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+            About this demo
+          </span>
+          <h2 className="mt-3 text-xl font-bold">What you're looking at</h2>
+        </div>
+        <div className="space-y-4 text-sm leading-relaxed text-muted-foreground md:col-span-2">
+          <p>
+            The vessel holds N₂O₄ and NO₂ interconverting continuously. Nothing ever stops: every particle you
+            see is still reacting, but the forward and reverse rates have matched, so the counts hold steady.
+            That is what makes equilibrium <em>dynamic</em> rather than static.
+          </p>
+          <p>
+            Each control disturbs the balance in a different way. Concentration and pressure move Qc and let the
+            system relax back to the same Kc; temperature moves Kc itself, because the reaction absorbs heat in
+            one direction and releases it in the other. Watch the readouts, not just the particles.
+          </p>
+        </div>
+      </section>
+
       <div id="simulation">
         <EquilibriumSim />
       </div>
@@ -83,6 +104,50 @@ function Index() {
             Fig 1.2: Visual representation of the equilibrium seesaw.
           </p>
         </div>
+      </section>
+
+      <section className="mt-16 grid gap-10 border-t border-border pt-16 md:grid-cols-3">
+        <div>
+          <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
+            Le Chatelier, precisely
+          </h3>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            A system at equilibrium responds to a disturbance by shifting in the direction that partially
+            offsets it. Partially is the key word: the system never fully undoes your change, it only moves to a
+            new balance point closer to the old one.
+          </p>
+        </div>
+        <div>
+          <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
+            Why pressure matters here
+          </h3>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Two moles of NO₂ occupy more space than one mole of N₂O₄. Compress the vessel and the equilibrium
+            shifts toward the side with fewer gas molecules. In a reaction with equal moles on both sides,
+            pressure would do nothing at all.
+          </p>
+        </div>
+        <div>
+          <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
+            Where this shows up
+          </h3>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            The Haber–Bosch process feeds roughly half the world's population by running an unfavourable
+            ammonia equilibrium under high pressure with continuous product removal — Le Chatelier applied at
+            industrial scale.
+          </p>
+        </div>
+      </section>
+
+      <section className="mt-16 rounded-2xl border border-border bg-card p-8">
+        <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
+          Common misconception
+        </h3>
+        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          Equilibrium does not mean equal amounts. A very large Kc means products dominate; a very small one
+          means the reaction barely proceeds. What is equal at equilibrium is the pair of rates, not the pair of
+          concentrations. Adding a catalyst reaches that state faster without changing where it lands.
+        </p>
       </section>
     </main>
   );
