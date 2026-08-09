@@ -36,6 +36,27 @@ function AcidBasePage() {
         </p>
       </header>
 
+      <section className="mb-10 grid gap-6 rounded-2xl border border-border bg-card p-8 md:grid-cols-3">
+        <div className="md:col-span-1">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+            About this demo
+          </span>
+          <h2 className="mt-3 text-xl font-bold">Reading a titration curve</h2>
+        </div>
+        <div className="space-y-4 text-sm leading-relaxed text-muted-foreground md:col-span-2">
+          <p>
+            The horizontal axis is the volume of base added; the vertical axis is the pH of the flask. A curve
+            has three regions worth naming: a gentle buffer plateau, a near-vertical jump, and a slow basic
+            tail once the acid is exhausted.
+          </p>
+          <p>
+            Lower the pKa and the whole curve drops and steepens toward strong-acid behaviour. Raise it and the
+            plateau lifts, the jump shortens, and the equivalence point drifts further above pH 7. Watch the
+            steep section carefully — its height determines which indicator would actually work.
+          </p>
+        </div>
+      </section>
+
       <div id="simulation">
         <TitrationSim />
       </div>
@@ -47,12 +68,53 @@ function AcidBasePage() {
             At 12.5 mL — half the titrant needed — exactly half the acid is deprotonated, so pH equals pKa. Drag
             the burette slider there and compare the readout with the pKa you set.
           </p>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            This falls straight out of the Henderson–Hasselbalch equation, pH = pKa + log([A⁻]/[HA]). When the
+            two concentrations are equal the logarithm is zero. It is also the flattest part of the curve, which
+            is why buffers are formulated at roughly a 1:1 ratio.
+          </p>
         </div>
         <div>
           <h2 className="mb-6 text-3xl font-bold italic">Why weak acids end above pH 7</h2>
           <p className="leading-relaxed text-muted-foreground">
             At equivalence, all that remains is the conjugate base, which pulls protons back off water. That is
             why a weak-acid equivalence point sits basic, while a strong acid lands squarely at 7.
+          </p>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            Equivalence is a stoichiometric statement — moles of base equal moles of acid — not a promise of
+            neutrality. The endpoint you actually observe is wherever the indicator changes colour, so a good
+            titration chooses an indicator whose range falls inside the vertical jump.
+          </p>
+        </div>
+      </section>
+
+      <section className="mt-16 grid gap-10 border-t border-border pt-16 md:grid-cols-3">
+        <div>
+          <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
+            What pH actually measures
+          </h3>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            pH is a logarithm, so a drop of one unit is a tenfold rise in hydrogen ion concentration. Stomach
+            acid near pH 1.5 is roughly a million times more acidic than blood at 7.4 — a difference that sounds
+            modest only because of the scale.
+          </p>
+        </div>
+        <div>
+          <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
+            Buffer capacity
+          </h3>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            A buffer resists change only while both partners are present in quantity. Push past roughly one pH
+            unit either side of the pKa and capacity collapses — the reason the curve's plateau ends so abruptly.
+          </p>
+        </div>
+        <div>
+          <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
+            Try this
+          </h3>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Run the same titration at pKa 3 and pKa 8. Compare how tall the vertical jump is in each case, then
+            ask which one would be harder to read accurately with a colour indicator.
           </p>
         </div>
       </section>
