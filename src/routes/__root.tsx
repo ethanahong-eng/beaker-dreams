@@ -188,6 +188,9 @@ function RootComponent() {
               <Link to="/acid-base" className="transition-colors hover:text-foreground">
                 Acid–Base
               </Link>
+              <Link to="/everyday" className="transition-colors hover:text-foreground">
+                Daily Life
+              </Link>
             </div>
           </div>
         </footer>

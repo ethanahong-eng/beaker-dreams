@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AcidBaseRouteImport } from './routes/acid-base'
+import { Route as EverydayRouteImport } from './routes/everyday'
 import { Route as KineticsRouteImport } from './routes/kinetics'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const AcidBaseRoute = AcidBaseRouteImport.update({
   path: '/acid-base',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EverydayRoute = EverydayRouteImport.update({
+  id: '/everyday',
+  path: '/everyday',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KineticsRoute = KineticsRouteImport.update({
   id: '/kinetics',
   path: '/kinetics',
@@ -32,30 +38,34 @@ const KineticsRoute = KineticsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acid-base': typeof AcidBaseRoute
+  '/everyday': typeof EverydayRoute
   '/kinetics': typeof KineticsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acid-base': typeof AcidBaseRoute
+  '/everyday': typeof EverydayRoute
   '/kinetics': typeof KineticsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/acid-base': typeof AcidBaseRoute
+  '/everyday': typeof EverydayRoute
   '/kinetics': typeof KineticsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/acid-base' | '/kinetics'
+  fullPaths: '/' | '/acid-base' | '/everyday' | '/kinetics'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/acid-base' | '/kinetics'
-  id: '__root__' | '/' | '/acid-base' | '/kinetics'
+  to: '/' | '/acid-base' | '/everyday' | '/kinetics'
+  id: '__root__' | '/' | '/acid-base' | '/everyday' | '/kinetics'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcidBaseRoute: typeof AcidBaseRoute
+  EverydayRoute: typeof EverydayRoute
   KineticsRoute: typeof KineticsRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AcidBaseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/everyday': {
+      id: '/everyday'
+      path: '/everyday'
+      fullPath: '/everyday'
+      preLoaderRoute: typeof EverydayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/kinetics': {
       id: '/kinetics'
       path: '/kinetics'
@@ -88,8 +105,19 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcidBaseRoute: AcidBaseRoute,
+  EverydayRoute: EverydayRoute,
   KineticsRoute: KineticsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
