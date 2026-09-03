@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SectionNav } from "@/components/SectionNav";
 
 export const Route = createFileRoute("/everyday")({
   head: () => ({
@@ -145,6 +146,10 @@ function EverydayPage() {
           wildly different scales, from a beaker to an ocean.
         </p>
       </section>
+
+      <SectionNav
+        items={essays.map((e, i) => ({ id: `essay-${i}`, label: e.tag }))}
+      />
     </main>
   );
 }
