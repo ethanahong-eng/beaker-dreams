@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type Ref } from "react";
 
 type Preset = "baseline" | "exothermic" | "stress" | "haber" | "inert";
 
@@ -151,6 +151,13 @@ function drawVector(ctx: CanvasRenderingContext2D, x: number, y: number, vx: num
   ctx.stroke();
 }
 
+// Rate bars used a linear scale (rate * 90) that pins at its 48px cap once
+// the rate passes ~0.5 mol/L*s — which is most of the temperature range,
+// since rates climb into the hundreds by a few hundred kelvin. Log-scaling
+// keeps the low end looking the same as before while giving the bar
+// somewhere to go across the full range instead of instantly maxing out.
+const barHeight = (rate: number) => clamp(14 * Math.log10(Math.max(0, rate) * 50 + 1) + 2, 2, 48);
+
 export function EquilibriumSim() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const particlesRef = useRef<Particle[]>([]);
@@ -164,22 +171,28 @@ export function EquilibriumSim() {
     vectors: true,
   });
 
+  // Kc, Qc, the rate bars, vessel pressure, and the shift/heat status text
+  // all depend on values computed every animation frame. They used to live
+  // in React state pushed at most every 120ms, so during an actual slider
+  // drag (which fires far more often than that) the numbers visibly froze
+  // and then jumped — reading as "glitching." They're written directly to
+  // the DOM every frame instead, bypassing React re-renders entirely for
+  // this fast-changing readout.
+  const kcRef = useRef<HTMLSpanElement | null>(null);
+  const qcRef = useRef<HTMLSpanElement | null>(null);
+  const vesselRef = useRef<HTMLSpanElement | null>(null);
+  const shiftRef = useRef<HTMLParagraphElement | null>(null);
+  const heatTextRef = useRef<HTMLParagraphElement | null>(null);
+  const fwdBarRef = useRef<HTMLDivElement | null>(null);
+  const revBarRef = useRef<HTMLDivElement | null>(null);
+  const heatBarRef = useRef<HTMLDivElement | null>(null);
+
   const [temp, setTemp] = useState(298);
   const [volume, setVolume] = useState(1.5);
   const [inertPressure, setInertPressure] = useState(0);
   const [running, setRunning] = useState(true);
   const [vectors, setVectors] = useState(true);
   const [preset, setPreset] = useState<Preset>("baseline");
-  const [readout, setReadout] = useState({
-    q: 0,
-    k: 0.15,
-    cA: 1,
-    cB: 0.05,
-    rf: 0,
-    rr: 0,
-    v: 1.5,
-    p: 1.5,
-  });
 
   stateRef.current.temp = temp;
   stateRef.current.volume = volume;
@@ -213,7 +226,6 @@ export function EquilibriumSim() {
 
     let raf = 0;
     let last = performance.now();
-    let sinceSync = 0;
     let vesselScale = 0.55;
 
     const GRID_COLS = 22;
@@ -237,8 +249,8 @@ export function EquilibriumSim() {
     const spawn = (kind: 0 | 1, x0: number, y0: number, x1: number, y1: number): Particle => ({
       x: x0 + Math.random() * Math.max(1, x1 - x0),
       y: y0 + Math.random() * Math.max(1, y1 - y0),
-      vx: rand(60),
-      vy: rand(60),
+      vx: rand(95),
+      vy: rand(95),
       kind,
       angle: Math.random() * Math.PI * 2,
       spin: rand(3),
@@ -311,10 +323,34 @@ export function EquilibriumSim() {
         s.nB = Math.max(0.001, s.nB);
       }
 
-      sinceSync += dt;
-      if (sinceSync > 0.12) {
-        sinceSync = 0;
-        setReadout({ q: (cB * cB) / Math.max(cA, 1e-6), k: K, cA, cB, rf, rr, v: V, p: P });
+      const q = (cB * cB) / Math.max(cA, 1e-6);
+      const netHeat = REACTION_DELTA_H_KJ * (rf - rr);
+      if (kcRef.current) kcRef.current.textContent = K.toFixed(3);
+      if (qcRef.current) qcRef.current.textContent = q.toFixed(3);
+      if (vesselRef.current)
+        vesselRef.current.textContent = `${V.toFixed(2)} L · ${P.toFixed(2)} atm`;
+      if (shiftRef.current) {
+        shiftRef.current.textContent =
+          Math.abs(q - K) < K * 0.04
+            ? "At equilibrium"
+            : q < K
+              ? "Shifting forward → more NO₂"
+              : "Shifting backward → more N₂O₄";
+      }
+      if (heatTextRef.current) {
+        heatTextRef.current.textContent =
+          Math.abs(netHeat) < 0.05
+            ? "Heat flow ~balanced"
+            : netHeat > 0
+              ? "Absorbing heat (endothermic)"
+              : "Releasing heat (exothermic)";
+      }
+      if (fwdBarRef.current) fwdBarRef.current.style.height = `${barHeight(rf)}px`;
+      if (revBarRef.current) revBarRef.current.style.height = `${barHeight(rr)}px`;
+      if (heatBarRef.current) {
+        heatBarRef.current.style.height = `${barHeight(Math.abs(netHeat))}px`;
+        heatBarRef.current.style.backgroundColor =
+          netHeat >= 0 ? "rgb(56, 189, 248)" : "rgb(249, 115, 22)";
       }
 
       // Vessel size tracks volume, eased rather than snapped so a
@@ -484,21 +520,6 @@ export function EquilibriumSim() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  const shift =
-    Math.abs(readout.q - readout.k) < readout.k * 0.04
-      ? "At equilibrium"
-      : readout.q < readout.k
-        ? "Shifting forward → more NO₂"
-        : "Shifting backward → more N₂O₄";
-
-  const netHeat = REACTION_DELTA_H_KJ * (readout.rf - readout.rr);
-  const heatText =
-    Math.abs(netHeat) < 0.05
-      ? "Heat flow ~balanced"
-      : netHeat > 0
-        ? "Absorbing heat (endothermic)"
-        : "Releasing heat (exothermic)";
-
   return (
     <div className="grid gap-8 lg:grid-cols-12">
       <div className="space-y-6 lg:col-span-8">
@@ -519,27 +540,15 @@ export function EquilibriumSim() {
               </div>
               <div className="flex h-12 items-end gap-3">
                 <div className="flex flex-col items-center gap-1">
-                  <div
-                    className="w-3 bg-foreground"
-                    style={{ height: `${Math.min(48, readout.rf * 90 + 2)}px` }}
-                  />
+                  <div ref={fwdBarRef} className="w-3 bg-foreground" style={{ height: "15px" }} />
                   <span className="font-mono text-[9px] text-muted-foreground">fwd</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  <div
-                    className="w-3 bg-accent"
-                    style={{ height: `${Math.min(48, readout.rr * 90 + 2)}px` }}
-                  />
+                  <div ref={revBarRef} className="w-3 bg-accent" style={{ height: "15px" }} />
                   <span className="font-mono text-[9px] text-muted-foreground">rev</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  <div
-                    className="w-3"
-                    style={{
-                      height: `${Math.min(48, Math.abs(netHeat) * 1.6 + 2)}px`,
-                      backgroundColor: netHeat >= 0 ? "rgb(56, 189, 248)" : "rgb(249, 115, 22)",
-                    }}
-                  />
+                  <div ref={heatBarRef} className="w-3" style={{ height: "2px" }} />
                   <span className="font-mono text-[9px] text-muted-foreground">heat</span>
                 </div>
               </div>
@@ -562,19 +571,20 @@ export function EquilibriumSim() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          <Stat label="Kc constant" value={readout.k.toFixed(3)} italic />
-          <Stat label="Reaction quotient Qc" value={readout.q.toFixed(3)} accent />
+          <Stat label="Kc constant" value="0.150" italic spanRef={kcRef} />
+          <Stat label="Reaction quotient Qc" value="0.150" accent spanRef={qcRef} />
           <Stat label="System temp" value={`${Math.round(temp)} K`} />
           <Stat label="ΔH rxn" value={`+${REACTION_DELTA_H_KJ.toFixed(1)} kJ/mol`} italic small />
-          <Stat
-            label="Vessel"
-            value={`${volume.toFixed(2)} L · ${readout.p.toFixed(2)} atm`}
-            small
-          />
+          <Stat label="Vessel" value="1.50 L · 1.50 atm" small spanRef={vesselRef} />
         </div>
-        <p className="font-mono text-xs uppercase tracking-widest text-accent">{shift}</p>
-        <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-          {heatText}
+        <p ref={shiftRef} className="font-mono text-xs uppercase tracking-widest text-accent">
+          At equilibrium
+        </p>
+        <p
+          ref={heatTextRef}
+          className="font-mono text-xs uppercase tracking-widest text-muted-foreground"
+        >
+          Heat flow ~balanced
         </p>
       </div>
 
@@ -702,12 +712,14 @@ function Stat({
   italic,
   accent,
   small,
+  spanRef,
 }: {
   label: string;
   value: string;
   italic?: boolean;
   accent?: boolean;
   small?: boolean;
+  spanRef?: Ref<HTMLSpanElement>;
 }) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
@@ -715,6 +727,7 @@ function Stat({
         {label}
       </span>
       <span
+        ref={spanRef}
         className={`font-mono font-bold ${small ? "text-base" : "text-2xl"} ${italic ? "italic" : ""} ${accent ? "text-accent" : ""}`}
       >
         {value}
