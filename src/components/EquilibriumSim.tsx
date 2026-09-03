@@ -123,6 +123,34 @@ function drawN2O4(
   }
 }
 
+// Velocity vectors get their own color and an arrowhead instead of a plain
+// species-tinted line, which used to blend into the molecules' own bonds
+// and made the "display vectors" toggle look like it did nothing.
+function drawVector(ctx: CanvasRenderingContext2D, x: number, y: number, vx: number, vy: number) {
+  const len = Math.hypot(vx, vy);
+  if (len < 1) return;
+  const ex = x + vx;
+  const ey = y + vy;
+  const angle = Math.atan2(vy, vx);
+  const headLen = 4.5;
+  ctx.strokeStyle = "rgba(217, 70, 239, 0.85)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(ex, ey);
+  ctx.moveTo(ex, ey);
+  ctx.lineTo(
+    ex - headLen * Math.cos(angle - Math.PI / 6),
+    ey - headLen * Math.sin(angle - Math.PI / 6),
+  );
+  ctx.moveTo(ex, ey);
+  ctx.lineTo(
+    ex - headLen * Math.cos(angle + Math.PI / 6),
+    ey - headLen * Math.sin(angle + Math.PI / 6),
+  );
+  ctx.stroke();
+}
+
 export function EquilibriumSim() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const particlesRef = useRef<Particle[]>([]);
@@ -217,8 +245,24 @@ export function EquilibriumSim() {
     });
 
     const frame = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      // rAF timestamps aren't guaranteed strictly increasing across every
+      // frame pair (a busy main thread, e.g. from a preset click's
+      // re-render, can occasionally hand back a `now` at or slightly
+      // behind `last`). A negative dt would tick flash ages backwards into
+      // negative territory, and ctx.arc throws on a negative radius —
+      // which, uncaught, would stop this rAF loop from ever rescheduling
+      // and freeze the simulation for good. Clamping here removes the
+      // cause; the try/finally below is a backstop against any other.
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
       last = now;
+      try {
+        runFrame(dt);
+      } finally {
+        raf = requestAnimationFrame(frame);
+      }
+    };
+
+    const runFrame = (dt: number) => {
       const s = stateRef.current;
 
       const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -432,17 +476,8 @@ export function EquilibriumSim() {
         const color = isA ? "rgba(15, 23, 42, 0.85)" : "rgba(14, 165, 233, 0.9)";
         if (isA) drawN2O4(ctx, p.x, p.y, p.angle, color);
         else drawNO2(ctx, p.x, p.y, p.angle, color);
-        if (s.vectors) {
-          ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(p.x + p.vx * 0.12 * speed, p.y + p.vy * 0.12 * speed);
-          ctx.strokeStyle = isA ? "rgba(15, 23, 42, 0.25)" : "rgba(14, 165, 233, 0.35)";
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
+        if (s.vectors) drawVector(ctx, p.x, p.y, p.vx * 0.22 * speed, p.vy * 0.22 * speed);
       }
-
-      raf = requestAnimationFrame(frame);
     };
 
     raf = requestAnimationFrame(frame);
@@ -592,10 +627,22 @@ export function EquilibriumSim() {
                 + Add N₂O₄
               </button>
               <button
+                onClick={() => (stateRef.current.nA = Math.max(0.05, stateRef.current.nA - 0.4))}
+                className="rounded-lg border border-border px-3 py-2 text-xs font-medium transition-colors hover:bg-secondary"
+              >
+                − Remove N₂O₄
+              </button>
+              <button
                 onClick={() => (stateRef.current.nB += 0.4)}
                 className="rounded-lg border border-border px-3 py-2 text-xs font-medium transition-colors hover:bg-secondary"
               >
                 + Add NO₂
+              </button>
+              <button
+                onClick={() => (stateRef.current.nB = Math.max(0.05, stateRef.current.nB - 0.4))}
+                className="rounded-lg border border-border px-3 py-2 text-xs font-medium transition-colors hover:bg-secondary"
+              >
+                − Remove NO₂
               </button>
             </div>
 
