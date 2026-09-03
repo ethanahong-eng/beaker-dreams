@@ -1,12 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 
-type Preset = "baseline" | "exothermic" | "stress" | "haber";
+type Preset = "baseline" | "exothermic" | "stress" | "haber" | "inert";
 
-const PRESETS: Record<Preset, { label: string; temp: number; pressure: number; addA: number }> = {
-  baseline: { label: "Baseline (298 K)", temp: 298, pressure: 1.5, addA: 0 },
-  exothermic: { label: "Heat the vessel", temp: 420, pressure: 1.5, addA: 0 },
-  stress: { label: "Concentration stress", temp: 298, pressure: 1.5, addA: 0.6 },
-  haber: { label: "High pressure squeeze", temp: 298, pressure: 4.2, addA: 0 },
+type PresetConfig = {
+  label: string;
+  temp: number;
+  volume: number;
+  inertPressure: number;
+  addA: number;
+};
+
+const PRESETS: Record<Preset, PresetConfig> = {
+  baseline: { label: "Baseline (298 K)", temp: 298, volume: 1.5, inertPressure: 0, addA: 0 },
+  exothermic: { label: "Heat the vessel", temp: 420, volume: 1.5, inertPressure: 0, addA: 0 },
+  stress: { label: "Concentration stress", temp: 298, volume: 1.5, inertPressure: 0, addA: 0.6 },
+  haber: { label: "High pressure squeeze", temp: 298, volume: 0.4, inertPressure: 0, addA: 0 },
+  inert: { label: "Add inert gas (no shift)", temp: 298, volume: 1.5, inertPressure: 3, addA: 0 },
 };
 
 // N2O4 (A) <=> 2 NO2 (B), forward is endothermic.
@@ -23,8 +32,96 @@ function kForward(T: number) {
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
-type Particle = { x: number; y: number; vx: number; vy: number; kind: 0 | 1 };
+type Particle = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  kind: 0 | 1;
+  angle: number;
+  spin: number;
+};
 type Flash = { x: number; y: number; age: number; life: number; hot: boolean };
+
+// Bent NO2 (~134 deg O-N-O) and planar N2O4 (two bent halves sharing an N-N
+// bond) instead of plain circles, so the particle shapes reflect real VSEPR
+// geometry rather than being an arbitrary blob.
+const NO2_HALF_ANGLE = ((180 - 134) / 2 + 67) * (Math.PI / 180);
+function drawNO2(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  angle: number,
+  color: string,
+) {
+  const bond = 6.5;
+  const o1x = x + Math.cos(angle - NO2_HALF_ANGLE) * bond;
+  const o1y = y + Math.sin(angle - NO2_HALF_ANGLE) * bond;
+  const o2x = x + Math.cos(angle + NO2_HALF_ANGLE) * bond;
+  const o2y = y + Math.sin(angle + NO2_HALF_ANGLE) * bond;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.moveTo(o1x, o1y);
+  ctx.lineTo(x, y);
+  ctx.lineTo(o2x, o2y);
+  ctx.stroke();
+  ctx.fillStyle = color;
+  for (const [cx, cy, r] of [
+    [x, y, 3] as const,
+    [o1x, o1y, 2.4] as const,
+    [o2x, o2y, 2.4] as const,
+  ]) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+const N2O4_FLARE = 50 * (Math.PI / 180);
+function drawN2O4(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  angle: number,
+  color: string,
+) {
+  const halfNN = 4.5;
+  const bond = 5.5;
+  const n1x = x - Math.cos(angle) * halfNN;
+  const n1y = y - Math.sin(angle) * halfNN;
+  const n2x = x + Math.cos(angle) * halfNN;
+  const n2y = y + Math.sin(angle) * halfNN;
+  const dir1 = angle + Math.PI;
+  const dir2 = angle;
+  const atoms: Array<readonly [number, number, number]> = [
+    [n1x, n1y, 2.8],
+    [n2x, n2y, 2.8],
+  ];
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.moveTo(n1x, n1y);
+  ctx.lineTo(n2x, n2y);
+  ctx.stroke();
+  for (const [nx, ny, dir] of [[n1x, n1y, dir1] as const, [n2x, n2y, dir2] as const]) {
+    for (const sign of [-1, 1] as const) {
+      const ox = nx + Math.cos(dir + sign * N2O4_FLARE) * bond;
+      const oy = ny + Math.sin(dir + sign * N2O4_FLARE) * bond;
+      ctx.beginPath();
+      ctx.moveTo(nx, ny);
+      ctx.lineTo(ox, oy);
+      ctx.stroke();
+      atoms.push([ox, oy, 2.3]);
+    }
+  }
+  ctx.fillStyle = color;
+  for (const [cx, cy, r] of atoms) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
 
 export function EquilibriumSim() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -33,17 +130,15 @@ export function EquilibriumSim() {
     nA: 1,
     nB: 0.05,
     temp: 298,
-    pressure: 1.5,
-    volumeMode: "piston" as "piston" | "rigid",
     volume: 1.5,
+    inertPressure: 0,
     running: true,
     vectors: true,
   });
 
   const [temp, setTemp] = useState(298);
-  const [pressure, setPressure] = useState(1.5);
-  const [volumeMode, setVolumeMode] = useState<"piston" | "rigid">("piston");
   const [volume, setVolume] = useState(1.5);
+  const [inertPressure, setInertPressure] = useState(0);
   const [running, setRunning] = useState(true);
   const [vectors, setVectors] = useState(true);
   const [preset, setPreset] = useState<Preset>("baseline");
@@ -59,9 +154,8 @@ export function EquilibriumSim() {
   });
 
   stateRef.current.temp = temp;
-  stateRef.current.pressure = pressure;
-  stateRef.current.volumeMode = volumeMode;
   stateRef.current.volume = volume;
+  stateRef.current.inertPressure = inertPressure;
   stateRef.current.running = running;
   stateRef.current.vectors = vectors;
 
@@ -69,8 +163,8 @@ export function EquilibriumSim() {
     setPreset(p);
     const cfg = PRESETS[p];
     setTemp(cfg.temp);
-    setPressure(cfg.pressure);
-    setVolumeMode("piston");
+    setVolume(cfg.volume);
+    setInertPressure(cfg.inertPressure);
     if (cfg.addA > 0) stateRef.current.nA += cfg.addA;
   };
 
@@ -78,21 +172,9 @@ export function EquilibriumSim() {
     stateRef.current.nA = 1;
     stateRef.current.nB = 0.05;
     setTemp(298);
-    setPressure(1.5);
     setVolume(1.5);
-    setVolumeMode("piston");
+    setInertPressure(0);
     setPreset("baseline");
-  };
-
-  // Seed the control being switched to from the value the other one just
-  // derived, so flipping the toggle doesn't jump the vessel size.
-  const switchToRigid = () => {
-    setVolume(Number(readout.v.toFixed(2)));
-    setVolumeMode("rigid");
-  };
-  const switchToPiston = () => {
-    setPressure(Number(readout.p.toFixed(2)));
-    setVolumeMode("piston");
   };
 
   useEffect(() => {
@@ -106,13 +188,22 @@ export function EquilibriumSim() {
     let sinceSync = 0;
     let vesselScale = 0.55;
 
-    const GRID_COLS = 16;
-    const GRID_ROWS = 10;
+    const GRID_COLS = 22;
+    const GRID_ROWS = 14;
     const gridA = new Float32Array(GRID_COLS * GRID_ROWS);
     const gridB = new Float32Array(GRID_COLS * GRID_ROWS);
     const rawA = new Float32Array(GRID_COLS * GRID_ROWS);
     const rawB = new Float32Array(GRID_COLS * GRID_ROWS);
     let flashes: Flash[] = [];
+
+    // Low-res density buffer, alpha-blended and stretched onto the vessel
+    // with the browser's bilinear image scaling — a cheap way to turn a
+    // coarse grid into a smooth gradient instead of visible blocks.
+    const heatCanvas = document.createElement("canvas");
+    heatCanvas.width = GRID_COLS;
+    heatCanvas.height = GRID_ROWS;
+    const heatCtx = heatCanvas.getContext("2d")!;
+    const heatImage = heatCtx.createImageData(GRID_COLS, GRID_ROWS);
 
     const rand = (n: number) => (Math.random() - 0.5) * n;
     const spawn = (kind: 0 | 1, x0: number, y0: number, x1: number, y1: number): Particle => ({
@@ -121,6 +212,8 @@ export function EquilibriumSim() {
       vx: rand(60),
       vy: rand(60),
       kind,
+      angle: Math.random() * Math.PI * 2,
+      spin: rand(3),
     });
 
     const frame = (now: number) => {
@@ -138,19 +231,14 @@ export function EquilibriumSim() {
       const w = rect.width;
       const h = rect.height;
 
-      // A rigid vessel fixes V and lets pressure float as moles/T change;
-      // a piston fixes external pressure and lets V respond instead. Both
-      // are just the ideal gas law solved for the variable not being held.
+      // Volume is its own independent control now — temperature and the
+      // (inert-gas) pressure slider never feed back into it. Pressure is
+      // purely a derived readout: the reactive species' partial pressure
+      // (from the ideal gas law) plus whatever inert gas has been dialed
+      // in. Adding inert gas raises total pressure without touching V or
+      // [N2O4]/[NO2], so — correctly — it never shifts the equilibrium.
       const total = s.nA + s.nB;
-      let V: number;
-      let P: number;
-      if (s.volumeMode === "rigid") {
-        V = Math.max(0.2, s.volume);
-        P = (total * R_EFF * s.temp) / V;
-      } else {
-        P = s.pressure;
-        V = Math.max(0.2, (total * R_EFF * s.temp) / P);
-      }
+      const V = Math.max(0.2, s.volume);
       const cA = s.nA / V;
       const cB = s.nB / V;
       const kf = kForward(s.temp);
@@ -158,6 +246,8 @@ export function EquilibriumSim() {
       const kr = kf / K;
       const rf = kf * cA;
       const rr = kr * cB * cB;
+      const pReactive = (total * R_EFF * s.temp) / V;
+      const P = pReactive + s.inertPressure;
 
       if (s.running) {
         // Exponential (semi-implicit) integrator: dnA/dt = -kf*nA + rr*V is
@@ -202,7 +292,7 @@ export function EquilibriumSim() {
         let diff = (kind === 0 ? wantA : wantB) - countOf(kind);
         while (diff > 0) {
           list.push(
-            spawn(kind, vesselX + 8, vesselY + 8, vesselX + vesselW - 8, vesselY + vesselH - 8),
+            spawn(kind, vesselX + 14, vesselY + 14, vesselX + vesselW - 14, vesselY + vesselH - 14),
           );
           diff--;
         }
@@ -219,16 +309,17 @@ export function EquilibriumSim() {
       ctx.fillStyle = "rgba(15, 23, 42, 0.05)";
       ctx.fillRect(0, 0, w, h);
 
-      // Concentration heat map: bin particles into a coarse grid and ease
-      // each cell toward its current count so the wash reads as a smooth
-      // field rather than flickering frame to frame.
-      const cellW = w / GRID_COLS;
-      const cellH = h / GRID_ROWS;
+      // Concentration heat map: bin particles (in vessel-relative
+      // coordinates) into a coarse grid, ease each cell toward its current
+      // count, then paint the low-res buffer scaled up over the vessel so
+      // bilinear interpolation turns it into a smooth gradient.
+      const cellW = vesselW / GRID_COLS;
+      const cellH = vesselH / GRID_ROWS;
       rawA.fill(0);
       rawB.fill(0);
       for (const p of list) {
-        const cx = clamp(Math.floor(p.x / cellW), 0, GRID_COLS - 1);
-        const cy = clamp(Math.floor(p.y / cellH), 0, GRID_ROWS - 1);
+        const cx = clamp(Math.floor((p.x - vesselX) / cellW), 0, GRID_COLS - 1);
+        const cy = clamp(Math.floor((p.y - vesselY) / cellH), 0, GRID_ROWS - 1);
         const idx = cy * GRID_COLS + cx;
         if (p.kind === 0) rawA[idx]! += 1;
         else rawB[idx]! += 1;
@@ -238,24 +329,24 @@ export function EquilibriumSim() {
         gridA[i]! += (rawA[i]! - gridA[i]!) * gridEase;
         gridB[i]! += (rawB[i]! - gridB[i]!) * gridEase;
       }
-      for (let cy = 0; cy < GRID_ROWS; cy++) {
-        for (let cx = 0; cx < GRID_COLS; cx++) {
-          const idx = cy * GRID_COLS + cx;
-          const a = Math.min(1, gridA[idx]! / 3);
-          const b = Math.min(1, gridB[idx]! / 3);
-          if (a < 0.03 && b < 0.03) continue;
-          const x = cx * cellW;
-          const y = cy * cellH;
-          if (a >= 0.03) {
-            ctx.fillStyle = `rgba(15, 23, 42, ${a * 0.16})`;
-            ctx.fillRect(x, y, cellW + 1, cellH + 1);
-          }
-          if (b >= 0.03) {
-            ctx.fillStyle = `rgba(14, 165, 233, ${b * 0.18})`;
-            ctx.fillRect(x, y, cellW + 1, cellH + 1);
-          }
-        }
+      const heatData = heatImage.data;
+      for (let i = 0; i < gridA.length; i++) {
+        const a = Math.min(1, gridA[i]! / 3);
+        const b = Math.min(1, gridB[i]! / 3);
+        const density = a + b;
+        const wA = density > 0 ? a / density : 0;
+        const wB = 1 - wA;
+        const p = i * 4;
+        heatData[p] = 15 * wA + 14 * wB;
+        heatData[p + 1] = 23 * wA + 165 * wB;
+        heatData[p + 2] = 42 * wA + 233 * wB;
+        heatData[p + 3] = Math.round(Math.min(0.55, density * 0.5) * 255);
       }
+      heatCtx.putImageData(heatImage, 0, 0);
+      ctx.save();
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(heatCanvas, 0, 0, GRID_COLS, GRID_ROWS, vesselX, vesselY, vesselW, vesselH);
+      ctx.restore();
 
       // Vessel wall: contracts/expands with volume, i.e. the "squeeze."
       ctx.strokeStyle = "rgba(100, 116, 139, 0.55)";
@@ -266,12 +357,13 @@ export function EquilibriumSim() {
         for (const p of list) {
           p.x += p.vx * dt * speed;
           p.y += p.vy * dt * speed;
+          p.angle += p.spin * dt * speed;
         }
       }
-      const minX = vesselX + 6;
-      const maxX = vesselX + vesselW - 6;
-      const minY = vesselY + 6;
-      const maxY = vesselY + vesselH - 6;
+      const minX = vesselX + 14;
+      const maxX = vesselX + vesselW - 14;
+      const minY = vesselY + 14;
+      const maxY = vesselY + vesselH - 14;
       for (const p of list) {
         if (p.x < minX || p.x > maxX) p.vx *= -1;
         if (p.y < minY || p.y > maxY) p.vy *= -1;
@@ -289,8 +381,8 @@ export function EquilibriumSim() {
         for (let j = i + 1; j < list.length; j++) {
           const a = list[i]!;
           const b = list[j]!;
-          const ra = a.kind === 0 ? 7 : 5;
-          const rb = b.kind === 0 ? 7 : 5;
+          const ra = a.kind === 0 ? 9 : 6;
+          const rb = b.kind === 0 ? 9 : 6;
           const dx = b.x - a.x;
           const dy = b.y - a.y;
           const dist = Math.hypot(dx, dy) || 0.0001;
@@ -337,10 +429,9 @@ export function EquilibriumSim() {
 
       for (const p of list) {
         const isA = p.kind === 0;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, isA ? 7 : 5, 0, Math.PI * 2);
-        ctx.fillStyle = isA ? "rgba(15, 23, 42, 0.85)" : "rgba(14, 165, 233, 0.9)";
-        ctx.fill();
+        const color = isA ? "rgba(15, 23, 42, 0.85)" : "rgba(14, 165, 233, 0.9)";
+        if (isA) drawN2O4(ctx, p.x, p.y, p.angle, color);
+        else drawNO2(ctx, p.x, p.y, p.angle, color);
         if (s.vectors) {
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
@@ -376,6 +467,10 @@ export function EquilibriumSim() {
   return (
     <div className="grid gap-8 lg:grid-cols-12">
       <div className="space-y-6 lg:col-span-8">
+        <h3 className="font-mono text-2xl font-bold tracking-tight">
+          N₂O₄ (g) <span className="text-accent">⇌</span> 2 NO₂ (g)
+        </h3>
+
         <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <canvas
             ref={canvasRef}
@@ -438,7 +533,7 @@ export function EquilibriumSim() {
           <Stat label="ΔH rxn" value={`+${REACTION_DELTA_H_KJ.toFixed(1)} kJ/mol`} italic small />
           <Stat
             label="Vessel"
-            value={`${readout.v.toFixed(2)} L · ${readout.p.toFixed(2)} atm`}
+            value={`${volume.toFixed(2)} L · ${readout.p.toFixed(2)} atm`}
             small
           />
         </div>
@@ -464,64 +559,29 @@ export function EquilibriumSim() {
               current={temp}
               onChange={setTemp}
             />
-
+            <Slider
+              label="Container volume"
+              value={`${volume.toFixed(1)} L`}
+              min={0.3}
+              max={5}
+              step={0.1}
+              current={volume}
+              onChange={setVolume}
+            />
             <div>
-              <div className="mb-3 flex items-center justify-between text-xs font-medium">
-                <span>Container</span>
-                <div className="flex overflow-hidden rounded-full border border-border text-[10px] font-bold uppercase">
-                  <button
-                    onClick={switchToPiston}
-                    className={`px-3 py-1 transition-colors ${
-                      volumeMode === "piston"
-                        ? "bg-accent text-accent-foreground"
-                        : "hover:bg-secondary"
-                    }`}
-                  >
-                    Piston
-                  </button>
-                  <button
-                    onClick={switchToRigid}
-                    className={`px-3 py-1 transition-colors ${
-                      volumeMode === "rigid"
-                        ? "bg-accent text-accent-foreground"
-                        : "hover:bg-secondary"
-                    }`}
-                  >
-                    Rigid
-                  </button>
-                </div>
-              </div>
-              {volumeMode === "piston" ? (
-                <>
-                  <Slider
-                    label="Pressure [N₂O₄]"
-                    value={`${pressure.toFixed(1)} atm`}
-                    min={0.5}
-                    max={5}
-                    step={0.1}
-                    current={pressure}
-                    onChange={setPressure}
-                  />
-                  <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-                    Fixed external pressure — vessel settles at {readout.v.toFixed(2)} L
-                  </p>
-                </>
-              ) : (
-                <>
-                  <Slider
-                    label="Container volume"
-                    value={`${volume.toFixed(1)} L`}
-                    min={0.3}
-                    max={5}
-                    step={0.1}
-                    current={volume}
-                    onChange={setVolume}
-                  />
-                  <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-                    Fixed rigid volume — pressure reads {readout.p.toFixed(2)} atm
-                  </p>
-                </>
-              )}
+              <Slider
+                label="Inert gas pressure"
+                value={`${inertPressure.toFixed(1)} atm`}
+                min={0}
+                max={5}
+                step={0.1}
+                current={inertPressure}
+                onChange={setInertPressure}
+              />
+              <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                Raises total pressure without changing volume or [N₂O₄]/[NO₂] — no equilibrium
+                shift.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-1">
