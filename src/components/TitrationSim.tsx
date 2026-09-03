@@ -54,9 +54,23 @@ export function TitrationSim() {
           </div>
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-64 w-full">
             {[0, 25, 50, 75, 100].map((g) => (
-              <line key={g} x1="0" y1={g} x2="100" y2={g} stroke="var(--border)" vectorEffect="non-scaling-stroke" />
+              <line
+                key={g}
+                x1="0"
+                y1={g}
+                x2="100"
+                y2={g}
+                stroke="var(--border)"
+                vectorEffect="non-scaling-stroke"
+              />
             ))}
-            <path d={path} fill="none" stroke="var(--foreground)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+            <path
+              d={path}
+              fill="none"
+              stroke="var(--foreground)"
+              strokeWidth="1.5"
+              vectorEffect="non-scaling-stroke"
+            />
             <line
               x1={(volume / 50) * 100}
               y1="0"
@@ -66,7 +80,12 @@ export function TitrationSim() {
               strokeWidth="1"
               vectorEffect="non-scaling-stroke"
             />
-            <circle cx={(volume / 50) * 100} cy={100 - (ph / 14) * 100} r="1.4" fill="var(--accent)" />
+            <circle
+              cx={(volume / 50) * 100}
+              cy={100 - (ph / 14) * 100}
+              r="1.4"
+              fill="var(--accent)"
+            />
           </svg>
           <div className="mt-2 flex justify-between font-mono text-[10px] uppercase text-muted-foreground">
             <span>0 mL</span>
@@ -78,7 +97,9 @@ export function TitrationSim() {
 
       <aside className="space-y-6 lg:col-span-4">
         <div className="rounded-xl border border-border bg-card p-6">
-          <h3 className="mb-6 font-mono text-xs font-bold uppercase tracking-widest">Burette controls</h3>
+          <h3 className="mb-6 font-mono text-xs font-bold uppercase tracking-widest">
+            Burette controls
+          </h3>
           <div className="space-y-8">
             <div>
               <div className="mb-3 flex justify-between text-xs font-medium">
@@ -113,10 +134,12 @@ export function TitrationSim() {
                 className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-[var(--accent)] disabled:opacity-40"
               />
             </div>
-            <label className="flex cursor-pointer items-center gap-3">
+            <label
+              className="flex cursor-pointer items-center gap-3"
+              onClick={() => setStrong((s) => !s)}
+            >
               <span
                 className={`relative h-5 w-10 rounded-full transition-colors ${strong ? "bg-accent" : "bg-input"}`}
-                onClick={() => setStrong((s) => !s)}
               >
                 <span
                   className={`absolute top-1 h-3 w-3 rounded-full bg-card transition-all ${strong ? "right-1" : "left-1"}`}
@@ -127,9 +150,14 @@ export function TitrationSim() {
           </div>
           <hr className="my-8 border-border" />
           <div className="space-y-2">
-            <span className="block font-mono text-[10px] uppercase text-muted-foreground">Solution pH</span>
+            <span className="block font-mono text-[10px] uppercase text-muted-foreground">
+              Solution pH
+            </span>
             <div className="h-2 w-full rounded-full bg-secondary">
-              <div className={`h-2 rounded-full ${phColor}`} style={{ width: `${(ph / 14) * 100}%` }} />
+              <div
+                className={`h-2 rounded-full ${phColor}`}
+                style={{ width: `${(ph / 14) * 100}%` }}
+              />
             </div>
             <span className="font-mono text-2xl font-bold">{ph.toFixed(2)}</span>
           </div>

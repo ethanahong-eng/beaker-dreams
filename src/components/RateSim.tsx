@@ -40,7 +40,9 @@ export function RateSim() {
             <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               Molecular energy distribution
             </span>
-            <span className="font-mono text-xs text-accent">{(fraction * 100).toFixed(1)}% above Ea</span>
+            <span className="font-mono text-xs text-accent">
+              {(fraction * 100).toFixed(1)}% above Ea
+            </span>
           </div>
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-64 w-full">
             <defs>
@@ -55,7 +57,13 @@ export function RateSim() {
               opacity="0.35"
               clipPath="url(#above-ea)"
             />
-            <path d={path} fill="none" stroke="var(--foreground)" strokeWidth="0.6" vectorEffect="non-scaling-stroke" />
+            <path
+              d={path}
+              fill="none"
+              stroke="var(--foreground)"
+              strokeWidth="0.6"
+              vectorEffect="non-scaling-stroke"
+            />
             <line
               x1={threshold}
               y1="0"
@@ -77,7 +85,9 @@ export function RateSim() {
 
       <aside className="space-y-6 lg:col-span-4">
         <div className="rounded-xl border border-border bg-card p-6">
-          <h3 className="mb-6 font-mono text-xs font-bold uppercase tracking-widest">Rate controls</h3>
+          <h3 className="mb-6 font-mono text-xs font-bold uppercase tracking-widest">
+            Rate controls
+          </h3>
           <div className="space-y-8">
             <div>
               <div className="mb-3 flex justify-between text-xs font-medium">
@@ -109,10 +119,12 @@ export function RateSim() {
                 className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-[var(--accent)]"
               />
             </div>
-            <label className="flex cursor-pointer items-center gap-3">
+            <label
+              className="flex cursor-pointer items-center gap-3"
+              onClick={() => setCatalyst((c) => !c)}
+            >
               <span
                 className={`relative h-5 w-10 rounded-full transition-colors ${catalyst ? "bg-accent" : "bg-input"}`}
-                onClick={() => setCatalyst((c) => !c)}
               >
                 <span
                   className={`absolute top-1 h-3 w-3 rounded-full bg-card transition-all ${catalyst ? "right-1" : "left-1"}`}
@@ -123,7 +135,9 @@ export function RateSim() {
           </div>
           <hr className="my-8 border-border" />
           <div className="rounded-lg border border-border p-4">
-            <span className="block font-mono text-[10px] uppercase text-muted-foreground">Relative rate</span>
+            <span className="block font-mono text-[10px] uppercase text-muted-foreground">
+              Relative rate
+            </span>
             <span className="font-mono text-2xl font-bold">{rate}</span>
           </div>
         </div>

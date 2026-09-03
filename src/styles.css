@@ -144,3 +144,20 @@
     color: var(--color-foreground);
   }
 }
+
+@keyframes drop-fall {
+  0% {
+    transform: translateY(-6px);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+}
+.drop-fall {
+  animation: drop-fall 0.4s ease-out;
+}

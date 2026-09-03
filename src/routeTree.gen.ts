@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AcidBaseRouteImport } from './routes/acid-base'
 import { Route as EverydayRouteImport } from './routes/everyday'
+import { Route as GeometryRouteImport } from './routes/geometry'
 import { Route as KineticsRouteImport } from './routes/kinetics'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const EverydayRoute = EverydayRouteImport.update({
   path: '/everyday',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GeometryRoute = GeometryRouteImport.update({
+  id: '/geometry',
+  path: '/geometry',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KineticsRoute = KineticsRouteImport.update({
   id: '/kinetics',
   path: '/kinetics',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acid-base': typeof AcidBaseRoute
   '/everyday': typeof EverydayRoute
+  '/geometry': typeof GeometryRoute
   '/kinetics': typeof KineticsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acid-base': typeof AcidBaseRoute
   '/everyday': typeof EverydayRoute
+  '/geometry': typeof GeometryRoute
   '/kinetics': typeof KineticsRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/acid-base': typeof AcidBaseRoute
   '/everyday': typeof EverydayRoute
+  '/geometry': typeof GeometryRoute
   '/kinetics': typeof KineticsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/acid-base' | '/everyday' | '/kinetics'
+  fullPaths: '/' | '/acid-base' | '/everyday' | '/geometry' | '/kinetics'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/acid-base' | '/everyday' | '/kinetics'
-  id: '__root__' | '/' | '/acid-base' | '/everyday' | '/kinetics'
+  to: '/' | '/acid-base' | '/everyday' | '/geometry' | '/kinetics'
+  id: '__root__' | '/' | '/acid-base' | '/everyday' | '/geometry' | '/kinetics'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcidBaseRoute: typeof AcidBaseRoute
   EverydayRoute: typeof EverydayRoute
+  GeometryRoute: typeof GeometryRoute
   KineticsRoute: typeof KineticsRoute
 }
 
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EverydayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/geometry': {
+      id: '/geometry'
+      path: '/geometry'
+      fullPath: '/geometry'
+      preLoaderRoute: typeof GeometryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/kinetics': {
       id: '/kinetics'
       path: '/kinetics'
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcidBaseRoute: AcidBaseRoute,
   EverydayRoute: EverydayRoute,
+  GeometryRoute: GeometryRoute,
   KineticsRoute: KineticsRoute,
 }
 export const routeTree = rootRouteImport
