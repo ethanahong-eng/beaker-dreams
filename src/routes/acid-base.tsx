@@ -36,6 +36,38 @@ function AcidBasePage() {
         </p>
       </header>
 
+      <section aria-labelledby="significance-heading" className="mb-20 border-t border-border pt-10">
+        <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+          Section 01 · Significance
+        </span>
+        <h2 id="significance-heading" className="mt-3 text-3xl font-bold">
+          Measuring health, water, and industry
+        </h2>
+        <div className="mt-8 grid gap-10 md:grid-cols-2">
+          <p className="leading-relaxed text-muted-foreground">
+            Long before pH meters, analysts used titration to determine the strength and purity of acids and
+            bases. Søren Sørensen introduced the pH scale in 1909 while studying proteins at the Carlsberg
+            Laboratory, giving medicine, agriculture, and manufacturing a shared language for acidity.
+          </p>
+          <p className="leading-relaxed text-muted-foreground">
+            Today, acid–base measurements protect drinking water, guide soil treatment, verify medicines, and
+            monitor blood chemistry. Reliable testing affects public health and food production, while poor
+            control can corrode infrastructure or damage ecosystems. The simple curve below represents decisions
+            made every day in clinics, treatment plants, and quality-control laboratories.
+          </p>
+        </div>
+      </section>
+
+      <section aria-labelledby="theory-heading">
+        <div className="mb-8">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+            Section 02 · Theory
+          </span>
+          <h2 id="theory-heading" className="mt-3 text-3xl font-bold">
+            Proton transfer and buffer balance
+          </h2>
+        </div>
+
       <section className="mb-10 grid gap-6 rounded-2xl border border-border bg-card p-8 md:grid-cols-3">
         <div className="md:col-span-1">
           <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
@@ -57,11 +89,7 @@ function AcidBasePage() {
         </div>
       </section>
 
-      <div id="simulation">
-        <TitrationSim />
-      </div>
-
-      <section className="mt-24 grid gap-16 border-t border-border pt-16 md:grid-cols-2">
+      <section className="mt-16 grid gap-16 border-t border-border pt-16 md:grid-cols-2">
         <div>
           <h2 className="mb-6 text-3xl font-bold italic">The half-equivalence trick</h2>
           <p className="leading-relaxed text-muted-foreground">
@@ -116,6 +144,25 @@ function AcidBasePage() {
             Run the same titration at pKa 3 and pKa 8. Compare how tall the vertical jump is in each case, then
             ask which one would be harder to read accurately with a colour indicator.
           </p>
+        </div>
+      </section>
+      </section>
+
+      <section aria-labelledby="simulation-heading" className="mt-24 border-t border-border pt-16">
+        <div className="mb-10 max-w-3xl">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+            Section 03 · Simulation
+          </span>
+          <h2 id="simulation-heading" className="mt-3 text-3xl font-bold">
+            Build a titration curve
+          </h2>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            Add base gradually and track the buffer region, half-equivalence point, and final pH jump. Compare a
+            weak acid with a strong acid to see why equivalence does not always mean neutrality.
+          </p>
+        </div>
+        <div id="simulation">
+          <TitrationSim />
         </div>
       </section>
     </main>
