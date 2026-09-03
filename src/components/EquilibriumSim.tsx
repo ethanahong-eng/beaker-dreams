@@ -97,8 +97,25 @@ export function EquilibriumSim() {
         const rf = kf * cA;
         const rr = kr * cB * cB;
         const step = Math.min(dt, 0.02);
-        s.nA += (-rf + rr) * V * step * 4;
-        s.nB += (2 * rf - 2 * rr) * V * step * 4;
+        const stepScaled = step * 4;
+
+        // Exponential (semi-implicit) integrator: dnA/dt = -kf*nA + rr*V is
+        // linear in nA if we hold the reverse-reaction source (rr*V) fixed
+        // over the step, so it has an exact closed-form solution. That
+        // solution always lands between nA and its quasi-equilibrium value,
+        // so it can never overshoot or oscillate no matter how large kf gets
+        // at high temperature — unlike plain explicit Euler, which diverges
+        // once kf*stepScaled passes ~2 (around 360-390 K with these rate
+        // constants). nB is then recovered from mass conservation (each mole
+        // of A that reacts makes two moles of B) instead of integrated
+        // separately.
+        const totalAEquiv = s.nA + s.nB / 2;
+        const source = rr * V;
+        const decay = Math.exp(-kf * stepScaled);
+        const nAEq = source / kf;
+        s.nA = s.nA * decay + nAEq * (1 - decay);
+        s.nB = 2 * (totalAEquiv - s.nA);
+
         s.nA = Math.max(0.001, s.nA);
         s.nB = Math.max(0.001, s.nB);
 
