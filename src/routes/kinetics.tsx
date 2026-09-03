@@ -36,6 +36,38 @@ function KineticsPage() {
         </p>
       </header>
 
+      <section aria-labelledby="significance-heading" className="mb-20 border-t border-border pt-10">
+        <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+          Section 01 · Significance
+        </span>
+        <h2 id="significance-heading" className="mt-3 text-3xl font-bold">
+          Controlling time, safety, and scarcity
+        </h2>
+        <div className="mt-8 grid gap-10 md:grid-cols-2">
+          <p className="leading-relaxed text-muted-foreground">
+            Nineteenth-century chemists including Jacobus van ’t Hoff and Svante Arrhenius turned reaction speed
+            into something measurable, linking temperature to the energy barrier a reaction must cross. That work
+            gave industry a way to predict shelf life, design safer processes, and make medicines consistently.
+          </p>
+          <p className="leading-relaxed text-muted-foreground">
+            Kinetics shapes daily access to food, clean water, fuel, and pharmaceuticals. Refrigeration slows
+            spoilage but demands energy; catalysts reduce industrial temperatures and costs but often depend on
+            scarce metals. Choosing how fast chemistry should run therefore carries economic, environmental, and
+            public-health consequences.
+          </p>
+        </div>
+      </section>
+
+      <section aria-labelledby="theory-heading">
+        <div className="mb-8">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+            Section 02 · Theory
+          </span>
+          <h2 id="theory-heading" className="mt-3 text-3xl font-bold">
+            Energy, collisions, and pathways
+          </h2>
+        </div>
+
       <section className="mb-10 grid gap-6 rounded-2xl border border-border bg-card p-8 md:grid-cols-3">
         <div className="md:col-span-1">
           <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
@@ -58,11 +90,7 @@ function KineticsPage() {
         </div>
       </section>
 
-      <div id="simulation">
-        <RateSim />
-      </div>
-
-      <section className="mt-24 grid gap-16 border-t border-border pt-16 md:grid-cols-2">
+      <section className="mt-16 grid gap-16 border-t border-border pt-16 md:grid-cols-2">
         <div>
           <h2 className="mb-6 text-3xl font-bold italic">Why heat multiplies rate</h2>
           <p className="leading-relaxed text-muted-foreground">
@@ -120,6 +148,25 @@ function KineticsPage() {
             Set Ea to 60 kJ/mol and step the temperature from 300 K to 310 K, watching the percentage above Ea.
             Then return to 300 K and switch on the catalyst — note how much temperature it substitutes for.
           </p>
+        </div>
+      </section>
+      </section>
+
+      <section aria-labelledby="simulation-heading" className="mt-24 border-t border-border pt-16">
+        <div className="mb-10 max-w-3xl">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+            Section 03 · Simulation
+          </span>
+          <h2 id="simulation-heading" className="mt-3 text-3xl font-bold">
+            Shift the energy distribution
+          </h2>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            Adjust temperature and activation energy, then compare those changes with a catalyst to see how each
+            alters the fraction of collisions able to react.
+          </p>
+        </div>
+        <div id="simulation">
+          <RateSim />
         </div>
       </section>
     </main>

@@ -37,6 +37,39 @@ function Index() {
         </p>
       </header>
 
+      <section aria-labelledby="significance-heading" className="mb-20 border-t border-border pt-10">
+        <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+          Section 01 · Significance
+        </span>
+        <h2 id="significance-heading" className="mt-3 text-3xl font-bold">
+          From fertilizer to a global food system
+        </h2>
+        <div className="mt-8 grid gap-10 md:grid-cols-2">
+          <p className="leading-relaxed text-muted-foreground">
+            Chemical equilibrium became an industrial tool in the early twentieth century. Fritz Haber showed
+            that nitrogen and hydrogen could be balanced under pressure to make ammonia; Carl Bosch then made the
+            process work at factory scale. The resulting fertilizer transformed agriculture and helped support
+            billions of people, while the same chemistry also supplied wartime explosives.
+          </p>
+          <p className="leading-relaxed text-muted-foreground">
+            That legacy makes equilibrium an economic and environmental question, not only a classroom rule.
+            Pressure, temperature, energy prices, and continuous product removal determine how much a plant can
+            produce and at what cost. Modern ammonia production remains energy intensive, so improving its
+            balance is central to food security and lower-carbon industry.
+          </p>
+        </div>
+      </section>
+
+      <section aria-labelledby="theory-heading">
+        <div className="mb-8">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+            Section 02 · Theory
+          </span>
+          <h2 id="theory-heading" className="mt-3 text-3xl font-bold">
+            Balance at the molecular scale
+          </h2>
+        </div>
+
       <section className="mb-10 grid gap-6 rounded-2xl border border-border bg-card p-8 md:grid-cols-3">
         <div className="md:col-span-1">
           <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
@@ -58,11 +91,7 @@ function Index() {
         </div>
       </section>
 
-      <div id="simulation">
-        <EquilibriumSim />
-      </div>
-
-      <section className="mt-24 grid gap-16 border-t border-border pt-16 md:grid-cols-2">
+      <section className="mt-16 grid gap-16 border-t border-border pt-16 md:grid-cols-2">
         <div>
           <h2 className="mb-6 text-3xl font-bold italic">The Reaction Quotient (Qc)</h2>
           <p className="mb-6 leading-relaxed text-muted-foreground">
@@ -148,6 +177,25 @@ function Index() {
           means the reaction barely proceeds. What is equal at equilibrium is the pair of rates, not the pair of
           concentrations. Adding a catalyst reaches that state faster without changing where it lands.
         </p>
+      </section>
+      </section>
+
+      <section aria-labelledby="simulation-heading" className="mt-24 border-t border-border pt-16">
+        <div className="mb-10 max-w-3xl">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+            Section 03 · Simulation
+          </span>
+          <h2 id="simulation-heading" className="mt-3 text-3xl font-bold">
+            Disturb the equilibrium
+          </h2>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            Change one condition at a time, then compare Qc with Kc to predict the direction of the shift before
+            the particles settle into their new balance.
+          </p>
+        </div>
+        <div id="simulation">
+          <EquilibriumSim />
+        </div>
       </section>
     </main>
   );
