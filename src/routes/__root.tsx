@@ -137,18 +137,18 @@ function RootComponent() {
           </Link>
           <div className="hidden gap-8 text-sm font-medium md:flex">
             <Link
-              to="/"
-              className="transition-colors hover:text-accent"
-              activeProps={{ className: "text-accent" }}
-            >
-              Equilibrium
-            </Link>
-            <Link
               to="/kinetics"
               className="transition-colors hover:text-accent"
               activeProps={{ className: "text-accent" }}
             >
               Kinetics
+            </Link>
+            <Link
+              to="/"
+              className="transition-colors hover:text-accent"
+              activeProps={{ className: "text-accent" }}
+            >
+              Equilibrium
             </Link>
             <Link
               to="/acid-base"
@@ -192,11 +192,11 @@ function RootComponent() {
               </span>
             </div>
             <div className="flex gap-8 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              <Link to="/" className="transition-colors hover:text-foreground">
-                Equilibrium
-              </Link>
               <Link to="/kinetics" className="transition-colors hover:text-foreground">
                 Kinetics
+              </Link>
+              <Link to="/" className="transition-colors hover:text-foreground">
+                Equilibrium
               </Link>
               <Link to="/acid-base" className="transition-colors hover:text-foreground">
                 Acid–Base
