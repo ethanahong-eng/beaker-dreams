@@ -11,6 +11,7 @@ import {
   type MoleculeTarget,
 } from "@/lib/vsepr";
 import { rotate3d } from "@/lib/project3d";
+import { AxisGizmo } from "@/components/AxisGizmo";
 
 const MAX_DOMAINS = 6;
 
@@ -154,6 +155,7 @@ export function VseprBuilder() {
                 </g>
               );
             })}
+            <AxisGizmo yaw={yaw} pitch={pitch} cx={40} cy={40} radius={22} />
           </svg>
           <p className="pointer-events-none absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
             Drag to rotate

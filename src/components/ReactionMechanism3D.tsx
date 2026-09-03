@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { rotate3d, type Vec3 } from "@/lib/project3d";
+import { AxisGizmo } from "@/components/AxisGizmo";
 
 // SN2 substitution, Br- + CH3Cl -> CH3Br + Cl-, staged as an explicit
 // keyframe animation rather than a physics simulation: the geometry of a
@@ -214,6 +215,7 @@ export function ReactionMechanism3D() {
             {atoms.map((a) => (
               <circle key={a.key} cx={a.proj.x} cy={a.proj.y} r={a.r * a.proj.s} fill={a.color} />
             ))}
+            <AxisGizmo yaw={yaw} pitch={pitch} cx={45} cy={45} radius={24} />
           </svg>
           <p className="pointer-events-none absolute bottom-3 left-3 right-3 font-mono text-xs text-muted-foreground">
             {caption(t, outcome)}

@@ -7,7 +7,7 @@ import {
   type WheelEvent as ReactWheelEvent,
 } from "react";
 import { createSoundEngine } from "@/lib/sound";
-import { rotate3d, type Vec3 } from "@/lib/project3d";
+import { rotate3d, AXES, type Vec3 } from "@/lib/project3d";
 
 // Species ids for the water-gas shift reaction: CO + H2O <=> CO2 + H2.
 // Unlike N2O4 <=> 2 NO2, this has two distinct reactants and two distinct
@@ -286,6 +286,49 @@ function drawVectorScreen(
     ey - headLen * Math.sin(angle + Math.PI / 6),
   );
   ctx.stroke();
+}
+
+// Small XYZ orientation gizmo, drawn as a fixed screen-space overlay (not
+// depth-sorted into the scene) so it always reads clearly regardless of
+// vessel zoom/rotation. Uses plain rotation, no perspective, matching the
+// SVG version of this widget used elsewhere on the site.
+function drawAxisGizmo(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number,
+  yaw: number,
+  pitch: number,
+) {
+  const points = AXES.map((a) => {
+    const [x1, y1, z2] = rotate3d(a.vec, yaw, pitch);
+    return { ...a, x: cx + x1 * radius, y: cy + y1 * radius, z: z2 };
+  }).sort((a, b) => a.z - b.z);
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius + 8, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(148, 163, 184, 0.18)";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(100, 116, 139, 0.4)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.font = "bold 10px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  for (const p of points) {
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillText(p.label, cx + (p.x - cx) * 1.32, cy + (p.y - cy) * 1.32);
+  }
 }
 
 // Rate bars used a linear scale that pins at its cap across most of the
@@ -767,6 +810,10 @@ export function EquilibriumSim() {
       }
       items.sort((a, b) => a.z - b.z);
       for (const it of items) it.draw();
+
+      // Fixed overlay, not part of the rotating/zooming scene, so it stays
+      // legible and doesn't compete with the corner HTML controls.
+      drawAxisGizmo(ctx, w / 2, 40, 26, s.yaw, s.pitch);
     };
 
     raf = requestAnimationFrame(frame);
