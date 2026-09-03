@@ -1,5 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TitrationSim } from "@/components/TitrationSim";
+import { SectionNav } from "@/components/SectionNav";
+
+const sections = [
+  { id: "significance", label: "Significance" },
+  { id: "theory", label: "Theory" },
+  { id: "simulation", label: "Simulation" },
+];
 
 export const Route = createFileRoute("/acid-base")({
   head: () => ({
@@ -36,7 +43,7 @@ function AcidBasePage() {
         </p>
       </header>
 
-      <section aria-labelledby="significance-heading" className="mb-20 border-t border-border pt-10">
+      <section id="significance" aria-labelledby="significance-heading" className="mb-20 scroll-mt-24 border-t border-border pt-10">
         <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
           Section 01 · Significance
         </span>
@@ -58,7 +65,7 @@ function AcidBasePage() {
         </div>
       </section>
 
-      <section aria-labelledby="theory-heading">
+      <section id="theory" aria-labelledby="theory-heading" className="scroll-mt-24">
         <div className="mb-8">
           <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
             Section 02 · Theory
@@ -148,7 +155,7 @@ function AcidBasePage() {
       </section>
       </section>
 
-      <section aria-labelledby="simulation-heading" className="mt-24 border-t border-border pt-16">
+      <section id="simulation" aria-labelledby="simulation-heading" className="mt-24 scroll-mt-24 border-t border-border pt-16">
         <div className="mb-10 max-w-3xl">
           <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
             Section 03 · Simulation
@@ -161,10 +168,11 @@ function AcidBasePage() {
             weak acid with a strong acid to see why equivalence does not always mean neutrality.
           </p>
         </div>
-        <div id="simulation">
+        <div>
           <TitrationSim />
         </div>
       </section>
+      <SectionNav items={sections} />
     </main>
   );
 }
