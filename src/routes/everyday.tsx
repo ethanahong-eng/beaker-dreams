@@ -116,7 +116,7 @@ function EverydayPage() {
 
       <div className="mt-20 space-y-24">
         {essays.map((e, i) => (
-          <article key={e.title} id={`essay-${i}`} className="grid gap-10 md:grid-cols-12">
+          <article key={e.title} id={`essay-${i}`} className="grid scroll-mt-24 gap-10 md:grid-cols-12">
             <div className="md:col-span-4">
               <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
                 {String(i + 1).padStart(2, "0")} / {e.tag}
