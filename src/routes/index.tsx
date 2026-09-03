@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EquilibriumSim } from "@/components/EquilibriumSim";
+import { SectionNav } from "@/components/SectionNav";
 import seesaw from "@/assets/equilibrium-seesaw.jpg";
+
+const sections = [
+  { id: "significance", label: "Significance" },
+  { id: "theory", label: "Theory" },
+  { id: "simulation", label: "Simulation" },
+];
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -37,7 +44,7 @@ function Index() {
         </p>
       </header>
 
-      <section aria-labelledby="significance-heading" className="mb-20 border-t border-border pt-10">
+      <section id="significance" aria-labelledby="significance-heading" className="mb-20 scroll-mt-24 border-t border-border pt-10">
         <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
           Section 01 · Significance
         </span>
@@ -60,7 +67,7 @@ function Index() {
         </div>
       </section>
 
-      <section aria-labelledby="theory-heading">
+      <section id="theory" aria-labelledby="theory-heading" className="scroll-mt-24">
         <div className="mb-8">
           <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
             Section 02 · Theory
@@ -180,7 +187,7 @@ function Index() {
       </section>
       </section>
 
-      <section aria-labelledby="simulation-heading" className="mt-24 border-t border-border pt-16">
+      <section id="simulation" aria-labelledby="simulation-heading" className="mt-24 scroll-mt-24 border-t border-border pt-16">
         <div className="mb-10 max-w-3xl">
           <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
             Section 03 · Simulation
@@ -193,10 +200,11 @@ function Index() {
             the particles settle into their new balance.
           </p>
         </div>
-        <div id="simulation">
+        <div>
           <EquilibriumSim />
         </div>
       </section>
+      <SectionNav items={sections} />
     </main>
   );
 }
