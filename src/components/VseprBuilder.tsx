@@ -10,6 +10,7 @@ import {
   type Domain,
   type MoleculeTarget,
 } from "@/lib/vsepr";
+import { rotate3d } from "@/lib/project3d";
 
 const MAX_DOMAINS = 6;
 
@@ -53,11 +54,7 @@ export function VseprBuilder() {
   const angle = bondAngleFromDomains(domains);
 
   const project = (d: Domain) => {
-    const [x0, y0, z0] = d.pos;
-    const x1 = x0 * Math.cos(yaw) + z0 * Math.sin(yaw);
-    const z1 = -x0 * Math.sin(yaw) + z0 * Math.cos(yaw);
-    const y1 = y0 * Math.cos(pitch) - z1 * Math.sin(pitch);
-    const z2 = y0 * Math.sin(pitch) + z1 * Math.cos(pitch);
+    const [x1, y1, z2] = rotate3d(d.pos, yaw, pitch);
     const scale = 1 / (2 - z2 * 0.6);
     return { x: x1 * scale, y: y1 * scale, z: z2, scale };
   };

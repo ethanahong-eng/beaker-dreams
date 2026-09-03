@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { RateSim } from "@/components/RateSim";
 import { CollisionSim } from "@/components/CollisionSim";
+import { ReactionMechanism3D } from "@/components/ReactionMechanism3D";
 import { SectionNav } from "@/components/SectionNav";
 
 const sections = [
@@ -8,6 +9,7 @@ const sections = [
   { id: "theory", label: "Theory" },
   { id: "simulation", label: "Simulation" },
   { id: "collisions", label: "Collision lab" },
+  { id: "mechanism", label: "Reaction mechanism" },
 ];
 
 export const Route = createFileRoute("/kinetics")({
@@ -215,6 +217,32 @@ function KineticsPage() {
         </div>
         <div>
           <CollisionSim />
+        </div>
+      </section>
+
+      <section
+        id="mechanism"
+        aria-labelledby="mechanism-heading"
+        className="mt-24 scroll-mt-24 border-t border-border pt-16"
+      >
+        <div className="mb-10 max-w-3xl">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+            Section 05 · Reaction Mechanism
+          </span>
+          <h2 id="mechanism-heading" className="mt-3 text-3xl font-bold">
+            Watch a reaction happen, atom by atom
+          </h2>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            The collision lab treats "enough energy" and "the right orientation" as abstract
+            pass/fail checks. Here they are the same two requirements, but on an actual reaction: a
+            bromide ion substituting for chloride on a carbon atom (SN2). Watch what a real
+            collision looks like in three dimensions — the incoming ion has to arrive from directly
+            opposite the leaving group, at enough speed to reach bonding distance, or nothing
+            happens at all.
+          </p>
+        </div>
+        <div>
+          <ReactionMechanism3D />
         </div>
       </section>
       <SectionNav items={sections} />
