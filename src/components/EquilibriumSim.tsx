@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type Ref } from "react";
+import { createSoundEngine } from "@/lib/sound";
 
 type Preset = "baseline" | "exothermic" | "stress" | "haber" | "inert";
 
@@ -169,7 +170,10 @@ export function EquilibriumSim() {
     inertPressure: 0,
     running: true,
     vectors: true,
+    soundOn: false,
   });
+  const soundRef = useRef<ReturnType<typeof createSoundEngine> | null>(null);
+  if (!soundRef.current) soundRef.current = createSoundEngine();
 
   // Kc, Qc, the rate bars, vessel pressure, and the shift/heat status text
   // all depend on values computed every animation frame. They used to live
@@ -192,6 +196,7 @@ export function EquilibriumSim() {
   const [inertPressure, setInertPressure] = useState(0);
   const [running, setRunning] = useState(true);
   const [vectors, setVectors] = useState(true);
+  const [soundOn, setSoundOn] = useState(false);
   const [preset, setPreset] = useState<Preset>("baseline");
 
   stateRef.current.temp = temp;
@@ -199,6 +204,16 @@ export function EquilibriumSim() {
   stateRef.current.inertPressure = inertPressure;
   stateRef.current.running = running;
   stateRef.current.vectors = vectors;
+  stateRef.current.soundOn = soundOn;
+
+  const toggleSound = () => {
+    setSoundOn((v) => {
+      const next = !v;
+      if (next) soundRef.current?.ensure();
+      else soundRef.current?.stopDrone();
+      return next;
+    });
+  };
 
   const applyPreset = (p: Preset) => {
     setPreset(p);
@@ -227,6 +242,7 @@ export function EquilibriumSim() {
     let raf = 0;
     let last = performance.now();
     let vesselScale = 0.55;
+    let wasAtEquilibrium = false;
 
     const GRID_COLS = 22;
     const GRID_ROWS = 14;
@@ -325,17 +341,18 @@ export function EquilibriumSim() {
 
       const q = (cB * cB) / Math.max(cA, 1e-6);
       const netHeat = REACTION_DELTA_H_KJ * (rf - rr);
+      const distanceRatio = Math.abs(q - K) / K;
+      const atEquilibrium = distanceRatio < 0.04;
       if (kcRef.current) kcRef.current.textContent = K.toFixed(3);
       if (qcRef.current) qcRef.current.textContent = q.toFixed(3);
       if (vesselRef.current)
         vesselRef.current.textContent = `${V.toFixed(2)} L · ${P.toFixed(2)} atm`;
       if (shiftRef.current) {
-        shiftRef.current.textContent =
-          Math.abs(q - K) < K * 0.04
-            ? "At equilibrium"
-            : q < K
-              ? "Shifting forward → more NO₂"
-              : "Shifting backward → more N₂O₄";
+        shiftRef.current.textContent = atEquilibrium
+          ? "At equilibrium"
+          : q < K
+            ? "Shifting forward → more NO₂"
+            : "Shifting backward → more N₂O₄";
       }
       if (heatTextRef.current) {
         heatTextRef.current.textContent =
@@ -351,6 +368,31 @@ export function EquilibriumSim() {
         heatBarRef.current.style.height = `${barHeight(Math.abs(netHeat))}px`;
         heatBarRef.current.style.backgroundColor =
           netHeat >= 0 ? "rgb(56, 189, 248)" : "rgb(249, 115, 22)";
+      }
+
+      // Sound: a rising drone as Q closes in on K, a chime the moment it
+      // crosses into "at equilibrium," then silence until the next
+      // disturbance pushes it back out. Hysteresis (enter at 0.04, only
+      // reset the chime-armed flag past 0.08) keeps float jitter right at
+      // the boundary from re-triggering the chime every frame.
+      if (s.soundOn) {
+        const sound = soundRef.current!;
+        if (atEquilibrium && !wasAtEquilibrium) {
+          sound.chime();
+          sound.stopDrone();
+          wasAtEquilibrium = true;
+        } else if (distanceRatio > 0.08) {
+          wasAtEquilibrium = false;
+        }
+        if (!wasAtEquilibrium) {
+          const band = 0.6;
+          if (distanceRatio < band) {
+            const closeness = 1 - distanceRatio / band;
+            sound.setDrone(280 + closeness * 480, 0.05 + closeness * 0.12);
+          } else {
+            sound.stopDrone();
+          }
+        }
       }
 
       // Vessel size tracks volume, eased rather than snapped so a
@@ -481,13 +523,14 @@ export function EquilibriumSim() {
           a.y -= (ny * overlap) / 2;
           b.x += (nx * overlap) / 2;
           b.y += (ny * overlap) / 2;
+          const hot = Math.abs(closing) > hotThreshold;
           if (flashes.length < 60) {
-            flashes.push({
-              x: (a.x + b.x) / 2,
-              y: (a.y + b.y) / 2,
-              age: 0,
-              life: 0.35,
-              hot: Math.abs(closing) > hotThreshold,
+            flashes.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, age: 0, life: 0.35, hot });
+          }
+          if (s.soundOn) {
+            soundRef.current!.click({
+              freq: (hot ? 950 : 650) + Math.random() * 150,
+              gain: hot ? 0.14 : 0.07,
             });
           }
         }
@@ -517,7 +560,10 @@ export function EquilibriumSim() {
     };
 
     raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      soundRef.current?.dispose();
+    };
   }, []);
 
   return (
@@ -656,16 +702,29 @@ export function EquilibriumSim() {
               </button>
             </div>
 
-            <label className="flex cursor-pointer items-center gap-3 pt-2">
+            <label
+              className="flex cursor-pointer items-center gap-3 pt-2"
+              onClick={() => setVectors((v) => !v)}
+            >
               <span
                 className={`relative h-5 w-10 rounded-full transition-colors ${vectors ? "bg-accent" : "bg-input"}`}
-                onClick={() => setVectors((v) => !v)}
               >
                 <span
                   className={`absolute top-1 h-3 w-3 rounded-full bg-card transition-all ${vectors ? "right-1" : "left-1"}`}
                 />
               </span>
               <span className="text-xs font-bold uppercase">Display vectors</span>
+            </label>
+
+            <label className="flex cursor-pointer items-center gap-3" onClick={toggleSound}>
+              <span
+                className={`relative h-5 w-10 rounded-full transition-colors ${soundOn ? "bg-accent" : "bg-input"}`}
+              >
+                <span
+                  className={`absolute top-1 h-3 w-3 rounded-full bg-card transition-all ${soundOn ? "right-1" : "left-1"}`}
+                />
+              </span>
+              <span className="text-xs font-bold uppercase">Sound effects</span>
             </label>
           </div>
 
