@@ -87,12 +87,12 @@ const essays = [
 
 function EverydayPage() {
   return (
-    <main className="mx-auto max-w-7xl px-6 py-12">
-      <header className="mb-16 max-w-3xl">
-        <div className="mb-4 inline-block border border-accent/20 bg-accent/10 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+    <main className="mx-auto max-w-7xl px-6 py-16">
+      <header className="mb-16 max-w-3xl border-b border-border pb-12">
+        <div className="mb-5 inline-block border-y border-border px-4 py-2 text-[10px] font-bold uppercase text-accent">
           Module 05: Applied Chemistry
         </div>
-        <h1 className="mb-6 text-5xl font-extrabold tracking-tight md:text-6xl">
+        <h1 className="mb-6 font-display text-5xl font-bold md:text-6xl">
           Chemistry in <span className="text-accent">Daily Life</span>
         </h1>
         <p className="text-lg leading-relaxed text-muted-foreground">
@@ -137,7 +137,7 @@ function EverydayPage() {
         ))}
       </div>
 
-      <section className="mt-24 rounded-2xl border border-border bg-card p-10">
+      <section className="mt-24 border border-border bg-card/70 p-10">
         <h2 className="mb-4 text-2xl font-bold italic">A closing thought</h2>
         <p className="max-w-3xl leading-relaxed text-muted-foreground">
           Every topic on this page reduces to the three ideas you can play with in the simulations: equilibria
