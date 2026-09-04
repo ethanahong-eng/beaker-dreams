@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { HybridizationSim } from "@/components/HybridizationSim";
 import { SectionNav } from "@/components/SectionNav";
 
 const sections = [
@@ -95,8 +96,8 @@ function HybridizationPage() {
             <p>
               A carbon atom's ground-state configuration leaves two electrons in 2p and none ready
               in 2s for bonding — the wrong picture for four equal bonds. Hybridization promotes and
-              recombines these orbitals into a set of identical hybrids, each one a weighted blend of
-              one s and some number of p orbitals.
+              recombines these orbitals into a set of identical hybrids, each one a weighted blend
+              of one s and some number of p orbitals.
             </p>
             <p>
               The blend ratio fixes the geometry: one s + one p gives two hybrids 180° apart (sp,
@@ -126,8 +127,8 @@ function HybridizationPage() {
             <h2 className="mb-6 text-3xl font-bold italic">Hybridization meets VSEPR</h2>
             <p className="leading-relaxed text-muted-foreground">
               Hybridization sets the ideal angles; VSEPR explains how lone pairs bend them. In water
-              the oxygen is sp³, so the ideal H–O–H angle is 109.5° — but two lone pairs repel harder
-              than bonding pairs and squeeze the angle down to about 104.5°.
+              the oxygen is sp³, so the ideal H–O–H angle is 109.5° — but two lone pairs repel
+              harder than bonding pairs and squeeze the angle down to about 104.5°.
             </p>
             <p className="mt-4 leading-relaxed text-muted-foreground">
               Read the two together and a molecule's shape follows from a single chain of reasoning:
@@ -143,9 +144,9 @@ function HybridizationPage() {
               sp — linear
             </h3>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Two hybrid orbitals 180° apart, as in ethyne (C₂H₂). Each carbon keeps two unhybridized
-              p orbitals, which overlap sideways to form the second and third bonds of the triple
-              bond.
+              Two hybrid orbitals 180° apart, as in ethyne (C₂H₂). Each carbon keeps two
+              unhybridized p orbitals, which overlap sideways to form the second and third bonds of
+              the triple bond.
             </p>
           </div>
           <div>
@@ -153,9 +154,9 @@ function HybridizationPage() {
               sp² — trigonal planar
             </h3>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Three hybrids at 120° leave one p orbital free for a π bond, as in ethene. The leftover
-              p orbitals above and below the plane are what make double bonds shorter, stronger, and
-              unable to rotate freely.
+              Three hybrids at 120° leave one p orbital free for a π bond, as in ethene. The
+              leftover p orbitals above and below the plane are what make double bonds shorter,
+              stronger, and unable to rotate freely.
             </p>
           </div>
           <div>
@@ -181,24 +182,18 @@ function HybridizationPage() {
             Section 03 · Simulation
           </span>
           <h2 id="simulation-heading" className="mt-3 text-3xl font-bold">
-            Build a hybrid, watch it form
+            Watch orbitals merge into geometry
           </h2>
           <p className="mt-4 leading-relaxed text-muted-foreground">
-            The interactive builder for this module is coming soon. It will let you choose a bonding
-            scheme, promote and recombine orbitals into sp, sp² or sp³ hybrids, and see the resulting
-            molecule take shape in real time.
+            Pick a hybridization scheme and the energy-level diagram animates the actual mixing —
+            the s orbital and however many p (and d) orbitals it takes sliding together into one
+            degenerate hybrid level, with any leftover pure orbitals staying put. The 3D view below
+            it updates from the very same electron-domain count, so the quantum-mechanical
+            explanation and the shape it produces are always looking at the same molecule.
           </p>
         </div>
-        <div className="flex min-h-[320px] items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-12 text-center">
-          <div>
-            <div className="mx-auto mb-4 h-12 w-12 rounded-full border border-border" />
-            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Simulation in progress
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Check back — the hybridization builder lands here.
-            </p>
-          </div>
+        <div>
+          <HybridizationSim />
         </div>
       </section>
       <SectionNav items={sections} />

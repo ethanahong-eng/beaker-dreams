@@ -21,6 +21,7 @@ import {
   CENTRAL_CANDIDATES,
   TERMINAL_CANDIDATES,
   TERMINAL_BOND_COST,
+  DEFAULT_LONE_PAIR_WEIGHT,
   type Domain,
   type ElementSymbol,
   type MoleculeTarget,
@@ -49,6 +50,7 @@ export function VseprBuilder() {
   const [rejectMsg, setRejectMsg] = useState<string | null>(null);
   const rejectTimerRef = useRef<number | null>(null);
   const [dropHover, setDropHover] = useState(false);
+  const [lonePairWeight, setLonePairWeight] = useState(DEFAULT_LONE_PAIR_WEIGHT);
 
   const target = deck[deckIndex % deck.length]!;
   const centralInfo = ELEMENTS[central];
@@ -74,7 +76,7 @@ export function VseprBuilder() {
     let current = initialDomainsWithElements(terminals, lonePairs);
     setDomains(current);
     const step = () => {
-      const next = relaxStep(current, 0.06);
+      const next = relaxStep(current, 0.06, lonePairWeight);
       const delta = maxDisplacement(current, next);
       current = next;
       setDomains(current);
@@ -82,7 +84,7 @@ export function VseprBuilder() {
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [central, terminals, lonePairs, hasMolecule]);
+  }, [central, terminals, lonePairs, hasMolecule, lonePairWeight]);
 
   useEffect(() => {
     return () => {
@@ -491,6 +493,27 @@ export function VseprBuilder() {
                 </div>
               </div>
             )}
+
+            <div>
+              <div className="mb-3 flex justify-between text-xs font-medium">
+                <span>Lone pair repulsion strength</span>
+                <span className="font-mono text-accent">{lonePairWeight.toFixed(1)}×</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={2.5}
+                step={0.1}
+                value={lonePairWeight}
+                onChange={(e) => setLonePairWeight(Number(e.target.value))}
+                aria-label="Lone pair repulsion strength"
+                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-[var(--accent)]"
+              />
+              <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                1.0× treats lone pairs like bonding pairs, no compression. Push it higher and watch
+                bond angles squeeze further than real chemistry (~1.2×) ever needs to.
+              </p>
+            </div>
           </div>
         </div>
 
