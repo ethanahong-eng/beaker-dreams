@@ -97,26 +97,26 @@ function HomePage() {
           </span>
         </div>
         <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl">
-          Hard chemistry, <br />
+           Chemistry <br />
           made <span className="text-accent">visible</span>.
         </h1>
         <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          Valence Lab turns abstract equations into things you can watch happen. Each module pairs a
-          live simulation with the history and theory behind it — so you don't just memorize the
-          rule, you see why it holds.
+           Chemistry doesn't have to be confusing with the right visuals.  Each module here pairs a
+           live simulation with the history and theory behind it.  Not only will you better understand
+           the chemistry principles, but you'll also learn how and why
         </p>
         <div className="mt-10 flex flex-wrap gap-4">
           <Link
             to="/geometry"
             className="bg-primary px-6 py-3 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent"
           >
-            Launch the lab
+             DIGITAL LAB
           </Link>
           <Link
             to="/everyday"
             className="border border-border bg-card px-6 py-3 text-xs font-bold uppercase tracking-widest text-foreground transition-colors hover:bg-accent/10"
           >
-            Read daily-life essays
+             DAILY-LIFE APPLICATION
           </Link>
         </div>
       </section>
