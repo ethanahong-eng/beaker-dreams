@@ -12,10 +12,10 @@ export type Domain = {
   element?: ElementSymbol;
 };
 
-const LONE_PAIR_WEIGHT = 1.2;
+export const DEFAULT_LONE_PAIR_WEIGHT = 1.2;
 
-function weightOf(kind: Domain["kind"]) {
-  return kind === "lone" ? LONE_PAIR_WEIGHT : 1;
+function weightOf(kind: Domain["kind"], lonePairWeight: number) {
+  return kind === "lone" ? lonePairWeight : 1;
 }
 
 function normalize(v: [number, number, number]): [number, number, number] {
@@ -54,8 +54,16 @@ export function initialDomainsWithElements(terminals: ElementSymbol[], lone: num
 
 // One damped relaxation step: every pair of domains pushes the other away
 // along the great-circle direction between them, weighted by charge, then
-// everything is renormalized back onto the unit sphere.
-export function relaxStep(domains: Domain[], rate: number): Domain[] {
+// everything is renormalized back onto the unit sphere. lonePairWeight is
+// how much harder a lone pair repels than a bonding pair -- adjustable
+// rather than a fixed constant, so a slider can show the same tetrahedral
+// electron geometry compressing into water's bent ~104.5 degrees (or
+// further) as the asymmetry is dialed up or down, live.
+export function relaxStep(
+  domains: Domain[],
+  rate: number,
+  lonePairWeight: number = DEFAULT_LONE_PAIR_WEIGHT,
+): Domain[] {
   const n = domains.length;
   const forces: [number, number, number][] = domains.map(() => [0, 0, 0]);
   for (let i = 0; i < n; i++) {
@@ -66,7 +74,8 @@ export function relaxStep(domains: Domain[], rate: number): Domain[] {
       const dy = a[1] - b[1];
       const dz = a[2] - b[2];
       const distSq = Math.max(0.02, dx * dx + dy * dy + dz * dz);
-      const w = weightOf(domains[i]!.kind) * weightOf(domains[j]!.kind);
+      const w =
+        weightOf(domains[i]!.kind, lonePairWeight) * weightOf(domains[j]!.kind, lonePairWeight);
       const f = (w / distSq) * rate;
       forces[i]![0] += dx * f;
       forces[i]![1] += dy * f;
