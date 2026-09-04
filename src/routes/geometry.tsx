@@ -28,12 +28,12 @@ export const Route = createFileRoute("/geometry")({
 
 function GeometryPage() {
   return (
-    <main className="mx-auto max-w-7xl px-6 py-12">
-      <header className="mb-16 max-w-3xl">
-        <div className="mb-4 inline-block border border-accent/20 bg-accent/10 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+    <main className="mx-auto max-w-7xl px-6 py-16">
+      <header className="mb-16 max-w-3xl border-b border-border pb-12">
+        <div className="mb-5 inline-block border-y border-border px-4 py-2 text-[10px] font-bold uppercase text-accent">
           Module 01: Molecular Architecture
         </div>
-        <h1 className="mb-6 text-5xl font-extrabold tracking-tight md:text-6xl">
+        <h1 className="mb-6 font-display text-5xl font-bold md:text-6xl">
           Molecule <span className="text-accent">Geometry</span>
         </h1>
         <p className="text-lg leading-relaxed text-muted-foreground">
@@ -46,9 +46,9 @@ function GeometryPage() {
       <section
         id="theory"
         aria-labelledby="theory-heading"
-        className="mb-20 scroll-mt-24 border-t border-border pt-10"
+        className="mb-20 scroll-mt-24 pt-2"
       >
-        <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+        <span className="text-[10px] font-bold uppercase text-accent">
           Section 01 · Theory
         </span>
         <h2 id="theory-heading" className="mt-3 text-3xl font-bold">
@@ -95,7 +95,7 @@ function GeometryPage() {
         className="scroll-mt-24 border-t border-border pt-16"
       >
         <div className="mb-10 max-w-3xl">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+          <span className="text-[10px] font-bold uppercase text-accent">
             Section 02 · Builder
           </span>
           <h2 id="builder-heading" className="mt-3 text-3xl font-bold">

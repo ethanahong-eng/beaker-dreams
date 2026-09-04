@@ -28,9 +28,9 @@ export function SectionNav({ items }: { items: SectionNavItem[] }) {
   return (
     <nav
       aria-label="Page sections"
-      className="fixed bottom-6 right-6 z-50 hidden w-44 rounded-2xl border border-border bg-card/90 p-4 shadow-xl backdrop-blur md:block"
+      className="fixed bottom-6 right-6 z-50 hidden w-48 border border-border bg-card p-5 shadow-sm md:block"
     >
-      <span className="mb-3 block font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+      <span className="mb-3 block border-b border-border pb-2 text-[10px] font-bold uppercase text-accent">
         On this page
       </span>
       <ul className="space-y-1">
@@ -43,13 +43,13 @@ export function SectionNav({ items }: { items: SectionNavItem[] }) {
               }
               aria-current={active === item.id ? "true" : undefined}
               className={cn(
-                "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors",
+                "flex w-full items-center gap-2 border-l-2 px-2 py-1.5 text-left text-xs transition-colors",
                 active === item.id
-                  ? "bg-accent/10 font-bold text-accent"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "border-accent bg-accent/5 font-bold text-accent"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
               )}
             >
-              <span className="font-mono text-[10px]">{String(i + 1).padStart(2, "0")}</span>
+              <span className="text-[10px] font-bold">{String(i + 1).padStart(2, "0")}</span>
               <span className="leading-snug">{item.label}</span>
             </button>
           </li>

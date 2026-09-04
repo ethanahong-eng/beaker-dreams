@@ -87,34 +87,34 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   return (
-    <main className="mx-auto max-w-7xl px-6 py-12">
+    <main className="mx-auto max-w-7xl px-6 py-16">
       {/* Hero */}
-      <section className="mb-20 max-w-4xl">
-        <div className="mb-6 inline-flex items-center gap-3 border border-border bg-card px-3 py-1.5">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
-          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+      <section className="mb-24 border-b border-border pb-16 text-center">
+        <div className="mb-8 inline-flex items-center gap-3 border-y border-border px-6 py-3">
+          <span className="h-2 w-2 rounded-full bg-accent" />
+          <span className="text-[10px] font-bold uppercase text-muted-foreground">
             Interactive chemistry · v2026
           </span>
         </div>
-        <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl">
+        <h1 className="font-display text-5xl font-bold leading-tight md:text-7xl">
            Chemistry <br />
           made <span className="text-accent">visible</span>.
         </h1>
-        <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+        <p className="mx-auto mt-8 max-w-2xl text-lg italic leading-relaxed text-muted-foreground">
            Chemistry doesn't have to be confusing with the right visuals.  Each module here pairs a
            live simulation with the history and theory behind it.  Not only will you better understand
            the chemistry principles, but you'll also learn how and why
         </p>
-        <div className="mt-10 flex flex-wrap gap-4">
+        <div className="mt-10 flex flex-wrap justify-center gap-4">
           <Link
             to="/geometry"
-            className="bg-primary px-6 py-3 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent"
+            className="border border-primary bg-primary px-7 py-3 text-xs font-bold uppercase text-primary-foreground transition-colors hover:bg-transparent hover:text-primary"
           >
              DIGITAL LAB
           </Link>
           <Link
             to="/everyday"
-            className="border border-border bg-card px-6 py-3 text-xs font-bold uppercase tracking-widest text-foreground transition-colors hover:bg-accent/10"
+            className="border border-primary bg-transparent px-7 py-3 text-xs font-bold uppercase text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
           >
              DAILY-LIFE APPLICATION
           </Link>
@@ -122,16 +122,16 @@ function HomePage() {
       </section>
 
       {/* Stat strip */}
-      <section className="mb-20 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-4">
+      <section className="mb-24 grid grid-cols-2 border border-border bg-card/60 md:grid-cols-4">
         {[
           { k: "4", v: "Interactive modules" },
           { k: "3", v: "Live simulations" },
           { k: "6", v: "Daily-life essays" },
           { k: "0", v: "Equations to memorize first" },
         ].map((s) => (
-          <div key={s.v} className="bg-card p-6">
-            <div className="font-mono text-4xl font-bold text-accent">{s.k}</div>
-            <div className="mt-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          <div key={s.v} className="border-b border-r border-border p-8 text-center md:border-b-0">
+            <div className="font-display text-4xl font-bold text-primary">{s.k}</div>
+            <div className="mt-2 text-[10px] font-bold uppercase text-muted-foreground">
               {s.v}
             </div>
           </div>
@@ -140,31 +140,31 @@ function HomePage() {
 
       {/* Modules */}
       <section className="mb-20">
-        <div className="mb-10 flex items-end justify-between border-b border-border pb-4">
-          <h2 className="font-mono text-xs font-bold uppercase tracking-widest text-accent">
+        <div className="mb-12 flex items-end justify-between border-b border-primary pb-4">
+          <h2 className="font-display text-3xl font-bold text-primary">
             Modules
           </h2>
-          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          <span className="text-[10px] font-bold uppercase text-muted-foreground">
             05 / 05
           </span>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-8 md:grid-cols-2">
           {modules.map((m) => (
             <Link
               key={m.to}
               to={m.to}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-8 transition-colors hover:border-accent"
+              className="group relative flex flex-col border border-border bg-card/70 p-8 transition-all hover:border-primary hover:shadow-sm"
             >
               <div className="mb-6 flex items-center justify-between">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                <span className="text-[10px] font-bold uppercase text-muted-foreground">
                   {m.tag}
                 </span>
-                <span className="font-mono text-3xl font-bold text-border transition-colors group-hover:text-accent">
+                <span className="font-display text-3xl font-bold text-border transition-colors group-hover:text-accent">
                   {m.index}
                 </span>
               </div>
-              <h3 className="mb-4 text-2xl font-bold">
+              <h3 className="mb-4 font-display text-2xl font-bold">
                 {m.title.replace(m.accent, "")}
                 <span className="text-accent">{m.accent}</span>
               </h3>
@@ -175,13 +175,13 @@ function HomePage() {
                 {m.topics.map((t) => (
                   <span
                     key={t}
-                    className="rounded-full border border-border px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
+                    className="border border-border px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground"
                   >
                     {t}
                   </span>
                 ))}
               </div>
-              <span className="mt-6 inline-flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+              <span className="mt-6 inline-flex w-fit items-center gap-2 border-b border-accent pb-1 text-[10px] font-bold uppercase text-accent">
                 Enter module
                 <span className="transition-transform group-hover:translate-x-1">→</span>
               </span>
@@ -193,10 +193,10 @@ function HomePage() {
       {/* Approach */}
       <section className="mb-20 grid gap-12 border-t border-border pt-16 md:grid-cols-3">
         <div className="md:col-span-1">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+          <span className="text-[10px] font-bold uppercase text-accent">
             How the lab works
           </span>
-          <h2 className="mt-3 text-3xl font-bold">Simulate first, read second</h2>
+          <h2 className="mt-3 font-display text-3xl font-bold">Simulate first, read second</h2>
         </div>
         <div className="space-y-8 md:col-span-2">
           {[
@@ -217,7 +217,7 @@ function HomePage() {
             },
           ].map((s) => (
             <div key={s.n} className="flex gap-6">
-              <span className="font-mono text-sm font-bold text-accent">{s.n}</span>
+              <span className="font-display text-sm font-bold text-accent">{s.n}</span>
               <div>
                 <h3 className="mb-2 font-bold">{s.t}</h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">{s.d}</p>

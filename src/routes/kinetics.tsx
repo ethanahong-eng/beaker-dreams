@@ -34,12 +34,12 @@ export const Route = createFileRoute("/kinetics")({
 
 function KineticsPage() {
   return (
-    <main className="mx-auto max-w-7xl px-6 py-12">
-      <header className="mb-16 max-w-3xl">
-        <div className="mb-4 inline-block border border-accent/20 bg-accent/10 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+    <main className="mx-auto max-w-7xl px-6 py-16">
+      <header className="mb-16 max-w-3xl border-b border-border pb-12">
+        <div className="mb-5 inline-block border-y border-border px-4 py-2 text-[10px] font-bold uppercase text-accent">
           Module 03: Reaction Rates
         </div>
-        <h1 className="mb-6 text-5xl font-extrabold tracking-tight md:text-6xl">
+        <h1 className="mb-6 font-display text-5xl font-bold md:text-6xl">
           Collision <span className="text-accent">Kinetics</span>
         </h1>
         <p className="text-lg leading-relaxed text-muted-foreground">
@@ -52,7 +52,7 @@ function KineticsPage() {
       <section
         id="significance"
         aria-labelledby="significance-heading"
-        className="mb-20 scroll-mt-24 border-t border-border pt-10"
+        className="mb-20 scroll-mt-24 pt-2"
       >
         <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
           Section 01 · Significance
@@ -86,7 +86,7 @@ function KineticsPage() {
           </h2>
         </div>
 
-        <section className="mb-10 grid gap-6 rounded-2xl border border-border bg-card p-8 md:grid-cols-3">
+        <section className="mb-10 grid gap-6 border border-border bg-card/70 p-8 md:grid-cols-3">
           <div className="md:col-span-1">
             <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
               About this demo
