@@ -23,11 +23,13 @@ export const ATOM_CHOICES: ElementSymbol[] = ["H", "C", "N", "O", "F", "Si", "P"
 // A real DFT (or even a minimal ab initio) calculation needs iterative
 // matrix diagonalization over basis-set integrals -- seconds to minutes
 // per geometry even on server hardware, not something that can redraw
-// live as a student drags atoms around in a browser with no backend. Ten
-// atoms keeps the same electron-domain repulsion physics used everywhere
-// else on this site (real, just not full quantum mechanics) fast enough
-// to stay interactive, while still reaching real multi-carbon chains.
-export const MAX_ATOMS = 10;
+// live as a student drags atoms around in a browser with no backend.
+// Fifteen atoms keeps the same electron-domain repulsion physics used
+// everywhere else on this site (real, just not full quantum mechanics)
+// fast enough to stay interactive -- each atom's local relax is O(k^2)
+// for k<=6 domains, trivial even at this size -- while reaching real
+// small rings and branched chains.
+export const MAX_ATOMS = 15;
 
 export function bondKey(a: AtomId, b: AtomId): string {
   return a < b ? `${a}-${b}` : `${b}-${a}`;
@@ -77,21 +79,83 @@ export function lonePairsOf(
   return lone;
 }
 
-export function wouldCreateCycle(bonds: MoleculeBond[], a: AtomId, b: AtomId): boolean {
-  if (a === b) return true;
-  const visited = new Set<AtomId>([a]);
-  const queue = [a];
+// The molecule is always one connected structure (every edit either grows
+// it from an existing atom or trims a leaf), so its cyclomatic number --
+// edges minus vertices plus one -- is exactly how many independent rings
+// it currently has. 0 means a tree; this app supports growing that to 1.
+export function cyclomaticNumber(atoms: MoleculeAtom[], bonds: MoleculeBond[]): number {
+  return bonds.length - atoms.length + 1;
+}
+
+function shortestPath(bonds: MoleculeBond[], start: AtomId, end: AtomId): AtomId[] | null {
+  if (start === end) return [start];
+  const prev = new Map<AtomId, AtomId>();
+  const visited = new Set<AtomId>([start]);
+  const queue = [start];
   while (queue.length) {
     const cur = queue.shift()!;
     for (const n of neighborsOf(bonds, cur)) {
-      if (n === b) return true;
-      if (!visited.has(n)) {
-        visited.add(n);
-        queue.push(n);
+      if (visited.has(n)) continue;
+      visited.add(n);
+      prev.set(n, cur);
+      if (n === end) {
+        const path = [end];
+        let node = end;
+        while (node !== start) {
+          node = prev.get(node)!;
+          path.push(node);
+        }
+        return path.reverse();
       }
+      queue.push(n);
     }
   }
-  return false;
+  return null;
+}
+
+// The molecule stays connected, so before a ring-closing bond is added
+// there's exactly one path between any two existing atoms -- its length
+// (plus the new bond) is the ring size that bond would create.
+function ringSizeIfBonded(bonds: MoleculeBond[], a: AtomId, b: AtomId): number {
+  const path = shortestPath(bonds, a, b);
+  return path ? path.length : Infinity;
+}
+
+export const MAX_RING_SIZE = 8;
+
+// Finds the molecule's one ring, if it has one: the bond list always
+// contains exactly `atoms.length` edges when there's a single ring (one
+// more than a tree), so the first bond that reconnects two atoms already
+// joined by the rest is the ring-closing edge -- the tree path between its
+// endpoints, plus that edge, is the ring.
+export function findRing(
+  atoms: MoleculeAtom[],
+  bonds: MoleculeBond[],
+): { members: AtomId[]; closingBond: MoleculeBond } | null {
+  if (cyclomaticNumber(atoms, bonds) < 1) return null;
+  const parent = new Map<AtomId, AtomId>();
+  const find = (x: AtomId): AtomId => {
+    let cur = x;
+    while (parent.get(cur) !== undefined && parent.get(cur) !== cur) cur = parent.get(cur)!;
+    return cur;
+  };
+  let closingBond: MoleculeBond | null = null;
+  for (const bond of bonds) {
+    if (!parent.has(bond.a)) parent.set(bond.a, bond.a);
+    if (!parent.has(bond.b)) parent.set(bond.b, bond.b);
+    const rootA = find(bond.a);
+    const rootB = find(bond.b);
+    if (rootA === rootB) {
+      closingBond = bond;
+      continue;
+    }
+    parent.set(rootA, rootB);
+  }
+  if (!closingBond) return null;
+  const treeBonds = bonds.filter((b) => b !== closingBond);
+  const members = shortestPath(treeBonds, closingBond.a, closingBond.b);
+  if (!members) return null;
+  return { members, closingBond };
 }
 
 export type EditResult =
@@ -188,6 +252,50 @@ export function tryChangeBondOrder(
     return {
       ok: false,
       reason: "That bond order isn't valid for one of these atoms' remaining valence electrons.",
+    };
+  }
+  return { ok: true, bonds: candidateBonds };
+}
+
+// Bonds two atoms that are both already in the molecule -- the only way to
+// close a ring, since every other edit only ever attaches a brand-new atom.
+// Because the molecule is always connected, any two distinct existing atoms
+// already have a path between them, so this bond always closes exactly one
+// ring; only one ring is supported at a time, and only up to MAX_RING_SIZE,
+// since embedding a ring is a real (if approximated) geometric placement,
+// not just another tree branch -- see embed.ts.
+export function tryBondAtoms(
+  atoms: MoleculeAtom[],
+  bonds: MoleculeBond[],
+  a: AtomId,
+  b: AtomId,
+  order: BondOrder,
+): BondEditResult {
+  if (a === b) return { ok: false, reason: "An atom can't bond to itself." };
+  if (bondBetween(bonds, a, b)) {
+    return {
+      ok: false,
+      reason: "These two are already bonded — use the π/σ bonds tool to change the bond order.",
+    };
+  }
+  if (cyclomaticNumber(atoms, bonds) >= 1) {
+    return { ok: false, reason: "Only one ring is supported at a time here." };
+  }
+  const ringSize = ringSizeIfBonded(bonds, a, b) + 1;
+  if (ringSize > MAX_RING_SIZE) {
+    return {
+      ok: false,
+      reason: `Rings are supported up to ${MAX_RING_SIZE} atoms — bonding these two would make a ${ringSize}-atom ring.`,
+    };
+  }
+  const candidateBonds: MoleculeBond[] = [...bonds, { a, b, order }];
+  if (
+    !hasCapacityForBond(atoms, candidateBonds, a) ||
+    !hasCapacityForBond(atoms, candidateBonds, b)
+  ) {
+    return {
+      ok: false,
+      reason: "That bond isn't valid for one of these atoms' remaining valence electrons.",
     };
   }
   return { ok: true, bonds: candidateBonds };
