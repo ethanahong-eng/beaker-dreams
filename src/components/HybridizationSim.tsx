@@ -9,13 +9,7 @@ import {
   DEFAULT_LONE_PAIR_WEIGHT,
   type Domain,
 } from "@/lib/vsepr";
-import {
-  HYBRID_TYPES,
-  HYBRID_ORDER,
-  ORBITAL_ENERGY,
-  hybridEnergy,
-  type HybridType,
-} from "@/lib/hybridization";
+import { HYBRID_TYPES, HYBRID_ORDER, type HybridType } from "@/lib/hybridization";
 import { rotate3d } from "@/lib/project3d";
 import { AxisGizmo } from "@/components/AxisGizmo";
 
@@ -118,37 +112,58 @@ export function HybridizationSim() {
             {projected.map(({ d, i, p }) => {
               const x = 150 + p.x * 110;
               const y = 150 + p.y * 110;
-              const r = 8 * p.scale;
+              const dist = Math.hypot(x - 150, y - 150) || 1;
+              const angleDeg = (Math.atan2(y - 150, x - 150) * 180) / Math.PI;
+              // Every domain, bonding or lone, is drawn as an actual hybrid
+              // orbital lobe -- a big lobe pointing outward and a small
+              // tail lobe on the opposite side of the nucleus -- instead
+              // of an abstract dot, since that's what a hybrid orbital
+              // actually looks like.
+              const lobeLen = dist * 0.5;
+              const lobeCx = 150 + ((x - 150) / dist) * lobeLen;
+              const lobeCy = 150 + ((y - 150) / dist) * lobeLen;
+              const tailLen = dist * 0.16;
+              const tailCx = 150 - ((x - 150) / dist) * tailLen;
+              const tailCy = 150 - ((y - 150) / dist) * tailLen;
+              const tailR = Math.max(3, tailLen * 0.75);
               if (d.kind === "bond") {
+                const termR = 8 * p.scale;
                 return (
                   <g key={i}>
-                    <line
-                      x1="150"
-                      y1="150"
-                      x2={x}
-                      y2={y}
-                      stroke="var(--muted-foreground)"
-                      strokeWidth={2 * p.scale}
+                    <circle cx={tailCx} cy={tailCy} r={tailR} fill="var(--accent)" opacity={0.55} />
+                    <ellipse
+                      cx={lobeCx}
+                      cy={lobeCy}
+                      rx={lobeLen}
+                      ry={lobeLen * 0.42}
+                      transform={`rotate(${angleDeg} ${lobeCx} ${lobeCy})`}
+                      fill="var(--accent)"
+                      opacity={0.85}
                     />
-                    <circle cx={x} cy={y} r={r} fill="var(--accent)" />
+                    {/* The attached atom's own orbital (e.g. hydrogen's 1s)
+                        overlapping the hybrid lobe's tip -- that overlap
+                        region is the bond. */}
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r={termR}
+                      fill="rgba(148, 163, 184, 0.95)"
+                      stroke="var(--card)"
+                      strokeWidth={1}
+                    />
                   </g>
                 );
               }
-              const perpX = -(y - 150) / 110;
-              const perpY = (x - 150) / 110;
               return (
                 <g key={i}>
-                  <circle
-                    cx={x + perpX * 5}
-                    cy={y + perpY * 5}
-                    r={r * 0.55}
-                    fill="rgba(148, 163, 184, 0.8)"
-                  />
-                  <circle
-                    cx={x - perpX * 5}
-                    cy={y - perpY * 5}
-                    r={r * 0.55}
-                    fill="rgba(148, 163, 184, 0.8)"
+                  <circle cx={tailCx} cy={tailCy} r={tailR} fill="rgba(148, 163, 184, 0.7)" />
+                  <ellipse
+                    cx={lobeCx}
+                    cy={lobeCy}
+                    rx={lobeLen}
+                    ry={lobeLen * 0.42}
+                    transform={`rotate(${angleDeg} ${lobeCx} ${lobeCy})`}
+                    fill="rgba(148, 163, 184, 0.7)"
                   />
                 </g>
               );
@@ -156,11 +171,11 @@ export function HybridizationSim() {
             <AxisGizmo yaw={yaw} pitch={pitch} cx={40} cy={40} radius={22} />
           </svg>
           <p className="pointer-events-none absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Drag to rotate
+            Drag to rotate · bonds form where lobes overlap
           </p>
         </div>
 
-        <EnergyDiagram hybridType={hybridType} />
+        <OrbitalMixingDiagram hybridType={hybridType} />
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div className="rounded-lg border border-border bg-card p-4">
@@ -282,123 +297,156 @@ export function HybridizationSim() {
   );
 }
 
-const Y_S = 185;
-const Y_P = 115;
-const ENERGY_SLOPE = (Y_P - Y_S) / (ORBITAL_ENERGY.p - ORBITAL_ENERGY.s);
-function energyToY(e: number): number {
-  return Y_S + ENERGY_SLOPE * (e - ORBITAL_ENERGY.s);
+// Real orbital shapes instead of an abstract energy ladder: a gray sphere
+// for s, gray dumbbells for p (a symmetric two-lobe shape), and -- after
+// mixing -- teal hybrid lobes, each one asymmetric (a big lobe pointing
+// where the bond forms, a small tail lobe behind the nucleus), arranged
+// radially the way the reference textbook diagrams draw them.
+
+function SOrbital({ cx, cy }: { cx: number; cy: number }) {
+  return <circle cx={cx} cy={cy} r={15} fill="rgba(148, 163, 184, 0.9)" />;
 }
-const Y_D = energyToY(ORBITAL_ENERGY.d);
 
-const P_X = [120, 158, 196];
-const D_X = [256, 292, 328, 364, 400];
+function POrbital({ cx, cy, dim = false }: { cx: number; cy: number; dim?: boolean }) {
+  return (
+    <g opacity={dim ? 0.4 : 1}>
+      <ellipse cx={cx} cy={cy - 16} rx={11} ry={17} fill="rgba(148, 163, 184, 0.9)" />
+      <ellipse cx={cx} cy={cy + 16} rx={11} ry={17} fill="rgba(148, 163, 184, 0.9)" />
+      <circle cx={cx} cy={cy} r={2.5} fill="var(--foreground)" />
+    </g>
+  );
+}
 
-type Slot = { id: string; kind: "s" | "p" | "d"; x: number; index: number };
+function DOrbital({ cx, cy, dim = false }: { cx: number; cy: number; dim?: boolean }) {
+  return (
+    <g opacity={dim ? 0.35 : 0.85}>
+      <ellipse
+        cx={cx}
+        cy={cy}
+        rx={10}
+        ry={18}
+        transform={`rotate(45 ${cx} ${cy})`}
+        fill="rgba(148, 163, 184, 0.85)"
+      />
+      <ellipse
+        cx={cx}
+        cy={cy}
+        rx={10}
+        ry={18}
+        transform={`rotate(-45 ${cx} ${cy})`}
+        fill="rgba(148, 163, 184, 0.85)"
+      />
+      <circle cx={cx} cy={cy} r={2.5} fill="var(--foreground)" />
+    </g>
+  );
+}
 
-// Every orbital slot keeps one fixed x position for its whole lifetime;
-// only its y (atomic height, or the shared hybrid height) and color
-// change when the hybridization type changes. That's what makes picking a
-// new type read as orbitals sliding into (or back out of) the merged
-// level, instead of the diagram just swapping to a different static
-// picture.
-function EnergyDiagram({ hybridType }: { hybridType: HybridType }) {
+function HybridLobe({ cx, cy, angleDeg }: { cx: number; cy: number; angleDeg: number }) {
+  const rad = (angleDeg * Math.PI) / 180;
+  const ux = Math.cos(rad);
+  const uy = Math.sin(rad);
+  const bigLen = 46;
+  const lobeCx = cx + ux * bigLen * 0.5;
+  const lobeCy = cy + uy * bigLen * 0.5;
+  return (
+    <g>
+      <circle cx={cx - ux * 8} cy={cy - uy * 8} r={7} fill="var(--accent)" opacity={0.6} />
+      <ellipse
+        cx={lobeCx}
+        cy={lobeCy}
+        rx={bigLen * 0.5}
+        ry={bigLen * 0.24}
+        transform={`rotate(${angleDeg} ${lobeCx} ${lobeCy})`}
+        fill="var(--accent)"
+      />
+    </g>
+  );
+}
+
+function OrbitalMixingDiagram({ hybridType }: { hybridType: HybridType }) {
   const info = HYBRID_TYPES[hybridType];
-  const showD = info.dCount > 0 || info.leftoverD > 0;
-  const hybridY = energyToY(hybridEnergy(info));
 
-  const slots: Slot[] = [
-    { id: "s", kind: "s", x: 60, index: 0 },
-    ...P_X.map((x, i) => ({ id: `p${i}`, kind: "p" as const, x, index: i })),
-    ...(showD ? D_X.map((x, i) => ({ id: `d${i}`, kind: "d" as const, x, index: i })) : []),
+  const before: Array<{ kind: "s" | "p" | "d" }> = [
+    { kind: "s" },
+    ...Array.from({ length: info.pCount }, () => ({ kind: "p" as const })),
+    ...Array.from({ length: info.dCount }, () => ({ kind: "d" as const })),
   ];
+  const spacing = 56;
+  const startX = 40;
+  const rowY = 95;
+  const lastBeforeX = startX + (before.length - 1) * spacing;
 
-  const isParticipating = (slot: Slot) => {
-    if (slot.kind === "s") return true;
-    if (slot.kind === "p") return slot.index < info.pCount;
-    return slot.index < info.dCount;
-  };
-
-  const participatingXs = slots.filter(isParticipating).map((s) => s.x);
-  const hybLineX1 = Math.min(...participatingXs) - 20;
-  const hybLineX2 = Math.max(...participatingXs) + 20;
+  const arrowX1 = lastBeforeX + 40;
+  const arrowX2 = 300;
+  const clusterCx = 375;
+  const clusterCy = rowY;
+  const angles = Array.from({ length: info.domains }, (_, i) => -90 + (360 / info.domains) * i);
 
   return (
     <div className="rounded-xl border border-border bg-card p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-mono text-xs font-bold uppercase tracking-widest text-muted-foreground">
-          Energy-level diagram
+          Orbital mixing
         </h3>
         <span className="font-mono text-[10px] text-muted-foreground">
           1 s + {info.pCount} p{info.dCount > 0 ? ` + ${info.dCount} d` : ""} → {info.domains}{" "}
-          {info.label} orbitals
-        </span>
-      </div>
-      <svg viewBox="0 0 440 210" className="h-[180px] w-full">
-        <line x1="20" y1={Y_S} x2="420" y2={Y_S} stroke="var(--border)" strokeDasharray="3 4" />
-        <text x="6" y={Y_S + 4} fontSize="11" fill="var(--muted-foreground)" fontFamily="monospace">
-          s
-        </text>
-        <line x1="20" y1={Y_P} x2="420" y2={Y_P} stroke="var(--border)" strokeDasharray="3 4" />
-        <text x="6" y={Y_P + 4} fontSize="11" fill="var(--muted-foreground)" fontFamily="monospace">
-          p
-        </text>
-        {showD && (
-          <>
-            <line x1="20" y1={Y_D} x2="420" y2={Y_D} stroke="var(--border)" strokeDasharray="3 4" />
-            <text
-              x="6"
-              y={Y_D + 4}
-              fontSize="11"
-              fill="var(--muted-foreground)"
-              fontFamily="monospace"
-            >
-              d
-            </text>
-          </>
-        )}
-
-        <line
-          x1={hybLineX1}
-          x2={hybLineX2}
-          y1={hybridY}
-          y2={hybridY}
-          stroke="var(--accent)"
-          strokeWidth={1.5}
-          strokeDasharray="2 3"
-          style={{ transition: "y1 0.6s ease, y2 0.6s ease, x1 0.6s ease, x2 0.6s ease" }}
-        />
-
-        {slots.map((slot) => {
-          const participating = isParticipating(slot);
-          const y = participating ? hybridY : energyToY(ORBITAL_ENERGY[slot.kind]);
-          return (
-            <line
-              key={slot.id}
-              x1={slot.x - 14}
-              x2={slot.x + 14}
-              y1={y}
-              y2={y}
-              stroke={participating ? "var(--accent)" : "var(--muted-foreground)"}
-              strokeWidth={4}
-              strokeLinecap="round"
-              style={{ transition: "y1 0.6s ease, y2 0.6s ease, stroke 0.4s ease" }}
-            />
-          );
-        })}
-      </svg>
-      <div className="mt-3 flex flex-wrap gap-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        <span className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-accent" />
           {info.label} hybrid orbitals
         </span>
-        <span className="flex items-center gap-2">
-          <span
-            className="h-2 w-2 rounded-full"
-            style={{ background: "var(--muted-foreground)" }}
-          />
-          Unhybridized
-        </span>
       </div>
+      <svg viewBox="0 0 460 190" className="h-[180px] w-full">
+        {before.map((orb, i) => {
+          const cx = startX + i * spacing;
+          if (orb.kind === "s") return <SOrbital key={i} cx={cx} cy={rowY} />;
+          if (orb.kind === "p") return <POrbital key={i} cx={cx} cy={rowY} />;
+          return <DOrbital key={i} cx={cx} cy={rowY} />;
+        })}
+        <text
+          x={startX + (lastBeforeX - startX) / 2}
+          y={rowY + 60}
+          textAnchor="middle"
+          fontSize="10"
+          fill="var(--muted-foreground)"
+          fontFamily="monospace"
+        >
+          atomic orbitals
+        </text>
+
+        <line
+          x1={arrowX1}
+          y1={rowY}
+          x2={arrowX2}
+          y2={rowY}
+          stroke="var(--muted-foreground)"
+          strokeWidth={2}
+        />
+        <polygon
+          points={`${arrowX2},${rowY - 6} ${arrowX2 + 12},${rowY} ${arrowX2},${rowY + 6}`}
+          fill="var(--muted-foreground)"
+        />
+
+        {angles.map((a, i) => (
+          <HybridLobe key={i} cx={clusterCx} cy={clusterCy} angleDeg={a} />
+        ))}
+        <circle cx={clusterCx} cy={clusterCy} r={4} fill="var(--foreground)" />
+        <text
+          x={clusterCx}
+          y={rowY + 60}
+          textAnchor="middle"
+          fontSize="10"
+          fill="var(--accent)"
+          fontFamily="monospace"
+        >
+          {info.label} hybrid orbitals
+        </text>
+      </svg>
+      {(info.leftoverP > 0 || info.leftoverD > 0) && (
+        <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+          {info.leftoverP > 0
+            ? `${info.leftoverP} p orbital${info.leftoverP === 1 ? "" : "s"}`
+            : `${info.leftoverD} d orbital${info.leftoverD === 1 ? "" : "s"}`}{" "}
+          stay pure and unhybridized — not shown above, since they never enter the mix.
+        </p>
+      )}
     </div>
   );
 }
