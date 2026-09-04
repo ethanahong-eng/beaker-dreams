@@ -33,7 +33,7 @@ function HybridizationPage() {
     <main className="mx-auto max-w-7xl px-6 py-16">
       <header className="mb-16 max-w-3xl border-b border-border pb-12">
         <div className="mb-5 inline-block border-y border-border px-4 py-2 text-[10px] font-bold uppercase text-accent">
-          Module 02: Orbital Mixing
+          TOPIC 02: ORBITAL MIXING
         </div>
         <h1 className="mb-6 font-display text-5xl font-bold md:text-6xl">
           Hybridization & <span className="text-accent">Form</span>
