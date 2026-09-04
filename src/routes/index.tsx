@@ -93,7 +93,7 @@ function HomePage() {
         <div className="mb-8 inline-flex items-center gap-3 border-y border-border px-6 py-3">
           <span className="h-2 w-2 rounded-full bg-accent" />
           <span className="text-[10px] font-bold uppercase text-muted-foreground">
-            Interactive chemistry · v2026
+            INTERACTIVE CHEMISTRY
           </span>
         </div>
          <h1 className="font-display text-5xl font-bold leading-tight md:text-7xl">
@@ -124,7 +124,7 @@ function HomePage() {
       <section className="mb-24 grid grid-cols-2 border border-border bg-card/60 md:grid-cols-4">
         {[
           { k: "4", v: "Interactive modules" },
-          { k: "3", v: "Live simulations" },
+          { k: "3", v: "SIMULATIONS" },
           { k: "6", v: "Daily-life essays" },
           { k: "0", v: "Equations to memorize first" },
         ].map((s) => (
@@ -195,7 +195,7 @@ function HomePage() {
           <span className="text-[10px] font-bold uppercase text-accent">
             How the lab works
           </span>
-          <h2 className="mt-3 font-display text-3xl font-bold">Simulate first, read second</h2>
+          <h2 className="mt-3 font-display text-3xl font-bold">Learn about a topic, how it works, then apply those skills in a digital lab</h2>
         </div>
         <div className="space-y-8 md:col-span-2">
           {[
