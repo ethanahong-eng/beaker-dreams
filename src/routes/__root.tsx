@@ -145,11 +145,18 @@ function RootComponent() {
               Home
             </Link>
             <Link
-              to="/equilibrium"
+              to="/geometry"
               className="transition-colors hover:text-accent"
               activeProps={{ className: "text-accent" }}
             >
-              Equilibrium
+              Geometry
+            </Link>
+            <Link
+              to="/hybridization"
+              className="transition-colors hover:text-accent"
+              activeProps={{ className: "text-accent" }}
+            >
+              Hybridization
             </Link>
             <Link
               to="/kinetics"
@@ -159,11 +166,11 @@ function RootComponent() {
               Kinetics
             </Link>
             <Link
-              to="/acid-base"
+              to="/equilibrium"
               className="transition-colors hover:text-accent"
               activeProps={{ className: "text-accent" }}
             >
-              Acid–Base
+              Equilibrium
             </Link>
             <Link
               to="/everyday"
@@ -174,7 +181,7 @@ function RootComponent() {
             </Link>
           </div>
           <Link
-            to="/equilibrium"
+            to="/geometry"
             className="bg-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent"
           >
             Launch Lab
@@ -196,14 +203,17 @@ function RootComponent() {
               <Link to="/" className="transition-colors hover:text-foreground">
                 Home
               </Link>
-              <Link to="/equilibrium" className="transition-colors hover:text-foreground">
-                Equilibrium
+              <Link to="/geometry" className="transition-colors hover:text-foreground">
+                Geometry
+              </Link>
+              <Link to="/hybridization" className="transition-colors hover:text-foreground">
+                Hybridization
               </Link>
               <Link to="/kinetics" className="transition-colors hover:text-foreground">
                 Kinetics
               </Link>
-              <Link to="/acid-base" className="transition-colors hover:text-foreground">
-                Acid–Base
+              <Link to="/equilibrium" className="transition-colors hover:text-foreground">
+                Equilibrium
               </Link>
               <Link to="/everyday" className="transition-colors hover:text-foreground">
                 Daily Life
