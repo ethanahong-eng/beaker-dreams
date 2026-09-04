@@ -18,7 +18,7 @@ const modules: Module[] = [
     title: "Molecule Geometry",
     accent: "Geometry",
     description:
-      "Electron domains around a central atom repel each other and settle as far apart as possible. Add bonding and lone pairs to a live VSEPR builder and watch real electron repulsion predict the correct 3D shape.",
+      "Electron domains around a central atom repel each other.  In order to find the lowest possible energy state, molecules will place themselves as far away as possible from each other, resulting in predictable Add bonding and lone pairs to a live VSEPR builder and watch real electron repulsion predict the correct 3D shape.",
     topics: ["VSEPR", "Electron domains", "Bond angles", "Lone pairs"],
   },
   {
@@ -28,7 +28,7 @@ const modules: Module[] = [
     title: "Hybridization",
     accent: "Hybridization",
     description:
-      "Atoms don't bond with the orbitals they're handed — they merge them first. See how s and p orbitals combine into sp, sp² and sp³ hybrids, and why the blend ratio fixes the molecule's angles and shape.",
+      "Before bonding with each other, orbitals in atoms have to merge. See how s and p orbitals combine into sp, sp² and sp³ hybrids, and why the blend ratio fixes the molecule's angles and shape.",
     topics: ["sp / sp² / sp³", "Orbital promotion", "π bonds", "Geometry link"],
   },
   {
@@ -97,26 +97,26 @@ function HomePage() {
           </span>
         </div>
         <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl">
-          Hard chemistry, <br />
+           Chemistry <br />
           made <span className="text-accent">visible</span>.
         </h1>
         <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          Valence Lab turns abstract equations into things you can watch happen. Each module pairs a
-          live simulation with the history and theory behind it — so you don't just memorize the
-          rule, you see why it holds.
+           Chemistry doesn't have to be confusing with the right visuals.  Each module here pairs a
+           live simulation with the history and theory behind it.  Not only will you better understand
+           the chemistry principles, but you'll also learn how and why
         </p>
         <div className="mt-10 flex flex-wrap gap-4">
           <Link
             to="/geometry"
             className="bg-primary px-6 py-3 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent"
           >
-            Launch the lab
+             DIGITAL LAB
           </Link>
           <Link
             to="/everyday"
             className="border border-border bg-card px-6 py-3 text-xs font-bold uppercase tracking-widest text-foreground transition-colors hover:bg-accent/10"
           >
-            Read daily-life essays
+             DAILY-LIFE APPLICATION
           </Link>
         </div>
       </section>
