@@ -107,7 +107,7 @@ function HomePage() {
         </p>
         <div className="mt-10 flex flex-wrap gap-4">
           <Link
-            to="/equilibrium"
+            to="/geometry"
             className="bg-primary px-6 py-3 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent"
           >
             Launch the lab
@@ -145,7 +145,7 @@ function HomePage() {
             Modules
           </h2>
           <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            04 / 04
+            05 / 05
           </span>
         </div>
 
