@@ -5,7 +5,6 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
-  type WheelEvent as ReactWheelEvent,
 } from "react";
 import {
   ELEMENTS,
@@ -20,13 +19,16 @@ import {
 import {
   ATOM_CHOICES,
   MAX_ATOMS,
+  MAX_RING_SIZE,
   neighborsOf,
   bondBetween,
   lonePairsOf,
   bondKey,
   tryAddAtom,
   tryChangeBondOrder,
+  tryBondAtoms,
   isRemovable,
+  findRing,
   removeAtom,
   formulaOfGraph,
   type AtomId,
@@ -35,6 +37,8 @@ import {
   type BondOrder,
 } from "@/lib/molecule";
 import { embedMolecule, type EmbeddedAtom } from "@/lib/embed";
+import { totalBondEnergy } from "@/lib/energy";
+import { branchResonanceAt, ringResonanceAt } from "@/lib/resonance";
 import { HYBRID_TYPES } from "@/lib/hybridization";
 import {
   rotate3d,
@@ -48,7 +52,7 @@ import {
 } from "@/lib/project3d";
 import { AxisGizmo } from "@/components/AxisGizmo";
 
-type Tool = "add" | "bondOrder" | "remove" | "angle" | "torsion";
+type Tool = "add" | "bondOrder" | "bond" | "remove" | "angle" | "torsion";
 
 function hybridLabelForDomains(n: number): string {
   const found = Object.values(HYBRID_TYPES).find((h) => h.domains === n);
@@ -58,6 +62,10 @@ function hybridLabelForDomains(n: number): string {
 function angleBetween(a: Vec3, b: Vec3): number {
   const d = Math.max(-1, Math.min(1, vDot(vNormalize(a), vNormalize(b))));
   return (Math.acos(d) * 180) / Math.PI;
+}
+
+function orderName(n: number): string {
+  return n === 1 ? "single" : n === 2 ? "double" : "triple";
 }
 
 // The trimmed atom toolkit doesn't include every element the legacy
@@ -82,6 +90,7 @@ export function VseprBuilder() {
   const [torsions, setTorsions] = useState<Map<string, number>>(new Map());
   const [torsionBond, setTorsionBond] = useState<{ a: AtomId; b: AtomId } | null>(null);
   const [angleSelection, setAngleSelection] = useState<AtomId[]>([]);
+  const [bondSelection, setBondSelection] = useState<AtomId[]>([]);
   const [lonePairWeight, setLonePairWeight] = useState(DEFAULT_LONE_PAIR_WEIGHT);
   const [rejectMsg, setRejectMsg] = useState<string | null>(null);
   const rejectTimerRef = useRef<number | null>(null);
@@ -92,6 +101,7 @@ export function VseprBuilder() {
   const dragRef = useRef<{ x: number; y: number; dragging: boolean; pointerId: number } | null>(
     null,
   );
+  const svgRef = useRef<SVGSVGElement | null>(null);
 
   const [mode, setMode] = useState<"practice" | "challenge">("practice");
   const [deck, setDeck] = useState<MoleculeTarget[]>(() => buildableDeck());
@@ -114,6 +124,8 @@ export function VseprBuilder() {
     if (!hasMolecule) return new Map();
     return embedMolecule(atoms, bonds, effectiveRoot, (key) => torsions.get(key), lonePairWeight);
   }, [atoms, bonds, effectiveRoot, torsions, lonePairWeight, hasMolecule]);
+
+  const ring = useMemo(() => findRing(atoms, bonds), [atoms, bonds]);
 
   const { centroid, boundingRadius } = useMemo(() => {
     const positions = [...embedded.values()].map((e) => e.pos as Vec3);
@@ -160,10 +172,26 @@ export function VseprBuilder() {
   const onPointerUp = () => {
     dragRef.current = null;
   };
-  const onWheel = (e: ReactWheelEvent<SVGSVGElement>) => {
-    e.preventDefault();
-    setZoom((z) => Math.max(0.4, Math.min(3, z * (1 - e.deltaY * 0.001))));
-  };
+  // React registers onWheel as a passive listener, so calling
+  // preventDefault from it is silently ignored -- the page would scroll
+  // right along with the intended zoom. A native listener registered with
+  // { passive: false } is the only way to actually stop that, so the wheel
+  // only zooms the molecule, not the whole page.
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const onWheelNative = (e: WheelEvent) => {
+      e.preventDefault();
+      // The auto-fit camera gives a longer chain less screen space per atom
+      // by default, so a 15-atom molecule needs a bit more zoom headroom
+      // than a 10-atom one did. There's no panning, though, so zooming too
+      // far on a long straight chain can push its far end off-canvas --
+      // this stays well short of that.
+      setZoom((z) => Math.max(0.4, Math.min(4, z * (1 - e.deltaY * 0.001))));
+    };
+    el.addEventListener("wheel", onWheelNative, { passive: false });
+    return () => el.removeEventListener("wheel", onWheelNative);
+  }, []);
 
   const resetMolecule = (starter: MoleculeAtom[] = []) => {
     setAtoms(starter);
@@ -173,6 +201,7 @@ export function VseprBuilder() {
     setTorsions(new Map());
     setTorsionBond(null);
     setAngleSelection([]);
+    setBondSelection([]);
     setRejectMsg(null);
     setChecked(null);
   };
@@ -201,6 +230,17 @@ export function VseprBuilder() {
     if (!existing) return;
     const nextOrder = ((existing.order % 3) + 1) as BondOrder;
     const result = tryChangeBondOrder(atoms, bonds, a, b, nextOrder);
+    if (!result.ok) {
+      flashReject(result.reason);
+      return;
+    }
+    setBonds(result.bonds);
+    setRejectMsg(null);
+    setChecked(null);
+  };
+
+  const attemptBond = (a: AtomId, b: AtomId) => {
+    const result = tryBondAtoms(atoms, bonds, a, b, newBondOrder);
     if (!result.ok) {
       flashReject(result.reason);
       return;
@@ -254,6 +294,15 @@ export function VseprBuilder() {
       });
       return;
     }
+    if (tool === "bond") {
+      if (bondSelection.length === 1 && bondSelection[0] !== id) {
+        attemptBond(bondSelection[0]!, id);
+        setBondSelection([]);
+      } else if (bondSelection[0] !== id) {
+        setBondSelection([id]);
+      }
+      return;
+    }
     setSelectedAtom(id);
   };
 
@@ -263,6 +312,10 @@ export function VseprBuilder() {
       return;
     }
     if (tool === "torsion") {
+      if (ring && ring.members.includes(a) && ring.members.includes(b)) {
+        flashReject("Ring bonds don't rotate independently in this simplified planar model.");
+        return;
+      }
       setTorsionBond({ a, b });
       return;
     }
@@ -271,6 +324,7 @@ export function VseprBuilder() {
   const setTool_ = (t: Tool) => {
     setTool(t);
     setAngleSelection([]);
+    setBondSelection([]);
     setTorsionBond(null);
     setRejectMsg(null);
   };
@@ -325,6 +379,15 @@ export function VseprBuilder() {
     return { atom, degree, lone };
   }, [atoms, bonds, selectedAtom]);
 
+  const resonance = useMemo(
+    () => (selectedAtom !== null ? branchResonanceAt(atoms, bonds, selectedAtom) : null),
+    [atoms, bonds, selectedAtom],
+  );
+  const ringResonance = useMemo(
+    () => (selectedAtom !== null ? ringResonanceAt(atoms, bonds, selectedAtom) : null),
+    [atoms, bonds, selectedAtom],
+  );
+
   const measuredAngle =
     angleSelection.length === 3
       ? (() => {
@@ -340,6 +403,7 @@ export function VseprBuilder() {
 
   const formula = hasMolecule ? formulaOfGraph(atoms) : null;
   const atomLimitReached = atoms.length >= MAX_ATOMS;
+  const bondEnergyTotal = useMemo(() => totalBondEnergy(atoms, bonds), [atoms, bonds]);
 
   // --- Rendering -----------------------------------------------------
   const projectedAtoms = atoms.map((atom) => {
@@ -420,6 +484,7 @@ export function VseprBuilder() {
     const r = info.radius * 0.85 * p.scale;
     const isSelected = selectedAtom === atom.id;
     const isAngleSelected = angleSelection.includes(atom.id);
+    const isBondSelected = bondSelection.includes(atom.id);
     items.push({
       z: p.z,
       key: `atom-${atom.id}`,
@@ -430,15 +495,15 @@ export function VseprBuilder() {
           className="cursor-pointer"
           data-atom-id={atom.id}
         >
-          {(isSelected || isAngleSelected) && (
+          {(isSelected || isAngleSelected || isBondSelected) && (
             <circle
               cx={x}
               cy={y}
               r={r + 5}
               fill="none"
-              stroke={isAngleSelected ? "var(--accent)" : "var(--foreground)"}
+              stroke={isAngleSelected || isBondSelected ? "var(--accent)" : "var(--foreground)"}
               strokeWidth={2}
-              strokeDasharray={isAngleSelected ? "3 3" : undefined}
+              strokeDasharray={isAngleSelected || isBondSelected ? "3 3" : undefined}
             />
           )}
           <circle
@@ -493,19 +558,21 @@ export function VseprBuilder() {
       <div className="space-y-6 lg:col-span-8">
         <div>
           <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            {hasMolecule ? "Building" : "Pick an atom to place first"}
+            {hasMolecule
+              ? `Building · ${atoms.length} / ${MAX_ATOMS} atoms`
+              : "Pick an atom to place first"}
           </span>
           {formula && <p className="text-2xl font-bold">{formula}</p>}
         </div>
 
         <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <svg
+            ref={svgRef}
             viewBox="0 0 300 300"
             className="h-full w-full cursor-grab touch-none active:cursor-grabbing"
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
-            onWheel={onWheel}
           >
             {items.map((it) => it.node)}
             <AxisGizmo yaw={yaw} pitch={pitch} cx={40} cy={40} radius={22} />
@@ -523,6 +590,13 @@ export function VseprBuilder() {
               {measuredAngle !== null
                 ? `Angle: ${measuredAngle.toFixed(1)}°`
                 : `Click ${3 - angleSelection.length} more bonded atom${3 - angleSelection.length === 1 ? "" : "s"} in a row`}
+            </p>
+          )}
+          {tool === "bond" && (
+            <p className="pointer-events-none absolute bottom-3 right-3 font-mono text-[10px] uppercase tracking-widest text-accent">
+              {bondSelection.length === 0
+                ? "Click the first atom to bond"
+                : "Click a second atom to bond it to"}
             </p>
           )}
         </div>
@@ -544,10 +618,10 @@ export function VseprBuilder() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div className="rounded-lg border border-border bg-card p-4">
             <span className="mb-1 block font-mono text-[10px] uppercase text-muted-foreground">
-              Atoms used
+              Total bond energy
             </span>
             <span className="font-mono text-base font-bold">
-              {atoms.length} / {MAX_ATOMS}
+              {hasMolecule ? `${Math.round(bondEnergyTotal).toLocaleString()} kJ/mol` : "—"}
             </span>
           </div>
           <div className="rounded-lg border border-border bg-card p-4">
@@ -591,6 +665,32 @@ export function VseprBuilder() {
               {electronGeometryName(selectedInfo.degree, selectedInfo.lone)}
             </span>{" "}
             ({selectedInfo.degree} bonding + {selectedInfo.lone} lone)
+          </p>
+        )}
+
+        {resonance && selectedInfo && (
+          <p className="rounded-lg border border-accent/30 bg-accent/10 p-3 font-mono text-[11px] leading-relaxed text-accent">
+            Resonance: {resonance.count} {ELEMENTS[resonance.element].name} atoms here are
+            chemically identical, but one holds a {resonance.orders.map(orderName).join("/")} bond
+            instead of the rest. Swapping which one holds it gives an equally valid structure — real
+            molecules delocalize evenly across all of them instead of picking one.
+          </p>
+        )}
+
+        {ringResonance && selectedInfo && (
+          <p className="rounded-lg border border-accent/30 bg-accent/10 p-3 font-mono text-[11px] leading-relaxed text-accent">
+            Resonance: this {ringResonance.ringSize}-membered ring's single/double bonds strictly
+            alternate — a Kekulé structure. Starting the alternation on the other bond is equally
+            valid; real aromatic rings delocalize evenly around the whole ring instead of picking
+            one pattern.
+          </p>
+        )}
+
+        {hasMolecule && (
+          <p className="font-mono text-[10px] leading-relaxed text-muted-foreground">
+            Bond energy is estimated by summing real bond dissociation energies, filling in gaps
+            with Pauling's electronegativity-difference formula — an honest estimate, not a full
+            quantum-mechanical energy.
           </p>
         )}
       </div>
@@ -652,13 +752,14 @@ export function VseprBuilder() {
           )}
 
           <h4 className="mb-3 text-xs font-medium">Tools</h4>
-          <div className="mb-5 grid grid-cols-3 gap-2 sm:grid-cols-5">
+          <div className="mb-5 grid grid-cols-3 gap-2 sm:grid-cols-6">
             <ToolButton label="Add" active={tool === "add"} onClick={() => setTool_("add")} />
             <ToolButton
               label="π/σ bonds"
               active={tool === "bondOrder"}
               onClick={() => setTool_("bondOrder")}
             />
+            <ToolButton label="Bond" active={tool === "bond"} onClick={() => setTool_("bond")} />
             <ToolButton
               label="Remove"
               active={tool === "remove"}
@@ -730,6 +831,45 @@ export function VseprBuilder() {
               adds or removes a π bond on top of the always-present σ bond, as long as both atoms
               still have the valence electrons for it.
             </p>
+          )}
+
+          {tool === "bond" && (
+            <div className="space-y-4">
+              <div>
+                <div className="mb-2 flex items-center justify-between text-xs font-medium">
+                  <span>New bond order</span>
+                  <span className="font-mono text-accent">
+                    {newBondOrder === 1
+                      ? "single (σ)"
+                      : newBondOrder === 2
+                        ? "double (σ+π)"
+                        : "triple (σ+2π)"}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  {([1, 2, 3] as BondOrder[]).map((o) => (
+                    <button
+                      key={o}
+                      onClick={() => setNewBondOrder(o)}
+                      className={`flex-1 rounded-lg border py-2 text-xs font-bold transition-colors ${
+                        newBondOrder === o
+                          ? "border-accent bg-accent/10 text-accent"
+                          : "border-border hover:bg-secondary"
+                      }`}
+                    >
+                      {o === 1 ? "—" : o === 2 ? "=" : "≡"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+                Click two existing atoms in a row to bond them directly — the only way to close a
+                ring, since every other tool only ever attaches a brand-new atom. Only one ring is
+                supported at a time, up to {MAX_RING_SIZE} atoms, and the local VSEPR angle at each
+                ring atom rarely matches the ring's own angle exactly — this view shows the flat,
+                unstrained approximation rather than a real chair or boat pucker.
+              </p>
+            </div>
           )}
 
           {tool === "remove" && (

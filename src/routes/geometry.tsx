@@ -103,15 +103,24 @@ function GeometryPage() {
           </h2>
           <p className="mt-4 leading-relaxed text-muted-foreground">
             Click an atom in the toolkit to place it, then click again to attach the next one to
-            whichever atom is selected — build carbon chains, branches, whatever you like, up to 10
+            whichever atom is selected — build carbon chains, branches, whatever you like, up to 15
             atoms, capped so the physics stays fast and the structure stays legible. Every
-            attachment is checked against both atoms' valence electrons before it's allowed to form.
+            attachment is checked against both atoms' valence electrons before it's allowed to form,
+            and lone pairs are never set by hand — they're whatever electrons are left over once the
+            bonds are drawn.
+          </p>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
             The tool bar adds the rest of a real molecular-modeling kit: cycle a bond between
-            single, double, and triple (σ vs. π), remove a leaf atom, measure the real angle between
-            any three bonded atoms, or rotate a bond's torsion to explore the one degree of freedom
-            VSEPR alone can't pin down. Lone pairs are never set by hand — they're whatever
-            electrons are left over once the bonds are drawn. Switch to Challenge mode to be given a
-            real molecule's formula and build it atom by atom.
+            single, double, and triple (σ vs. π), bond two existing atoms directly to close a ring,
+            remove a leaf atom, measure the real angle between any three bonded atoms, or rotate a
+            bond's torsion to explore the one degree of freedom VSEPR alone can't pin down. One ring
+            is supported at a time, drawn as a flat regular polygon rather than a real chair or boat
+            pucker. Select an atom whose bonds have a genuine ambiguity — like the two ends of a
+            symmetric double bond, or a fully alternating ring — and the panel calls out the
+            resonance directly: real molecules delocalize evenly across those bonds instead of
+            picking one arrangement. A running total bond energy, estimated from real bond
+            dissociation energies, shows how that energy shifts as the structure changes. Switch to
+            Challenge mode to be given a real molecule's formula and build it atom by atom.
           </p>
         </div>
         <div>
