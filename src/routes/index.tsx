@@ -96,10 +96,9 @@ function HomePage() {
             Interactive chemistry · v2026
           </span>
         </div>
-        <h1 className="font-display text-5xl font-bold leading-tight md:text-7xl">
-           Chemistry <br />
-          made <span className="text-accent">visible</span>.
-        </h1>
+         <h1 className="font-display text-5xl font-bold leading-tight md:text-7xl">
+           Molecular structures and behaviors
+         </h1>
         <p className="mx-auto mt-8 max-w-2xl text-lg italic leading-relaxed text-muted-foreground">
            Chemistry doesn't have to be confusing with the right visuals.  Each module here pairs a
            live simulation with the history and theory behind it.  Not only will you better understand
