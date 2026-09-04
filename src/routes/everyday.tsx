@@ -90,7 +90,7 @@ function EverydayPage() {
     <main className="mx-auto max-w-7xl px-6 py-16">
       <header className="mb-16 max-w-3xl border-b border-border pb-12">
         <div className="mb-5 inline-block border-y border-border px-4 py-2 text-[10px] font-bold uppercase text-accent">
-          Module 05: Applied Chemistry
+          TOPIC 05: APPLIED CHEMISTRY
         </div>
         <h1 className="mb-6 font-display text-5xl font-bold md:text-6xl">
           Chemistry in <span className="text-accent">Daily Life</span>
