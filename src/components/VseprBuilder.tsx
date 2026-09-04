@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -220,6 +221,25 @@ export function VseprBuilder() {
     if (selectedAtom === id) setSelectedAtom(result.atoms[0]?.id ?? null);
     setChecked(null);
   };
+
+  // Click an atom to select it (in any tool but Angle, which uses clicks for
+  // its own 3-atom sequence), then press Delete/Backspace to remove it --
+  // a faster path than switching to the Remove tool first. Skipped while a
+  // slider has focus so dragging the repulsion/torsion controls with the
+  // keyboard doesn't also delete the selected atom.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Delete" && e.key !== "Backspace") return;
+      if (selectedAtom === null) return;
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && (active.tagName === "INPUT" || active.isContentEditable))
+        return;
+      e.preventDefault();
+      attemptRemove(selectedAtom);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   const onAtomClick = (id: AtomId) => {
     if (tool === "remove") {
@@ -715,7 +735,8 @@ export function VseprBuilder() {
           {tool === "remove" && (
             <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
               Click an atom with only one bond to remove it. Interior atoms are protected so
-              removing one never splits the molecule in two.
+              removing one never splits the molecule in two. In any tool, selecting an atom and
+              pressing Delete or Backspace does the same thing.
             </p>
           )}
 
