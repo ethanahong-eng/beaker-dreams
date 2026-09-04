@@ -137,18 +137,26 @@ function RootComponent() {
           </Link>
           <div className="hidden gap-8 text-sm font-medium md:flex">
             <Link
+              to="/"
+              className="transition-colors hover:text-accent"
+              activeProps={{ className: "text-accent" }}
+              activeOptions={{ exact: true }}
+            >
+              Home
+            </Link>
+            <Link
+              to="/equilibrium"
+              className="transition-colors hover:text-accent"
+              activeProps={{ className: "text-accent" }}
+            >
+              Equilibrium
+            </Link>
+            <Link
               to="/kinetics"
               className="transition-colors hover:text-accent"
               activeProps={{ className: "text-accent" }}
             >
               Kinetics
-            </Link>
-            <Link
-              to="/"
-              className="transition-colors hover:text-accent"
-              activeProps={{ className: "text-accent" }}
-            >
-              Equilibrium
             </Link>
             <Link
               to="/acid-base"
@@ -158,13 +166,6 @@ function RootComponent() {
               Acid–Base
             </Link>
             <Link
-              to="/geometry"
-              className="transition-colors hover:text-accent"
-              activeProps={{ className: "text-accent" }}
-            >
-              Geometry
-            </Link>
-            <Link
               to="/everyday"
               className="transition-colors hover:text-accent"
               activeProps={{ className: "text-accent" }}
@@ -172,12 +173,12 @@ function RootComponent() {
               Daily Life
             </Link>
           </div>
-          <a
-            href="#simulation"
+          <Link
+            to="/equilibrium"
             className="bg-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent"
           >
             Launch Lab
-          </a>
+          </Link>
         </nav>
 
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
@@ -192,17 +193,17 @@ function RootComponent() {
               </span>
             </div>
             <div className="flex gap-8 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <Link to="/" className="transition-colors hover:text-foreground">
+                Home
+              </Link>
+              <Link to="/equilibrium" className="transition-colors hover:text-foreground">
+                Equilibrium
+              </Link>
               <Link to="/kinetics" className="transition-colors hover:text-foreground">
                 Kinetics
               </Link>
-              <Link to="/" className="transition-colors hover:text-foreground">
-                Equilibrium
-              </Link>
               <Link to="/acid-base" className="transition-colors hover:text-foreground">
                 Acid–Base
-              </Link>
-              <Link to="/geometry" className="transition-colors hover:text-foreground">
-                Geometry
               </Link>
               <Link to="/everyday" className="transition-colors hover:text-foreground">
                 Daily Life
