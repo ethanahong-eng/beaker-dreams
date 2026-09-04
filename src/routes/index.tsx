@@ -14,7 +14,7 @@ const modules: Module[] = [
   {
     to: "/geometry",
     index: "01",
-    tag: "Module 01 · Molecular Architecture",
+    tag: "TOPIC 01 · MOLECULAR ARCHITECTURE",
     title: "Molecule Geometry",
     accent: "Geometry",
     description:
@@ -24,7 +24,7 @@ const modules: Module[] = [
   {
     to: "/hybridization",
     index: "02",
-    tag: "Module 02 · Orbital Mixing",
+    tag: "TOPIC 02 · ORBITAL MIXING",
     title: "Hybridization",
     accent: "Hybridization",
     description:
@@ -34,7 +34,7 @@ const modules: Module[] = [
   {
     to: "/kinetics",
     index: "03",
-    tag: "Module 03 · Reaction Rates",
+    tag: "TOPIC 03 · REACTION RATES",
     title: "Collision Kinetics",
     accent: "Kinetics",
     description:
@@ -44,7 +44,7 @@ const modules: Module[] = [
   {
     to: "/equilibrium",
     index: "04",
-    tag: "Module 04 · Chemical Dynamics",
+    tag: "TOPIC 04 · CHEMICAL DYNAMICS",
     title: "Dynamic Equilibrium",
     accent: "Equilibrium",
     description:
@@ -54,7 +54,7 @@ const modules: Module[] = [
   {
     to: "/everyday",
     index: "05",
-    tag: "Module 05 · In the World",
+    tag: "TOPIC 05 · IN THE WORLD",
     title: "Chemistry in Daily Life",
     accent: "Daily Life",
     description:
@@ -100,7 +100,7 @@ function HomePage() {
            Molecular structures and behaviors
          </h1>
         <p className="mx-auto mt-8 max-w-2xl text-lg italic leading-relaxed text-muted-foreground">
-           Chemistry doesn't have to be confusing with the right visuals.  Each module here pairs a
+            Chemistry doesn't have to be confusing with the right visuals.  Each page here pairs a
            live simulation with the history and theory behind it.  Not only will you better understand
            the chemistry principles, but you'll also learn how and why
         </p>
@@ -141,7 +141,7 @@ function HomePage() {
       <section className="mb-20">
         <div className="mb-12 flex items-end justify-between border-b border-primary pb-4">
           <h2 className="font-display text-3xl font-bold text-primary">
-            Modules
+            Lessons
           </h2>
           <span className="text-[10px] font-bold uppercase text-muted-foreground">
             05 / 05
@@ -202,7 +202,7 @@ function HomePage() {
             {
               n: "01",
               t: "Significance",
-              d: "Every module opens with the history and stakes — why this reaction fed a city, ruined a drug, or decided a treaty — so the equation has a reason before you touch a slider.",
+               d: "Every page opens with the history and stakes — why this reaction fed a city, ruined a drug, or decided a treaty — so the equation has a reason before you touch a slider.",
             },
             {
               n: "02",
