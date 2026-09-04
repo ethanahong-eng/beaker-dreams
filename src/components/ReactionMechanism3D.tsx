@@ -145,7 +145,7 @@ export function ReactionMechanism3D() {
     const dy = e.clientY - dragRef.current.y;
     dragRef.current = { x: e.clientX, y: e.clientY };
     setYaw((y) => y + dx * 0.01);
-    setPitch((p) => Math.max(-1.3, Math.min(1.3, p + dy * 0.01)));
+    setPitch((p) => Math.max(-1.3, Math.min(1.3, p - dy * 0.01)));
   };
   const onPointerUp = () => {
     dragRef.current = null;

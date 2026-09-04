@@ -72,7 +72,7 @@ export function VseprBuilder() {
     const dy = e.clientY - dragRef.current.y;
     dragRef.current = { x: e.clientX, y: e.clientY };
     setYaw((y) => y + dx * 0.01);
-    setPitch((p) => Math.max(-1.4, Math.min(1.4, p + dy * 0.01)));
+    setPitch((p) => Math.max(-1.4, Math.min(1.4, p - dy * 0.01)));
   };
   const onPointerUp = () => {
     dragRef.current = null;
