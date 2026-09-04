@@ -95,7 +95,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&family=JetBrains+Mono:wght@400;500;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Nunito+Sans:wght@400;600;700&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
@@ -125,81 +125,83 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-background font-sans text-foreground selection:bg-accent/30">
-        <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-card/80 px-6 py-4 backdrop-blur-sm">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary font-bold text-primary-foreground">
+      <div className="min-h-screen bg-background font-sans text-foreground selection:bg-accent/20">
+        <nav className="sticky top-0 z-50 border-b border-border bg-background/95 px-6 py-5">
+          <div className="mx-auto flex max-w-7xl items-center justify-between">
+          <Link to="/" className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center border border-primary bg-primary font-display text-sm font-bold text-primary-foreground">
               V
             </span>
-            <span className="font-mono text-lg font-bold uppercase tracking-tighter">
+            <span className="font-display text-lg font-bold uppercase">
               Valence.lab
             </span>
           </Link>
-          <div className="hidden gap-8 text-sm font-medium md:flex">
+          <div className="hidden items-center gap-7 text-[11px] font-bold uppercase text-muted-foreground md:flex">
             <Link
               to="/"
-              className="transition-colors hover:text-accent"
-              activeProps={{ className: "text-accent" }}
+              className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
+              activeProps={{ className: "border-primary text-primary" }}
               activeOptions={{ exact: true }}
             >
               Home
             </Link>
             <Link
               to="/geometry"
-              className="transition-colors hover:text-accent"
-              activeProps={{ className: "text-accent" }}
+              className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
+              activeProps={{ className: "border-primary text-primary" }}
             >
               Geometry
             </Link>
             <Link
               to="/hybridization"
-              className="transition-colors hover:text-accent"
-              activeProps={{ className: "text-accent" }}
+              className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
+              activeProps={{ className: "border-primary text-primary" }}
             >
               Hybridization
             </Link>
             <Link
               to="/kinetics"
-              className="transition-colors hover:text-accent"
-              activeProps={{ className: "text-accent" }}
+              className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
+              activeProps={{ className: "border-primary text-primary" }}
             >
               Kinetics
             </Link>
             <Link
               to="/equilibrium"
-              className="transition-colors hover:text-accent"
-              activeProps={{ className: "text-accent" }}
+              className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
+              activeProps={{ className: "border-primary text-primary" }}
             >
               Equilibrium
             </Link>
             <Link
               to="/everyday"
-              className="transition-colors hover:text-accent"
-              activeProps={{ className: "text-accent" }}
+              className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
+              activeProps={{ className: "border-primary text-primary" }}
             >
               Daily Life
             </Link>
           </div>
           <Link
             to="/geometry"
-            className="bg-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent"
+            className="border border-primary bg-primary px-5 py-2 text-[11px] font-bold uppercase text-primary-foreground transition-colors hover:bg-transparent hover:text-primary"
           >
             Launch Lab
           </Link>
+          </div>
         </nav>
 
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
 
-        <footer className="mt-24 border-t border-border bg-card py-12">
+        <footer className="mt-24 border-t border-border bg-background py-12">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 px-6 md:flex-row">
             <div className="flex items-center gap-2">
-              <span className="h-6 w-6 rounded-sm bg-primary" />
-              <span className="font-mono text-sm font-bold uppercase tracking-tighter">
+              <span className="h-6 w-6 border border-primary bg-primary" />
+              <span className="font-display text-sm font-bold uppercase">
                 Valence Laboratory © 2026
               </span>
             </div>
-            <div className="flex gap-8 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            <div className="flex flex-wrap justify-center gap-6 text-[10px] font-bold uppercase text-muted-foreground">
               <Link to="/" className="transition-colors hover:text-foreground">
                 Home
               </Link>
