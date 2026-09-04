@@ -81,7 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Learn hard chemistry topics through interactive simulations: dynamic equilibrium, reaction kinetics and acid-base titration.",
+          "Learn hard chemistry topics through interactive simulations: molecular geometry, orbital hybridization, reaction kinetics and dynamic equilibrium.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
