@@ -18,7 +18,7 @@ const modules: Module[] = [
     title: "Molecule Geometry",
     accent: "Geometry",
     description:
-      "Electron domains around a central atom repel each other and settle as far apart as possible. Add bonding and lone pairs to a live VSEPR builder and watch real electron repulsion predict the correct 3D shape.",
+      "Electron domains around a central atom repel each other.  In order to find the lowest possible energy state, molecules will place themselves as far away as possible from each other, resulting in predictable Add bonding and lone pairs to a live VSEPR builder and watch real electron repulsion predict the correct 3D shape.",
     topics: ["VSEPR", "Electron domains", "Bond angles", "Lone pairs"],
   },
   {
@@ -28,7 +28,7 @@ const modules: Module[] = [
     title: "Hybridization",
     accent: "Hybridization",
     description:
-      "Atoms don't bond with the orbitals they're handed — they merge them first. See how s and p orbitals combine into sp, sp² and sp³ hybrids, and why the blend ratio fixes the molecule's angles and shape.",
+      "Before bonding with each other, orbitals in atoms have to merge. See how s and p orbitals combine into sp, sp² and sp³ hybrids, and why the blend ratio fixes the molecule's angles and shape.",
     topics: ["sp / sp² / sp³", "Orbital promotion", "π bonds", "Geometry link"],
   },
   {
