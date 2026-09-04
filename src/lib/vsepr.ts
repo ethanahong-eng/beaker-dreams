@@ -6,7 +6,11 @@
 // like water's ~104.5 degrees fall out of the simulation instead of being
 // asserted.
 
-export type Domain = { kind: "bond" | "lone"; pos: [number, number, number] };
+export type Domain = {
+  kind: "bond" | "lone";
+  pos: [number, number, number];
+  element?: ElementSymbol;
+};
 
 const LONE_PAIR_WEIGHT = 1.2;
 
@@ -38,6 +42,16 @@ export function initialDomains(bonding: number, lone: number): Domain[] {
   return domains;
 }
 
+// Same layout as initialDomains, but each bonding domain is tagged with the
+// actual terminal element occupying it (in the order attached), so the
+// renderer can draw the real atom instead of a generic sphere. Physics
+// doesn't care which element is there -- only electron-domain count and
+// kind matter for repulsion -- so this just decorates the existing layout.
+export function initialDomainsWithElements(terminals: ElementSymbol[], lone: number): Domain[] {
+  const base = initialDomains(terminals.length, lone);
+  return base.map((d, i) => (d.kind === "bond" ? { ...d, element: terminals[i]! } : d));
+}
+
 // One damped relaxation step: every pair of domains pushes the other away
 // along the great-circle direction between them, weighted by charge, then
 // everything is renormalized back onto the unit sphere.
@@ -64,6 +78,7 @@ export function relaxStep(domains: Domain[], rate: number): Domain[] {
   }
   return domains.map((d, i) => ({
     kind: d.kind,
+    ...(d.element !== undefined ? { element: d.element } : {}),
     pos: normalize([d.pos[0] + forces[i]![0], d.pos[1] + forces[i]![1], d.pos[2] + forces[i]![2]]),
   }));
 }
@@ -129,27 +144,292 @@ export function bondAngleFromDomains(domains: Domain[]): number | null {
   return min;
 }
 
+// --- Real-atom toolkit ---------------------------------------------------
+// Everything below turns the abstract "N bonding pairs, M lone pairs"
+// builder into an actual periodic-table toolkit: pick a central atom, drag
+// real terminal atoms onto it, and let plain valence-electron bookkeeping
+// -- the same rule taught as "count electrons, subtract one pair per bond,
+// whatever's left is lone pairs" -- decide both whether the combination is
+// chemically legal and how many lone pairs the central atom ends up with.
+// No molecule-by-molecule lookup table: XeF2's three lone pairs, SF6's
+// none, and ClF3's rejection of a 4th halogen all fall out of the same
+// four-line calculation.
+
+export type ElementSymbol =
+  "H" | "Be" | "B" | "C" | "N" | "O" | "F" | "Al" | "Si" | "P" | "S" | "Cl" | "Br" | "I" | "Xe";
+
+type ElementInfo = {
+  symbol: ElementSymbol;
+  name: string;
+  color: string;
+  radius: number;
+  valenceElectrons: number; // used when this element is the central atom
+  maxDomains: 4 | 6; // strict octet (period 2) vs. an expanded one
+};
+
+export const ELEMENTS: Record<ElementSymbol, ElementInfo> = {
+  H: {
+    symbol: "H",
+    name: "Hydrogen",
+    color: "rgba(148, 163, 184, 0.9)",
+    radius: 5,
+    valenceElectrons: 1,
+    maxDomains: 4,
+  },
+  Be: {
+    symbol: "Be",
+    name: "Beryllium",
+    color: "rgba(196, 181, 253, 0.9)",
+    radius: 10,
+    valenceElectrons: 2,
+    maxDomains: 4,
+  },
+  B: {
+    symbol: "B",
+    name: "Boron",
+    color: "rgba(244, 114, 182, 0.9)",
+    radius: 10,
+    valenceElectrons: 3,
+    maxDomains: 4,
+  },
+  C: {
+    symbol: "C",
+    name: "Carbon",
+    color: "rgba(15, 23, 42, 0.92)",
+    radius: 11,
+    valenceElectrons: 4,
+    maxDomains: 4,
+  },
+  N: {
+    symbol: "N",
+    name: "Nitrogen",
+    color: "rgba(59, 130, 246, 0.9)",
+    radius: 10,
+    valenceElectrons: 5,
+    maxDomains: 4,
+  },
+  O: {
+    symbol: "O",
+    name: "Oxygen",
+    color: "rgba(220, 38, 38, 0.92)",
+    radius: 10,
+    valenceElectrons: 6,
+    maxDomains: 4,
+  },
+  F: {
+    symbol: "F",
+    name: "Fluorine",
+    color: "rgba(134, 239, 172, 0.9)",
+    radius: 9,
+    valenceElectrons: 7,
+    maxDomains: 4,
+  },
+  Al: {
+    symbol: "Al",
+    name: "Aluminum",
+    color: "rgba(100, 116, 139, 0.8)",
+    radius: 12,
+    valenceElectrons: 3,
+    maxDomains: 6,
+  },
+  Si: {
+    symbol: "Si",
+    name: "Silicon",
+    color: "rgba(161, 98, 7, 0.75)",
+    radius: 12,
+    valenceElectrons: 4,
+    maxDomains: 6,
+  },
+  P: {
+    symbol: "P",
+    name: "Phosphorus",
+    color: "rgba(249, 115, 22, 0.9)",
+    radius: 12,
+    valenceElectrons: 5,
+    maxDomains: 6,
+  },
+  S: {
+    symbol: "S",
+    name: "Sulfur",
+    color: "rgba(234, 179, 8, 0.9)",
+    radius: 11,
+    valenceElectrons: 6,
+    maxDomains: 6,
+  },
+  Cl: {
+    symbol: "Cl",
+    name: "Chlorine",
+    color: "rgba(34, 197, 94, 0.9)",
+    radius: 11,
+    valenceElectrons: 7,
+    maxDomains: 6,
+  },
+  Br: {
+    symbol: "Br",
+    name: "Bromine",
+    color: "rgba(153, 27, 27, 0.85)",
+    radius: 12,
+    valenceElectrons: 7,
+    maxDomains: 6,
+  },
+  I: {
+    symbol: "I",
+    name: "Iodine",
+    color: "rgba(147, 51, 234, 0.85)",
+    radius: 13,
+    valenceElectrons: 7,
+    maxDomains: 6,
+  },
+  Xe: {
+    symbol: "Xe",
+    name: "Xenon",
+    color: "rgba(45, 212, 191, 0.85)",
+    radius: 13,
+    valenceElectrons: 8,
+    maxDomains: 6,
+  },
+};
+
+// Central-atom candidates cover the usual intro-VSEPR set. Terminal atoms
+// are restricted to a small set with an unambiguous, fixed bond order --
+// halogens and hydrogen always single-bond, oxygen and sulfur always
+// double-bond as a terminal group (the common carbonyl/sulfonyl case) --
+// so the interaction never needs to ask the user "single or double bond?"
+// while still reproducing real electron-domain counts.
+export const CENTRAL_CANDIDATES: ElementSymbol[] = [
+  "Be",
+  "B",
+  "C",
+  "N",
+  "O",
+  "Al",
+  "Si",
+  "P",
+  "S",
+  "Cl",
+  "Br",
+  "I",
+  "Xe",
+];
+export const TERMINAL_CANDIDATES: ElementSymbol[] = ["H", "F", "Cl", "Br", "I", "O", "S"];
+
+export const TERMINAL_BOND_COST: Partial<Record<ElementSymbol, 1 | 2>> = {
+  H: 1,
+  F: 1,
+  Cl: 1,
+  Br: 1,
+  I: 1,
+  O: 2,
+  S: 2,
+};
+
+// Valence electrons left on the central atom once every terminal atom's
+// bond is accounted for, halved into lone pairs. Null means the
+// combination isn't chemically valid -- negative or odd electrons left
+// over, or more electron domains than the central atom's octet allows.
+export function computeLonePairs(
+  central: ElementSymbol,
+  terminals: ElementSymbol[],
+): number | null {
+  if (terminals.length === 0) return null;
+  const info = ELEMENTS[central];
+  const consumed = terminals.reduce((sum, t) => sum + (TERMINAL_BOND_COST[t] ?? 1), 0);
+  const remaining = info.valenceElectrons - consumed;
+  if (remaining < 0 || remaining % 2 !== 0) return null;
+  const lone = remaining / 2;
+  if (terminals.length + lone > info.maxDomains) return null;
+  return lone;
+}
+
+export type AttachResult = { ok: true; lone: number } | { ok: false; reason: string };
+
+// Tries adding one more terminal atom and explains, in plain language,
+// exactly which valence rule a rejected attempt would break -- this is
+// the check that keeps the toolkit from building anything that "doesn't
+// exist in nature" by the same standard a chemistry class would use.
+// Only two things about an attachment are irrecoverable no matter what gets
+// attached afterward: running the central atom out of valence electrons, or
+// packing in more electron domains than its octet (or expanded octet)
+// allows. An odd number of electrons left over is NOT one of those --
+// carbon reads as "incomplete" after one or three chlorines are attached,
+// not "wrong," because a fourth one finishes CCl4 perfectly legally.
+// Blocking on odd parity would reject every legitimate structure on the
+// way to being built one bond at a time, so only the two irrecoverable
+// cases gate the drop; parity is left for computeLonePairs to report as
+// "not resolved yet" rather than "invalid."
+export function tryAttach(
+  central: ElementSymbol,
+  terminals: ElementSymbol[],
+  next: ElementSymbol,
+): AttachResult {
+  const info = ELEMENTS[central];
+  const candidate = [...terminals, next];
+  const consumed = candidate.reduce((sum, t) => sum + (TERMINAL_BOND_COST[t] ?? 1), 0);
+  const remaining = info.valenceElectrons - consumed;
+  if (remaining < 0) {
+    return {
+      ok: false,
+      reason: `${info.name} doesn't have enough valence electrons left to bond another ${ELEMENTS[next].name.toLowerCase()} atom.`,
+    };
+  }
+  const domainEstimate = candidate.length + Math.floor(remaining / 2);
+  if (domainEstimate > info.maxDomains) {
+    return {
+      ok: false,
+      reason:
+        info.maxDomains === 4
+          ? `${info.name} can't exceed 4 electron domains — the octet rule caps it there.`
+          : `${info.name} can't hold more than ${info.maxDomains} electron domains.`,
+    };
+  }
+  return { ok: true, lone: computeLonePairs(central, candidate) ?? 0 };
+}
+
+const SUBSCRIPT_DIGITS = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"];
+function subscript(n: number): string {
+  return String(n)
+    .split("")
+    .map((d) => SUBSCRIPT_DIGITS[Number(d)])
+    .join("");
+}
+
+export function formulaOf(central: ElementSymbol, terminals: ElementSymbol[]): string {
+  const counts = new Map<ElementSymbol, number>();
+  for (const t of terminals) counts.set(t, (counts.get(t) ?? 0) + 1);
+  let formula = central as string;
+  for (const [el, n] of [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    formula += el + (n > 1 ? subscript(n) : "");
+  }
+  return formula;
+}
+
+export function sameComposition(a: ElementSymbol[], b: ElementSymbol[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((el, i) => el === sortedB[i]);
+}
+
 export type MoleculeTarget = {
   formula: string;
-  centralAtom: string;
-  bonding: number;
-  lone: number;
+  central: ElementSymbol;
+  terminals: ElementSymbol[];
 };
 
 export const MOLECULE_DECK: MoleculeTarget[] = [
-  { formula: "BeCl2", centralAtom: "Be", bonding: 2, lone: 0 },
-  { formula: "BF3", centralAtom: "B", bonding: 3, lone: 0 },
-  { formula: "SO2", centralAtom: "S", bonding: 2, lone: 1 },
-  { formula: "CH4", centralAtom: "C", bonding: 4, lone: 0 },
-  { formula: "NH3", centralAtom: "N", bonding: 3, lone: 1 },
-  { formula: "H2O", centralAtom: "O", bonding: 2, lone: 2 },
-  { formula: "PCl5", centralAtom: "P", bonding: 5, lone: 0 },
-  { formula: "SF4", centralAtom: "S", bonding: 4, lone: 1 },
-  { formula: "ClF3", centralAtom: "Cl", bonding: 3, lone: 2 },
-  { formula: "XeF2", centralAtom: "Xe", bonding: 2, lone: 3 },
-  { formula: "SF6", centralAtom: "S", bonding: 6, lone: 0 },
-  { formula: "BrF5", centralAtom: "Br", bonding: 5, lone: 1 },
-  { formula: "XeF4", centralAtom: "Xe", bonding: 4, lone: 2 },
+  { formula: "BeCl₂", central: "Be", terminals: ["Cl", "Cl"] },
+  { formula: "BF₃", central: "B", terminals: ["F", "F", "F"] },
+  { formula: "CO₂", central: "C", terminals: ["O", "O"] },
+  { formula: "CH₄", central: "C", terminals: ["H", "H", "H", "H"] },
+  { formula: "NH₃", central: "N", terminals: ["H", "H", "H"] },
+  { formula: "H₂O", central: "O", terminals: ["H", "H"] },
+  { formula: "PCl₅", central: "P", terminals: ["Cl", "Cl", "Cl", "Cl", "Cl"] },
+  { formula: "SF₄", central: "S", terminals: ["F", "F", "F", "F"] },
+  { formula: "ClF₃", central: "Cl", terminals: ["F", "F", "F"] },
+  { formula: "XeF₂", central: "Xe", terminals: ["F", "F"] },
+  { formula: "SF₆", central: "S", terminals: ["F", "F", "F", "F", "F", "F"] },
+  { formula: "BrF₅", central: "Br", terminals: ["F", "F", "F", "F", "F"] },
+  { formula: "XeF₄", central: "Xe", terminals: ["F", "F", "F", "F"] },
 ];
 
 export function shuffledDeck(): MoleculeTarget[] {

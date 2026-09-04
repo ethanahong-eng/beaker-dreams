@@ -14,7 +14,7 @@ export const Route = createFileRoute("/geometry")({
       {
         name: "description",
         content:
-          "Build molecules by choosing bonding and lone pairs, then watch real electron repulsion settle into the correct 3D shape.",
+          "Drag real atoms from a periodic-table toolkit onto a central atom and watch valence electron bookkeeping and real repulsion physics settle into the correct 3D shape, lone pairs included.",
       },
       { property: "og:title", content: "VSEPR Molecule Builder — Valence Lab" },
       {
@@ -80,12 +80,14 @@ function GeometryPage() {
             Section 02 · Builder
           </span>
           <h2 id="builder-heading" className="mt-3 text-3xl font-bold">
-            Build a molecule, one electron domain at a time
+            Build a molecule, one real atom at a time
           </h2>
           <p className="mt-4 leading-relaxed text-muted-foreground">
-            Add bonding pairs and lone pairs and watch the shape settle live. Switch to Challenge
-            mode to be given a real molecule's formula and try to reproduce its geometry from
-            scratch.
+            Pick a central atom, then drag or click terminal atoms from the toolkit to attach them.
+            Every attachment is checked against the central atom's valence electrons — try to
+            overload carbon with a 5th bond and it simply won't drop. Lone pairs aren't set by hand;
+            they're whatever electrons are left over once the bonds are drawn. Switch to Challenge
+            mode to be given a real molecule's formula and build it atom by atom.
           </p>
         </div>
         <div>
