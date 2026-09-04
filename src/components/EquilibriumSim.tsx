@@ -487,7 +487,7 @@ export function EquilibriumSim() {
     const dy = e.clientY - dragRef.current.y;
     dragRef.current = { x: e.clientX, y: e.clientY };
     stateRef.current.yaw += dx * 0.008;
-    stateRef.current.pitch = clamp(stateRef.current.pitch + dy * 0.008, -1.4, 1.4);
+    stateRef.current.pitch = clamp(stateRef.current.pitch - dy * 0.008, -1.4, 1.4);
   };
   const onCanvasPointerUp = () => {
     dragRef.current = null;
