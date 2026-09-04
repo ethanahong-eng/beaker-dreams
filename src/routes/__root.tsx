@@ -181,12 +181,6 @@ function RootComponent() {
               Daily Life
             </Link>
           </div>
-          <Link
-            to="/geometry"
-            className="border border-primary bg-primary px-5 py-2 text-[11px] font-bold uppercase text-primary-foreground transition-colors hover:bg-transparent hover:text-primary"
-          >
-            Launch Lab
-          </Link>
           </div>
         </nav>
 
