@@ -121,19 +121,19 @@ function EquilibriumPage() {
             </p>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
-                <span className="font-mono font-bold text-accent">Qc < Kc:</span>
+                <span className="font-mono font-bold text-accent">{"Qc < Kc:"}</span>
                 <span className="text-sm">
                   Reaction proceeds forward (right) to form more products.
                 </span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="font-mono font-bold text-accent">Qc > Kc:</span>
+                <span className="font-mono font-bold text-accent">{"Qc > Kc:"}</span>
                 <span className="text-sm">
                   Reaction proceeds backward (left) to form more reactants.
                 </span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="font-mono font-bold text-accent">Qc = Kc:</span>
+                <span className="font-mono font-bold text-accent">{"Qc = Kc:"}</span>
                 <span className="text-sm">
                   Rates are matched. Molecules keep reacting, but concentrations hold steady.
                 </span>
