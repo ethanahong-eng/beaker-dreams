@@ -37,7 +37,7 @@ function KineticsPage() {
     <main className="mx-auto max-w-7xl px-6 py-12">
       <header className="mb-16 max-w-3xl">
         <div className="mb-4 inline-block border border-accent/20 bg-accent/10 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
-          Module 02: Reaction Rates
+          Module 03: Reaction Rates
         </div>
         <h1 className="mb-6 text-5xl font-extrabold tracking-tight md:text-6xl">
           Collision <span className="text-accent">Kinetics</span>

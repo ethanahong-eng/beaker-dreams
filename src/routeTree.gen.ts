@@ -10,20 +10,15 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AcidBaseRouteImport } from './routes/acid-base'
 import { Route as EquilibriumRouteImport } from './routes/equilibrium'
 import { Route as EverydayRouteImport } from './routes/everyday'
 import { Route as GeometryRouteImport } from './routes/geometry'
+import { Route as HybridizationRouteImport } from './routes/hybridization'
 import { Route as KineticsRouteImport } from './routes/kinetics'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AcidBaseRoute = AcidBaseRouteImport.update({
-  id: '/acid-base',
-  path: '/acid-base',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EquilibriumRoute = EquilibriumRouteImport.update({
@@ -41,6 +36,11 @@ const GeometryRoute = GeometryRouteImport.update({
   path: '/geometry',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HybridizationRoute = HybridizationRouteImport.update({
+  id: '/hybridization',
+  path: '/hybridization',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KineticsRoute = KineticsRouteImport.update({
   id: '/kinetics',
   path: '/kinetics',
@@ -49,62 +49,62 @@ const KineticsRoute = KineticsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/acid-base': typeof AcidBaseRoute
   '/equilibrium': typeof EquilibriumRoute
   '/everyday': typeof EverydayRoute
   '/geometry': typeof GeometryRoute
+  '/hybridization': typeof HybridizationRoute
   '/kinetics': typeof KineticsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/acid-base': typeof AcidBaseRoute
   '/equilibrium': typeof EquilibriumRoute
   '/everyday': typeof EverydayRoute
   '/geometry': typeof GeometryRoute
+  '/hybridization': typeof HybridizationRoute
   '/kinetics': typeof KineticsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/acid-base': typeof AcidBaseRoute
   '/equilibrium': typeof EquilibriumRoute
   '/everyday': typeof EverydayRoute
   '/geometry': typeof GeometryRoute
+  '/hybridization': typeof HybridizationRoute
   '/kinetics': typeof KineticsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/acid-base'
     | '/equilibrium'
     | '/everyday'
     | '/geometry'
+    | '/hybridization'
     | '/kinetics'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/acid-base'
     | '/equilibrium'
     | '/everyday'
     | '/geometry'
+    | '/hybridization'
     | '/kinetics'
   id:
     | '__root__'
     | '/'
-    | '/acid-base'
     | '/equilibrium'
     | '/everyday'
     | '/geometry'
+    | '/hybridization'
     | '/kinetics'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AcidBaseRoute: typeof AcidBaseRoute
   EquilibriumRoute: typeof EquilibriumRoute
   EverydayRoute: typeof EverydayRoute
   GeometryRoute: typeof GeometryRoute
+  HybridizationRoute: typeof HybridizationRoute
   KineticsRoute: typeof KineticsRoute
 }
 
@@ -115,13 +115,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/acid-base': {
-      id: '/acid-base'
-      path: '/acid-base'
-      fullPath: '/acid-base'
-      preLoaderRoute: typeof AcidBaseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/equilibrium': {
@@ -145,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GeometryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hybridization': {
+      id: '/hybridization'
+      path: '/hybridization'
+      fullPath: '/hybridization'
+      preLoaderRoute: typeof HybridizationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/kinetics': {
       id: '/kinetics'
       path: '/kinetics'
@@ -157,10 +157,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AcidBaseRoute: AcidBaseRoute,
   EquilibriumRoute: EquilibriumRoute,
   EverydayRoute: EverydayRoute,
   GeometryRoute: GeometryRoute,
+  HybridizationRoute: HybridizationRoute,
   KineticsRoute: KineticsRoute,
 }
 export const routeTree = rootRouteImport

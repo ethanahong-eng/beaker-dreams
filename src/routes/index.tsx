@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 type Module = {
-  to: "/equilibrium" | "/kinetics" | "/acid-base" | "/everyday";
+  to: "/geometry" | "/hybridization" | "/kinetics" | "/equilibrium" | "/everyday";
   index: string;
   tag: string;
   title: string;
@@ -12,8 +12,38 @@ type Module = {
 
 const modules: Module[] = [
   {
-    to: "/equilibrium",
+    to: "/geometry",
     index: "01",
+    tag: "Module 01 · Molecular Architecture",
+    title: "Molecule Geometry",
+    accent: "Geometry",
+    description:
+      "Electron domains around a central atom repel each other and settle as far apart as possible. Add bonding and lone pairs to a live VSEPR builder and watch real electron repulsion predict the correct 3D shape.",
+    topics: ["VSEPR", "Electron domains", "Bond angles", "Lone pairs"],
+  },
+  {
+    to: "/hybridization",
+    index: "02",
+    tag: "Module 02 · Orbital Mixing",
+    title: "Hybridization",
+    accent: "Hybridization",
+    description:
+      "Atoms don't bond with the orbitals they're handed — they merge them first. See how s and p orbitals combine into sp, sp² and sp³ hybrids, and why the blend ratio fixes the molecule's angles and shape.",
+    topics: ["sp / sp² / sp³", "Orbital promotion", "π bonds", "Geometry link"],
+  },
+  {
+    to: "/kinetics",
+    index: "03",
+    tag: "Module 03 · Reaction Rates",
+    title: "Collision Kinetics",
+    accent: "Kinetics",
+    description:
+      "A reaction only fires when molecules collide with enough energy and the right orientation. Shift the Maxwell–Boltzmann distribution, raise activation energy, or add a catalyst to see how few collisions actually clear the barrier.",
+    topics: ["Activation energy", "Maxwell–Boltzmann", "Catalysis", "Arrhenius"],
+  },
+  {
+    to: "/equilibrium",
+    index: "04",
     tag: "Module 04 · Chemical Dynamics",
     title: "Dynamic Equilibrium",
     accent: "Equilibrium",
@@ -22,28 +52,8 @@ const modules: Module[] = [
     topics: ["Le Chatelier", "Qc vs Kc", "Haber–Bosch", "Water-gas shift"],
   },
   {
-    to: "/kinetics",
-    index: "02",
-    tag: "Module 02 · Reaction Rates",
-    title: "Collision Kinetics",
-    accent: "Kinetics",
-    description:
-      "A reaction only fires when molecules collide with enough energy and the right orientation. Shift the Maxwell–Boltzmann distribution, raise activation energy, or add a catalyst to see how few collisions actually clear the barrier.",
-    topics: ["Activation energy", "Maxwell–Boltzmann", "Catalysis", "Arrhenius"],
-  },
-  {
-    to: "/acid-base",
-    index: "03",
-    tag: "Module 03 · Aqueous Chemistry",
-    title: "Acid–Base Titration",
-    accent: "Acid–Base",
-    description:
-      "Generate titration curves for strong and weak acids against NaOH. Read the buffer region, locate the equivalence point, and see why pKa governs how a weak acid resists change long before neutralization.",
-    topics: ["Titration curves", "pKa & buffers", "Equivalence point", "Henderson–Hasselbalch"],
-  },
-  {
     to: "/everyday",
-    index: "04",
+    index: "05",
     tag: "Module 05 · In the World",
     title: "Chemistry in Daily Life",
     accent: "Daily Life",
@@ -60,13 +70,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Learn hard chemistry topics through interactive simulations: dynamic equilibrium, reaction kinetics, acid–base titration, and the chemistry that shapes daily life.",
+          "Learn hard chemistry topics through interactive simulations: molecular geometry, orbital hybridization, reaction kinetics and dynamic equilibrium — plus the chemistry that shapes daily life.",
       },
       { property: "og:title", content: "Valence Lab — Interactive Chemistry Simulations" },
       {
         property: "og:description",
         content:
-          "Interactive chemistry lessons with live simulations of equilibrium, kinetics and acid–base titration, plus explainers on the chemistry of daily life.",
+          "Interactive chemistry lessons with live simulations of molecular geometry, hybridization, kinetics and equilibrium, plus explainers on the chemistry of daily life.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -97,7 +107,7 @@ function HomePage() {
         </p>
         <div className="mt-10 flex flex-wrap gap-4">
           <Link
-            to="/equilibrium"
+            to="/geometry"
             className="bg-primary px-6 py-3 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-accent"
           >
             Launch the lab
@@ -135,7 +145,7 @@ function HomePage() {
             Modules
           </h2>
           <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            04 / 04
+            05 / 05
           </span>
         </div>
 
