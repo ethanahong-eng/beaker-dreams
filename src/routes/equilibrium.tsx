@@ -32,7 +32,7 @@ function EquilibriumPage() {
     <main className="mx-auto max-w-7xl px-6 py-16">
       <header className="mb-16 max-w-3xl border-b border-border pb-12">
         <div className="mb-5 inline-block border-y border-border px-4 py-2 text-[10px] font-bold uppercase text-accent">
-          Module 04: Chemical Dynamics
+          TOPIC 04: CHEMICAL DYNAMICS
         </div>
         <h1 className="mb-6 font-display text-5xl font-bold md:text-6xl">
           Dynamic <span className="text-accent">Equilibrium</span>
