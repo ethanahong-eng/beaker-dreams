@@ -14,7 +14,7 @@ export const Route = createFileRoute("/geometry")({
       {
         name: "description",
         content:
-          "Drag real atoms from a periodic-table toolkit onto a central atom and watch valence electron bookkeeping and real repulsion physics settle into the correct 3D shape, lone pairs included.",
+          "Build real multi-atom molecules — chains, branches, and all — atom by atom, and watch valence electron bookkeeping and real repulsion physics settle every center into its correct 3D shape, lone pairs included.",
       },
       { property: "og:title", content: "VSEPR Molecule Builder — Valence Lab" },
       {
@@ -68,6 +68,25 @@ function GeometryPage() {
             simulates that repulsion directly rather than asserting the answer.
           </p>
         </div>
+        <div className="mt-10 grid gap-10 md:grid-cols-2">
+          <p className="leading-relaxed text-muted-foreground">
+            A real molecule with more than one heavy atom isn't one VSEPR problem — it's several,
+            stitched together bond by bond. A working full quantum-mechanical calculation (DFT or
+            even a minimal ab initio method) needs iterative matrix diagonalization over basis-set
+            integrals, which takes seconds to minutes even on server hardware — far too slow to
+            redraw live as a student drags atoms around in a browser with no backend.
+          </p>
+          <p className="leading-relaxed text-muted-foreground">
+            So the builder runs the same real electron-domain repulsion physics independently at
+            every bonded center, then rotates each atom's whole local result as a rigid unit to line
+            it up with the shared bond back to its neighbor — the same distance-geometry shortcut
+            real cheminformatics tools like RDKit's ETKDG use to generate fast 3D structures without
+            full quantum optimization. It's honest chemistry, just not the slowest possible version
+            of it. The one thing this approach can't decide on its own — the twist around a bond,
+            which real molecules are also free to rotate through — is exposed directly as its own
+            tool rather than guessed.
+          </p>
+        </div>
       </section>
 
       <section
@@ -83,11 +102,16 @@ function GeometryPage() {
             Build a molecule, one real atom at a time
           </h2>
           <p className="mt-4 leading-relaxed text-muted-foreground">
-            Pick a central atom, then drag or click terminal atoms from the toolkit to attach them.
-            Every attachment is checked against the central atom's valence electrons — try to
-            overload carbon with a 5th bond and it simply won't drop. Lone pairs aren't set by hand;
-            they're whatever electrons are left over once the bonds are drawn. Switch to Challenge
-            mode to be given a real molecule's formula and build it atom by atom.
+            Click an atom in the toolkit to place it, then click again to attach the next one to
+            whichever atom is selected — build carbon chains, branches, whatever you like, up to 10
+            atoms, capped so the physics stays fast and the structure stays legible. Every
+            attachment is checked against both atoms' valence electrons before it's allowed to form.
+            The tool bar adds the rest of a real molecular-modeling kit: cycle a bond between
+            single, double, and triple (σ vs. π), remove a leaf atom, measure the real angle between
+            any three bonded atoms, or rotate a bond's torsion to explore the one degree of freedom
+            VSEPR alone can't pin down. Lone pairs are never set by hand — they're whatever
+            electrons are left over once the bonds are drawn. Switch to Challenge mode to be given a
+            real molecule's formula and build it atom by atom.
           </p>
         </div>
         <div>

@@ -1,189 +1,291 @@
 import {
-  useEffect,
+  useMemo,
   useRef,
   useState,
-  type DragEvent as ReactDragEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+  type WheelEvent as ReactWheelEvent,
 } from "react";
 import {
-  initialDomainsWithElements,
-  relaxStep,
-  maxDisplacement,
+  ELEMENTS,
+  DEFAULT_LONE_PAIR_WEIGHT,
+  computeLonePairs as legacyComputeLonePairs,
   electronGeometryName,
   molecularGeometryName,
-  bondAngleFromDomains,
-  computeLonePairs,
-  tryAttach,
-  formulaOf,
-  sameComposition,
   shuffledDeck,
-  ELEMENTS,
-  CENTRAL_CANDIDATES,
-  TERMINAL_CANDIDATES,
-  TERMINAL_BOND_COST,
-  DEFAULT_LONE_PAIR_WEIGHT,
-  type Domain,
   type ElementSymbol,
   type MoleculeTarget,
 } from "@/lib/vsepr";
-import { rotate3d } from "@/lib/project3d";
+import {
+  ATOM_CHOICES,
+  MAX_ATOMS,
+  neighborsOf,
+  bondBetween,
+  lonePairsOf,
+  bondKey,
+  tryAddAtom,
+  tryChangeBondOrder,
+  isRemovable,
+  removeAtom,
+  formulaOfGraph,
+  type AtomId,
+  type MoleculeAtom,
+  type MoleculeBond,
+  type BondOrder,
+} from "@/lib/molecule";
+import { embedMolecule, type EmbeddedAtom } from "@/lib/embed";
+import { HYBRID_TYPES } from "@/lib/hybridization";
+import {
+  rotate3d,
+  vAdd,
+  vSub,
+  vScale,
+  vDot,
+  vLength,
+  vNormalize,
+  type Vec3,
+} from "@/lib/project3d";
 import { AxisGizmo } from "@/components/AxisGizmo";
 
-const DEFAULT_CENTRAL: ElementSymbol = "C";
-const DEFAULT_TERMINALS: ElementSymbol[] = ["H", "H", "H", "H"];
+type Tool = "add" | "bondOrder" | "remove" | "angle" | "torsion";
+
+function hybridLabelForDomains(n: number): string {
+  const found = Object.values(HYBRID_TYPES).find((h) => h.domains === n);
+  return found?.label ?? "—";
+}
+
+function angleBetween(a: Vec3, b: Vec3): number {
+  const d = Math.max(-1, Math.min(1, vDot(vNormalize(a), vNormalize(b))));
+  return (Math.acos(d) * 180) / Math.PI;
+}
+
+// The trimmed atom toolkit doesn't include every element the legacy
+// single-center deck was written against (Be, B, and Xe dropped out) --
+// filter those targets out rather than leave Challenge mode asking for a
+// molecule the toolkit has no way to place.
+const BUILDABLE_ELEMENTS = new Set<ElementSymbol>(ATOM_CHOICES);
+function isBuildableTarget(t: MoleculeTarget): boolean {
+  return BUILDABLE_ELEMENTS.has(t.central) && t.terminals.every((e) => BUILDABLE_ELEMENTS.has(e));
+}
+function buildableDeck(): MoleculeTarget[] {
+  return shuffledDeck().filter(isBuildableTarget);
+}
 
 export function VseprBuilder() {
-  const [central, setCentral] = useState<ElementSymbol>(DEFAULT_CENTRAL);
-  const [terminals, setTerminals] = useState<ElementSymbol[]>(DEFAULT_TERMINALS);
-  const [domains, setDomains] = useState<Domain[]>([]);
+  const [atoms, setAtoms] = useState<MoleculeAtom[]>([]);
+  const [bonds, setBonds] = useState<MoleculeBond[]>([]);
+  const [rootId, setRootId] = useState<AtomId>(0);
+  const [selectedAtom, setSelectedAtom] = useState<AtomId | null>(null);
+  const [tool, setTool] = useState<Tool>("add");
+  const [newBondOrder, setNewBondOrder] = useState<BondOrder>(1);
+  const [torsions, setTorsions] = useState<Map<string, number>>(new Map());
+  const [torsionBond, setTorsionBond] = useState<{ a: AtomId; b: AtomId } | null>(null);
+  const [angleSelection, setAngleSelection] = useState<AtomId[]>([]);
+  const [lonePairWeight, setLonePairWeight] = useState(DEFAULT_LONE_PAIR_WEIGHT);
+  const [rejectMsg, setRejectMsg] = useState<string | null>(null);
+  const rejectTimerRef = useRef<number | null>(null);
+
   const [yaw, setYaw] = useState(0.6);
   const [pitch, setPitch] = useState(0.3);
-  const dragRef = useRef<{ x: number; y: number } | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const dragRef = useRef<{ x: number; y: number; dragging: boolean; pointerId: number } | null>(
+    null,
+  );
 
   const [mode, setMode] = useState<"practice" | "challenge">("practice");
-  const [deck, setDeck] = useState<MoleculeTarget[]>(() => shuffledDeck());
+  const [deck, setDeck] = useState<MoleculeTarget[]>(() => buildableDeck());
   const [deckIndex, setDeckIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const [checked, setChecked] = useState<boolean | null>(null);
 
-  const [rejectMsg, setRejectMsg] = useState<string | null>(null);
-  const rejectTimerRef = useRef<number | null>(null);
-  const [dropHover, setDropHover] = useState(false);
-  const [lonePairWeight, setLonePairWeight] = useState(DEFAULT_LONE_PAIR_WEIGHT);
-
   const target = deck[deckIndex % deck.length]!;
-  const centralInfo = ELEMENTS[central];
-  const hasMolecule = terminals.length > 0;
-  const lonePairsRaw = computeLonePairs(central, terminals);
-  // An odd number of electrons left over means the structure isn't
-  // finished pairing up yet (e.g. carbon after one or three chlorines) --
-  // that's "incomplete," not invalid, so it still renders (with a
-  // provisional 0 lone pairs) rather than blocking the build.
-  const isIncomplete = hasMolecule && lonePairsRaw === null;
-  const lonePairs = lonePairsRaw ?? 0;
-  const totalDomains = terminals.length + lonePairs;
+  const effectiveRoot = atoms.some((a) => a.id === rootId) ? rootId : (atoms[0]?.id ?? 0);
+  const hasMolecule = atoms.length > 0;
 
-  // Reinitialize on a fresh sphere layout and relax toward the repulsion
-  // minimum whenever the central atom or its attached terminals change,
-  // animating the settle.
-  useEffect(() => {
-    if (!hasMolecule) {
-      setDomains([]);
-      return;
-    }
-    let raf = 0;
-    let current = initialDomainsWithElements(terminals, lonePairs);
-    setDomains(current);
-    const step = () => {
-      const next = relaxStep(current, 0.06, lonePairWeight);
-      const delta = maxDisplacement(current, next);
-      current = next;
-      setDomains(current);
-      if (delta > 0.0005) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [central, terminals, lonePairs, hasMolecule, lonePairWeight]);
+  const flashReject = (reason: string) => {
+    setRejectMsg(reason);
+    if (rejectTimerRef.current) window.clearTimeout(rejectTimerRef.current);
+    rejectTimerRef.current = window.setTimeout(() => setRejectMsg(null), 3800);
+  };
 
-  useEffect(() => {
-    return () => {
-      if (rejectTimerRef.current) window.clearTimeout(rejectTimerRef.current);
-    };
-  }, []);
+  const embedded = useMemo<Map<AtomId, EmbeddedAtom>>(() => {
+    if (!hasMolecule) return new Map();
+    return embedMolecule(atoms, bonds, effectiveRoot, (key) => torsions.get(key), lonePairWeight);
+  }, [atoms, bonds, effectiveRoot, torsions, lonePairWeight, hasMolecule]);
 
-  const molecularName = molecularGeometryName(terminals.length, lonePairs);
-  const electronName = electronGeometryName(terminals.length, lonePairs);
-  const angle = bondAngleFromDomains(domains);
-  const formula = hasMolecule ? formulaOf(central, terminals) : null;
+  const { centroid, boundingRadius } = useMemo(() => {
+    const positions = [...embedded.values()].map((e) => e.pos as Vec3);
+    if (positions.length === 0) return { centroid: [0, 0, 0] as Vec3, boundingRadius: 0.6 };
+    const sum = positions.reduce((acc, p) => vAdd(acc, p), [0, 0, 0] as Vec3);
+    const c = vScale(sum, 1 / positions.length);
+    const radius = Math.max(0.6, ...positions.map((p) => vLength(vSub(p, c))));
+    return { centroid: c, boundingRadius: radius };
+  }, [embedded]);
 
-  const project = (d: Domain) => {
-    const [x1, y1, z2] = rotate3d(d.pos, yaw, pitch);
-    const scale = 1 / (2 - z2 * 0.6);
+  const project = (posGlobal: Vec3) => {
+    const centered = vSub(posGlobal, centroid);
+    const norm = vScale(centered, 1 / (boundingRadius + 0.55));
+    const [x1, y1, z2] = rotate3d(norm, yaw, pitch);
+    const scale = zoom / (2 - z2 * 0.6);
     return { x: x1 * scale, y: y1 * scale, z: z2, scale };
   };
 
-  const projected = domains.map((d, i) => ({ d, i, p: project(d) })).sort((a, b) => a.p.z - b.p.z);
-
+  // Pointer capture is deferred until the pointer has actually moved past a
+  // small threshold, rather than grabbed on every pointerdown. Capturing
+  // immediately would retarget the click event to the SVG itself on a plain
+  // tap (per the Pointer Events spec), which would make it impossible to
+  // ever click an atom or bond -- every tap would look identical to a
+  // zero-distance drag on the background.
+  const DRAG_THRESHOLD = 4;
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>) => {
-    dragRef.current = { x: e.clientX, y: e.clientY };
-    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = { x: e.clientX, y: e.clientY, dragging: false, pointerId: e.pointerId };
   };
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>) => {
-    if (!dragRef.current) return;
-    const dx = e.clientX - dragRef.current.x;
-    const dy = e.clientY - dragRef.current.y;
-    dragRef.current = { x: e.clientX, y: e.clientY };
+    const drag = dragRef.current;
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    const dy = e.clientY - drag.y;
+    if (!drag.dragging) {
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      drag.dragging = true;
+      e.currentTarget.setPointerCapture(drag.pointerId);
+    }
+    drag.x = e.clientX;
+    drag.y = e.clientY;
     setYaw((y) => y + dx * 0.01);
     setPitch((p) => Math.max(-1.4, Math.min(1.4, p - dy * 0.01)));
   };
   const onPointerUp = () => {
     dragRef.current = null;
   };
-
-  const flashReject = (reason: string) => {
-    setRejectMsg(reason);
-    if (rejectTimerRef.current) window.clearTimeout(rejectTimerRef.current);
-    rejectTimerRef.current = window.setTimeout(() => setRejectMsg(null), 3500);
+  const onWheel = (e: ReactWheelEvent<SVGSVGElement>) => {
+    e.preventDefault();
+    setZoom((z) => Math.max(0.4, Math.min(3, z * (1 - e.deltaY * 0.001))));
   };
 
-  // The one gate on everything a user can build: try the attachment, and
-  // if plain valence-electron bookkeeping says it isn't legal (the octet
-  // rule, an odd leftover electron, more domains than the atom can hold),
-  // refuse the drop and say exactly which rule it broke.
-  const attemptAttach = (el: ElementSymbol) => {
-    const result = tryAttach(central, terminals, el);
+  const resetMolecule = (starter: MoleculeAtom[] = []) => {
+    setAtoms(starter);
+    setBonds([]);
+    setRootId(starter[0]?.id ?? 0);
+    setSelectedAtom(starter[0]?.id ?? null);
+    setTorsions(new Map());
+    setTorsionBond(null);
+    setAngleSelection([]);
+    setRejectMsg(null);
+    setChecked(null);
+  };
+
+  const attemptAdd = (element: ElementSymbol) => {
+    const result = tryAddAtom(
+      atoms,
+      bonds,
+      hasMolecule ? selectedAtom : null,
+      element,
+      newBondOrder,
+    );
     if (!result.ok) {
       flashReject(result.reason);
       return;
     }
-    setRejectMsg(null);
-    setTerminals((t) => [...t, el]);
-    setChecked(null);
-  };
-
-  const removeTerminalAt = (index: number) => {
-    setTerminals((t) => t.filter((_, i) => i !== index));
-    setChecked(null);
-  };
-
-  const selectCentral = (el: ElementSymbol) => {
-    setCentral(el);
-    setTerminals([]);
+    setAtoms(result.atoms);
+    setBonds(result.bonds);
+    if (result.newId !== undefined) setSelectedAtom(result.newId);
     setRejectMsg(null);
     setChecked(null);
   };
 
-  const onTileDragStart = (e: ReactDragEvent<HTMLButtonElement>, el: ElementSymbol) => {
-    e.dataTransfer.setData("text/plain", el);
-    e.dataTransfer.effectAllowed = "copy";
+  const cycleBondOrder = (a: AtomId, b: AtomId) => {
+    const existing = bondBetween(bonds, a, b);
+    if (!existing) return;
+    const nextOrder = ((existing.order % 3) + 1) as BondOrder;
+    const result = tryChangeBondOrder(atoms, bonds, a, b, nextOrder);
+    if (!result.ok) {
+      flashReject(result.reason);
+      return;
+    }
+    setBonds(result.bonds);
+    setRejectMsg(null);
+    setChecked(null);
   };
-  const onDropZoneOver = (e: ReactDragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "copy";
-    setDropHover(true);
+
+  const attemptRemove = (id: AtomId) => {
+    if (!isRemovable(bonds, atoms, id)) {
+      flashReject("Only an atom with a single bond (a leaf) can be removed here.");
+      return;
+    }
+    const result = removeAtom(atoms, bonds, id);
+    setAtoms(result.atoms);
+    setBonds(result.bonds);
+    if (selectedAtom === id) setSelectedAtom(result.atoms[0]?.id ?? null);
+    setChecked(null);
   };
-  const onDropZoneLeave = () => setDropHover(false);
-  const onDropZoneDrop = (e: ReactDragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDropHover(false);
-    const el = e.dataTransfer.getData("text/plain") as ElementSymbol;
-    if (el && ELEMENTS[el]) attemptAttach(el);
+
+  const onAtomClick = (id: AtomId) => {
+    if (tool === "remove") {
+      attemptRemove(id);
+      return;
+    }
+    if (tool === "angle") {
+      setAngleSelection((sel) => {
+        if (sel.length >= 3) return [id];
+        if (sel[sel.length - 1] === id) return sel;
+        return [...sel, id];
+      });
+      return;
+    }
+    setSelectedAtom(id);
+  };
+
+  const onBondClick = (a: AtomId, b: AtomId) => {
+    if (tool === "bondOrder") {
+      cycleBondOrder(a, b);
+      return;
+    }
+    if (tool === "torsion") {
+      setTorsionBond({ a, b });
+      return;
+    }
+  };
+
+  const setTool_ = (t: Tool) => {
+    setTool(t);
+    setAngleSelection([]);
+    setTorsionBond(null);
+    setRejectMsg(null);
   };
 
   const startChallenge = () => {
     setMode("challenge");
-    setDeck(shuffledDeck());
+    setDeck(buildableDeck());
     setDeckIndex(0);
     setScore(0);
     setAttempts(0);
-    setRejectMsg(null);
-    setCentral("C");
-    setTerminals([]);
+    setTool_("add");
+    resetMolecule([]);
   };
 
   const checkAnswer = () => {
-    const correct = central === target.central && sameComposition(terminals, target.terminals);
+    const root = atoms.find(
+      (a) =>
+        a.element === target.central && neighborsOf(bonds, a.id).length === target.terminals.length,
+    );
+    const others = root ? atoms.filter((a) => a.id !== root.id) : [];
+    const shapeMatches =
+      !!root &&
+      atoms.length === 1 + target.terminals.length &&
+      others.every(
+        (a) => neighborsOf(bonds, a.id).length === 1 && bondBetween(bonds, a.id, root.id),
+      );
+    const gotElements = shapeMatches ? [...others.map((a) => a.element)].sort() : [];
+    const wantElements = [...target.terminals].sort();
+    const compositionMatches =
+      shapeMatches &&
+      gotElements.length === wantElements.length &&
+      gotElements.every((e, i) => e === wantElements[i]);
+    const expectedLone = legacyComputeLonePairs(target.central, target.terminals);
+    const actualLone = root ? lonePairsOf(atoms, bonds, root.id) : null;
+    const correct = compositionMatches && actualLone === expectedLone;
     setChecked(correct);
     setAttempts((a) => a + 1);
     if (correct) setScore((sc) => sc + 1);
@@ -191,137 +293,216 @@ export function VseprBuilder() {
 
   const nextMolecule = () => {
     setDeckIndex((i) => i + 1);
-    setChecked(null);
-    setRejectMsg(null);
-    setCentral("C");
-    setTerminals([]);
+    resetMolecule([]);
   };
 
-  const usedElements = hasMolecule ? [central, ...new Set(terminals)] : [central];
+  const selectedInfo = useMemo(() => {
+    if (selectedAtom === null) return null;
+    const atom = atoms.find((a) => a.id === selectedAtom);
+    if (!atom) return null;
+    const degree = neighborsOf(bonds, atom.id).length;
+    const lone = degree > 0 ? lonePairsOf(atoms, bonds, atom.id) : null;
+    return { atom, degree, lone };
+  }, [atoms, bonds, selectedAtom]);
+
+  const measuredAngle =
+    angleSelection.length === 3
+      ? (() => {
+          const [a, b, c] = angleSelection;
+          if (!bondBetween(bonds, a!, b!) || !bondBetween(bonds, b!, c!)) return null;
+          const eb = embedded.get(b!);
+          const ea = embedded.get(a!);
+          const ec = embedded.get(c!);
+          if (!eb || !ea || !ec) return null;
+          return angleBetween(vSub(ea.pos, eb.pos), vSub(ec.pos, eb.pos));
+        })()
+      : null;
+
+  const formula = hasMolecule ? formulaOfGraph(atoms) : null;
+  const atomLimitReached = atoms.length >= MAX_ATOMS;
+
+  // --- Rendering -----------------------------------------------------
+  const projectedAtoms = atoms.map((atom) => {
+    const emb = embedded.get(atom.id);
+    const pos: Vec3 = emb ? (emb.pos as Vec3) : [0, 0, 0];
+    return { atom, emb, p: project(pos) };
+  });
+  const byId = new Map(projectedAtoms.map((pa) => [pa.atom.id, pa]));
+
+  type Item = { z: number; key: string; node: ReactNode };
+  const items: Item[] = [];
+
+  for (const bond of bonds) {
+    const pa = byId.get(bond.a);
+    const pb = byId.get(bond.b);
+    if (!pa || !pb) continue;
+    const x1 = 150 + pa.p.x * 110;
+    const y1 = 150 + pa.p.y * 110;
+    const x2 = 150 + pb.p.x * 110;
+    const y2 = 150 + pb.p.y * 110;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy) || 1;
+    const perpX = -dy / len;
+    const perpY = dx / len;
+    // Keep the invisible click target away from both endpoints -- otherwise
+    // it overlaps the atoms' own hit-circles right where bonds meet them,
+    // and whichever happens to paint on top that frame steals the click.
+    const inset = Math.min(18, len / 3);
+    const hitX1 = x1 + (dx / len) * inset;
+    const hitY1 = y1 + (dy / len) * inset;
+    const hitX2 = x2 - (dx / len) * inset;
+    const hitY2 = y2 - (dy / len) * inset;
+    const offsets = bond.order === 1 ? [0] : bond.order === 2 ? [-2.6, 2.6] : [-4.5, 0, 4.5];
+    const isTorsionSelected =
+      torsionBond && bondKey(torsionBond.a, torsionBond.b) === bondKey(bond.a, bond.b);
+    items.push({
+      z: (pa.p.z + pb.p.z) / 2,
+      key: `bond-${bond.a}-${bond.b}`,
+      node: (
+        <g
+          key={`bond-${bond.a}-${bond.b}`}
+          onClick={() => onBondClick(bond.a, bond.b)}
+          className={tool === "bondOrder" || tool === "torsion" ? "cursor-pointer" : ""}
+          data-bond-a={bond.a}
+          data-bond-b={bond.b}
+        >
+          <line
+            x1={hitX1}
+            y1={hitY1}
+            x2={hitX2}
+            y2={hitY2}
+            stroke="transparent"
+            strokeWidth={16}
+            style={{ pointerEvents: "all" }}
+          />
+          {offsets.map((off, i) => (
+            <line
+              key={i}
+              x1={x1 + perpX * off}
+              y1={y1 + perpY * off}
+              x2={x2 + perpX * off}
+              y2={y2 + perpY * off}
+              stroke={isTorsionSelected ? "var(--accent)" : "var(--muted-foreground)"}
+              strokeWidth={isTorsionSelected ? 3 : 2}
+              style={{ pointerEvents: "none" }}
+            />
+          ))}
+        </g>
+      ),
+    });
+  }
+
+  for (const { atom, emb, p } of projectedAtoms) {
+    const info = ELEMENTS[atom.element];
+    const x = 150 + p.x * 110;
+    const y = 150 + p.y * 110;
+    const r = info.radius * 0.85 * p.scale;
+    const isSelected = selectedAtom === atom.id;
+    const isAngleSelected = angleSelection.includes(atom.id);
+    items.push({
+      z: p.z,
+      key: `atom-${atom.id}`,
+      node: (
+        <g
+          key={`atom-${atom.id}`}
+          onClick={() => onAtomClick(atom.id)}
+          className="cursor-pointer"
+          data-atom-id={atom.id}
+        >
+          {(isSelected || isAngleSelected) && (
+            <circle
+              cx={x}
+              cy={y}
+              r={r + 5}
+              fill="none"
+              stroke={isAngleSelected ? "var(--accent)" : "var(--foreground)"}
+              strokeWidth={2}
+              strokeDasharray={isAngleSelected ? "3 3" : undefined}
+            />
+          )}
+          <circle
+            cx={x}
+            cy={y}
+            r={Math.max(r + 5, 12)}
+            fill="transparent"
+            style={{ pointerEvents: "all" }}
+          />
+          <circle cx={x} cy={y} r={r} fill={info.color} stroke="var(--card)" strokeWidth={1} />
+        </g>
+      ),
+    });
+
+    if (emb) {
+      emb.loneDirs.forEach((dir, i) => {
+        const lonePos = vAdd(emb.pos as Vec3, vScale(dir as Vec3, 0.32));
+        const lp = project(lonePos);
+        const lx = 150 + lp.x * 110;
+        const ly = 150 + lp.y * 110;
+        const perpX = -(ly - y) / 30;
+        const perpY = (lx - x) / 30;
+        items.push({
+          z: lp.z,
+          key: `lone-${atom.id}-${i}`,
+          node: (
+            <g key={`lone-${atom.id}-${i}`}>
+              <circle
+                cx={lx + perpX * 4}
+                cy={ly + perpY * 4}
+                r={3.4 * lp.scale}
+                fill="rgba(148, 163, 184, 0.8)"
+              />
+              <circle
+                cx={lx - perpX * 4}
+                cy={ly - perpY * 4}
+                r={3.4 * lp.scale}
+                fill="rgba(148, 163, 184, 0.8)"
+              />
+            </g>
+          ),
+        });
+      });
+    }
+  }
+  items.sort((a, b) => a.z - b.z);
+
+  const usedElements = [...new Set(atoms.map((a) => a.element))];
 
   return (
     <div className="grid gap-8 lg:grid-cols-12">
       <div className="space-y-6 lg:col-span-8">
         <div>
           <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            {hasMolecule ? "Building" : "Pick a central atom, then attach terminal atoms"}
+            {hasMolecule ? "Building" : "Pick an atom to place first"}
           </span>
           {formula && <p className="text-2xl font-bold">{formula}</p>}
-          {isIncomplete && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Not a finished structure yet — {centralInfo.name} has an electron left unpaired.
-              Attach one more bond to complete it.
-            </p>
-          )}
         </div>
 
-        <div
-          onDragOver={onDropZoneOver}
-          onDragLeave={onDropZoneLeave}
-          onDrop={onDropZoneDrop}
-          className={`relative aspect-[16/10] overflow-hidden rounded-xl border bg-card shadow-sm transition-colors ${
-            dropHover ? "border-accent ring-2 ring-accent/40" : "border-border"
-          }`}
-        >
+        <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <svg
             viewBox="0 0 300 300"
             className="h-full w-full cursor-grab touch-none active:cursor-grabbing"
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
+            onWheel={onWheel}
           >
-            <circle cx="150" cy="150" r={centralInfo.radius} fill={centralInfo.color} />
-            {projected.map(({ d, i, p }) => {
-              const x = 150 + p.x * 110;
-              const y = 150 + p.y * 110;
-              if (d.kind === "bond") {
-                const el = d.element!;
-                const info = ELEMENTS[el];
-                const r = info.radius * 0.75 * p.scale;
-                const isDouble = TERMINAL_BOND_COST[el] === 2;
-                const perpX = -(y - 150) / 110;
-                const perpY = (x - 150) / 110;
-                return (
-                  <g key={i} onClick={() => removeTerminalAt(i)} className="cursor-pointer">
-                    {isDouble ? (
-                      <>
-                        <line
-                          x1={150 + perpX * 2.5}
-                          y1={150 + perpY * 2.5}
-                          x2={x + perpX * 2.5}
-                          y2={y + perpY * 2.5}
-                          stroke="var(--muted-foreground)"
-                          strokeWidth={1.6 * p.scale}
-                        />
-                        <line
-                          x1={150 - perpX * 2.5}
-                          y1={150 - perpY * 2.5}
-                          x2={x - perpX * 2.5}
-                          y2={y - perpY * 2.5}
-                          stroke="var(--muted-foreground)"
-                          strokeWidth={1.6 * p.scale}
-                        />
-                      </>
-                    ) : (
-                      <line
-                        x1="150"
-                        y1="150"
-                        x2={x}
-                        y2={y}
-                        stroke="var(--muted-foreground)"
-                        strokeWidth={2 * p.scale}
-                      />
-                    )}
-                    {/* Padded, invisible hit target -- the visible atom is
-                        often small at the back of the sphere, so relying on
-                        the painted circle alone makes "click to remove"
-                        unreliably fiddly to actually land. */}
-                    <circle
-                      cx={x}
-                      cy={y}
-                      r={Math.max(r + 6, 10)}
-                      fill="transparent"
-                      style={{ pointerEvents: "all" }}
-                    />
-                    <circle
-                      cx={x}
-                      cy={y}
-                      r={r}
-                      fill={info.color}
-                      stroke="var(--card)"
-                      strokeWidth={1}
-                    />
-                  </g>
-                );
-              }
-              const r = 8 * p.scale;
-              const perpX = -(y - 150) / 110;
-              const perpY = (x - 150) / 110;
-              return (
-                <g key={i}>
-                  <circle
-                    cx={x + perpX * 5}
-                    cy={y + perpY * 5}
-                    r={r * 0.55}
-                    fill="rgba(148, 163, 184, 0.8)"
-                  />
-                  <circle
-                    cx={x - perpX * 5}
-                    cy={y - perpY * 5}
-                    r={r * 0.55}
-                    fill="rgba(148, 163, 184, 0.8)"
-                  />
-                </g>
-              );
-            })}
+            {items.map((it) => it.node)}
             <AxisGizmo yaw={yaw} pitch={pitch} cx={40} cy={40} radius={22} />
           </svg>
           <p className="pointer-events-none absolute bottom-3 left-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Drag to rotate · click an atom to remove it
+            Drag to rotate · scroll to zoom
           </p>
           {!hasMolecule && (
             <p className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-mono text-xs uppercase tracking-widest text-muted-foreground">
-              Drop or click a terminal atom to begin
+              Click an atom in the toolbox to place the first one
+            </p>
+          )}
+          {tool === "angle" && (
+            <p className="pointer-events-none absolute bottom-3 right-3 font-mono text-[10px] uppercase tracking-widest text-accent">
+              {measuredAngle !== null
+                ? `Angle: ${measuredAngle.toFixed(1)}°`
+                : `Click ${3 - angleSelection.length} more bonded atom${3 - angleSelection.length === 1 ? "" : "s"} in a row`}
             </p>
           )}
         </div>
@@ -335,7 +516,6 @@ export function VseprBuilder() {
                   style={{ background: ELEMENTS[el].color }}
                 />
                 {ELEMENTS[el].name}
-                {el === central ? " (central)" : ""}
               </span>
             ))}
           </div>
@@ -344,40 +524,55 @@ export function VseprBuilder() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div className="rounded-lg border border-border bg-card p-4">
             <span className="mb-1 block font-mono text-[10px] uppercase text-muted-foreground">
-              Electron geometry
+              Atoms used
             </span>
             <span className="font-mono text-base font-bold">
-              {isIncomplete ? "Incomplete" : hasMolecule ? electronName : "—"}
+              {atoms.length} / {MAX_ATOMS}
             </span>
           </div>
           <div className="rounded-lg border border-border bg-card p-4">
             <span className="mb-1 block font-mono text-[10px] uppercase text-muted-foreground">
-              Molecular shape
+              Selected atom
             </span>
             <span className="font-mono text-base font-bold text-accent">
-              {isIncomplete ? "Incomplete" : hasMolecule ? molecularName : "—"}
+              {selectedInfo ? ELEMENTS[selectedInfo.atom.element].name : "—"}
             </span>
           </div>
           <div className="rounded-lg border border-border bg-card p-4">
             <span className="mb-1 block font-mono text-[10px] uppercase text-muted-foreground">
-              Narrowest bond angle
+              Local geometry
             </span>
             <span className="font-mono text-base font-bold">
-              {angle && !isIncomplete ? `${angle.toFixed(1)}°` : "—"}
+              {selectedInfo && selectedInfo.lone !== null
+                ? selectedInfo.degree <= 1
+                  ? "Terminal atom"
+                  : molecularGeometryName(selectedInfo.degree, selectedInfo.lone)
+                : selectedInfo && selectedInfo.degree === 0
+                  ? "Not bonded yet"
+                  : "Incomplete"}
             </span>
           </div>
           <div className="rounded-lg border border-border bg-card p-4">
             <span className="mb-1 block font-mono text-[10px] uppercase text-muted-foreground">
-              Domains used
+              Local hybridization
             </span>
             <span className="font-mono text-base font-bold">
-              {totalDomains} / {centralInfo.maxDomains}
-              <span className="ml-1 font-normal text-muted-foreground">
-                ({isIncomplete ? "pending" : `${lonePairs} lone`})
-              </span>
+              {selectedInfo && selectedInfo.lone !== null
+                ? hybridLabelForDomains(selectedInfo.degree + selectedInfo.lone)
+                : "—"}
             </span>
           </div>
         </div>
+
+        {selectedInfo && selectedInfo.lone !== null && (
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Electron geometry at {ELEMENTS[selectedInfo.atom.element].name}:{" "}
+            <span className="text-accent">
+              {electronGeometryName(selectedInfo.degree, selectedInfo.lone)}
+            </span>{" "}
+            ({selectedInfo.degree} bonding + {selectedInfo.lone} lone)
+          </p>
+        )}
       </div>
 
       <aside className="space-y-6 lg:col-span-4">
@@ -436,64 +631,153 @@ export function VseprBuilder() {
             </div>
           )}
 
-          <div className="space-y-5">
-            <div>
-              <h4 className="mb-3 text-xs font-medium">Central atom</h4>
-              <div className="grid grid-cols-5 gap-2">
-                {CENTRAL_CANDIDATES.map((el) => (
-                  <ElementTile
-                    key={el}
-                    el={el}
-                    selected={el === central}
-                    onClick={() => selectCentral(el)}
-                  />
-                ))}
-              </div>
-            </div>
+          <h4 className="mb-3 text-xs font-medium">Tools</h4>
+          <div className="mb-5 grid grid-cols-3 gap-2 sm:grid-cols-5">
+            <ToolButton label="Add" active={tool === "add"} onClick={() => setTool_("add")} />
+            <ToolButton
+              label="π/σ bonds"
+              active={tool === "bondOrder"}
+              onClick={() => setTool_("bondOrder")}
+            />
+            <ToolButton
+              label="Remove"
+              active={tool === "remove"}
+              onClick={() => setTool_("remove")}
+            />
+            <ToolButton label="Angle" active={tool === "angle"} onClick={() => setTool_("angle")} />
+            <ToolButton
+              label="Rotate"
+              active={tool === "torsion"}
+              onClick={() => setTool_("torsion")}
+            />
+          </div>
 
-            <div>
-              <h4 className="mb-3 text-xs font-medium">Terminal atoms — drag or click to attach</h4>
-              <div className="grid grid-cols-4 gap-2">
-                {TERMINAL_CANDIDATES.map((el) => (
-                  <ElementTile
-                    key={el}
-                    el={el}
-                    draggable
-                    onDragStart={(e) => onTileDragStart(e, el)}
-                    onClick={() => attemptAttach(el)}
-                  />
-                ))}
-              </div>
-              {rejectMsg && (
-                <p className="mt-3 font-mono text-[11px] leading-relaxed text-destructive">
-                  {rejectMsg}
-                </p>
-              )}
-            </div>
-
-            {hasMolecule && (
+          {tool === "add" && (
+            <div className="space-y-4">
               <div>
-                <h4 className="mb-3 text-xs font-medium">Attached</h4>
-                <div className="flex flex-wrap gap-2">
-                  {terminals.map((el, i) => (
+                <div className="mb-2 flex items-center justify-between text-xs font-medium">
+                  <span>Bond order for new atom</span>
+                  <span className="font-mono text-accent">
+                    {newBondOrder === 1
+                      ? "single (σ)"
+                      : newBondOrder === 2
+                        ? "double (σ+π)"
+                        : "triple (σ+2π)"}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  {([1, 2, 3] as BondOrder[]).map((o) => (
                     <button
-                      key={`${el}-${i}`}
-                      onClick={() => removeTerminalAt(i)}
-                      className="flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-1 text-xs font-medium transition-colors hover:border-destructive hover:text-destructive"
-                      aria-label={`Remove ${ELEMENTS[el].name}`}
+                      key={o}
+                      onClick={() => setNewBondOrder(o)}
+                      className={`flex-1 rounded-lg border py-2 text-xs font-bold transition-colors ${
+                        newBondOrder === o
+                          ? "border-accent bg-accent/10 text-accent"
+                          : "border-border hover:bg-secondary"
+                      }`}
                     >
-                      <span
-                        className="h-2 w-2 rounded-full"
-                        style={{ background: ELEMENTS[el].color }}
-                      />
-                      {el}
-                      <span aria-hidden="true">×</span>
+                      {o === 1 ? "—" : o === 2 ? "=" : "≡"}
                     </button>
                   ))}
                 </div>
               </div>
-            )}
+              <div>
+                <h4 className="mb-3 text-xs font-medium">
+                  {hasMolecule ? "Attach to the selected atom" : "Place the first atom"}
+                </h4>
+                <div className="grid grid-cols-5 gap-2">
+                  {ATOM_CHOICES.map((el) => (
+                    <ElementTile
+                      key={el}
+                      el={el}
+                      onClick={() => attemptAdd(el)}
+                      disabled={atomLimitReached}
+                    />
+                  ))}
+                </div>
+                {atomLimitReached && (
+                  <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                    {MAX_ATOMS}-atom limit reached — remove a leaf atom to add a different one.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
+          {tool === "bondOrder" && (
+            <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+              Click a bond in the 3D view to cycle it single → double → triple → single. Each click
+              adds or removes a π bond on top of the always-present σ bond, as long as both atoms
+              still have the valence electrons for it.
+            </p>
+          )}
+
+          {tool === "remove" && (
+            <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+              Click an atom with only one bond to remove it. Interior atoms are protected so
+              removing one never splits the molecule in two.
+            </p>
+          )}
+
+          {tool === "angle" && (
+            <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+              Click three bonded atoms in a row — A, then B, then C — to measure the real A–B–C
+              angle from the built structure.
+            </p>
+          )}
+
+          {tool === "torsion" && (
+            <div className="space-y-3">
+              <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+                Click a bond to select it, then rotate everything on one side of it around that bond
+                axis — the one thing VSEPR alone can't decide, which is why real molecules have
+                distinct staggered and eclipsed conformations.
+              </p>
+              {torsionBond && (
+                <div>
+                  <div className="mb-2 flex justify-between text-xs font-medium">
+                    <span>Torsion angle</span>
+                    <span className="font-mono text-accent">
+                      {(
+                        ((torsions.get(bondKey(torsionBond.a, torsionBond.b)) ?? Math.PI / 3) *
+                          180) /
+                        Math.PI
+                      ).toFixed(0)}
+                      °
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={-180}
+                    max={180}
+                    step={5}
+                    value={
+                      ((torsions.get(bondKey(torsionBond.a, torsionBond.b)) ?? Math.PI / 3) * 180) /
+                      Math.PI
+                    }
+                    onChange={(e) => {
+                      const key = bondKey(torsionBond.a, torsionBond.b);
+                      const next = new Map(torsions);
+                      next.set(key, (Number(e.target.value) * Math.PI) / 180);
+                      setTorsions(next);
+                    }}
+                    aria-label="Torsion angle"
+                    className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-[var(--accent)]"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {rejectMsg && (
+            <p className="mt-4 font-mono text-[11px] leading-relaxed text-destructive">
+              {rejectMsg}
+            </p>
+          )}
+
+          <hr className="my-6 border-border" />
+
+          <div className="space-y-6">
             <div>
               <div className="mb-3 flex justify-between text-xs font-medium">
                 <span>Lone pair repulsion strength</span>
@@ -509,11 +793,13 @@ export function VseprBuilder() {
                 aria-label="Lone pair repulsion strength"
                 className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-[var(--accent)]"
               />
-              <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-                1.0× treats lone pairs like bonding pairs, no compression. Push it higher and watch
-                bond angles squeeze further than real chemistry (~1.2×) ever needs to.
-              </p>
             </div>
+            <button
+              onClick={() => resetMolecule()}
+              className="w-full rounded-full border border-border bg-card px-4 py-2 text-sm font-medium transition-colors hover:border-accent"
+            >
+              Reset molecule
+            </button>
           </div>
         </div>
 
@@ -522,44 +808,58 @@ export function VseprBuilder() {
             Quick concept
           </h3>
           <p className="mb-4 text-sm leading-relaxed">
-            Every attachment is checked the way a chemist would: count the central atom's valence
-            electrons, subtract one pair per bond, and whatever's left becomes lone pairs. Run out
-            of electrons or push past the octet's domain limit and the atom won't drop — the same
-            rule that gives XeF₂ three lone pairs and refuses a 5th bond on carbon. An odd electron
-            in between is just unfinished, not illegal — one more bond pairs it up.
+            Every atom in the structure relaxes its own electron domains independently — a chain
+            isn't one shape, it's several VSEPR centers stitched together bond by bond. What VSEPR
+            can't pin down is the twist around each bond; that's a real, separate degree of freedom,
+            which is why it's its own tool instead of a fixed answer.
           </p>
-          <div className="font-mono text-xs text-accent">— VSEPR theory</div>
+          <div className="font-mono text-xs text-accent">— VSEPR theory, chained</div>
         </div>
       </aside>
     </div>
   );
 }
 
+function ToolButton({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-lg border px-2 py-2 text-[10px] font-bold uppercase tracking-wide transition-colors ${
+        active ? "border-accent bg-accent/10 text-accent" : "border-border hover:bg-secondary"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 function ElementTile({
   el,
-  selected,
-  draggable,
   onClick,
-  onDragStart,
+  disabled,
 }: {
   el: ElementSymbol;
-  selected?: boolean;
-  draggable?: boolean;
   onClick: () => void;
-  onDragStart?: (e: ReactDragEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
 }) {
   const info = ELEMENTS[el];
   return (
     <button
       type="button"
-      draggable={draggable}
-      onDragStart={onDragStart}
       onClick={onClick}
+      disabled={disabled}
       title={info.name}
       aria-label={info.name}
-      className={`flex flex-col items-center gap-1 rounded-lg border py-2 text-xs font-bold transition-colors ${
-        selected ? "border-accent bg-accent/10 text-accent" : "border-border hover:bg-secondary"
-      } ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
+      className="flex flex-col items-center gap-1 rounded-lg border border-border py-2 text-xs font-bold transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-30"
     >
       <span className="h-3 w-3 rounded-full" style={{ background: info.color }} />
       {el}
