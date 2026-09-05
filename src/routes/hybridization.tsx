@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { HybridizationSim } from "@/components/HybridizationSim";
 import { SectionNav } from "@/components/SectionNav";
+import { NextTopicNav } from "@/components/NextTopicNav";
 
 const sections = [
   { id: "significance", label: "Significance" },
@@ -196,6 +197,9 @@ function HybridizationPage() {
           <HybridizationSim />
         </div>
       </section>
+
+      <NextTopicNav currentSlug="hybridization" />
+
       <SectionNav items={sections} />
     </main>
   );

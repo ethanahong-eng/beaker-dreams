@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CollisionSim } from "@/components/CollisionSim";
 import { ReactionMechanism3D } from "@/components/ReactionMechanism3D";
 import { SectionNav } from "@/components/SectionNav";
+import { NextTopicNav } from "@/components/NextTopicNav";
 
 const sections = [
   { id: "significance", label: "Significance" },
@@ -221,6 +222,9 @@ function KineticsPage() {
           <CollisionSim />
         </div>
       </section>
+
+      <NextTopicNav currentSlug="kinetics" />
+
       <SectionNav items={sections} />
     </main>
   );
