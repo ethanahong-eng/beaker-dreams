@@ -1,67 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { topics, units, type Topic } from "@/lib/topics";
 
-type Module = {
-  to: "/geometry" | "/hybridization" | "/kinetics" | "/equilibrium" | "/everyday";
-  index: string;
-  tag: string;
-  title: string;
-  accent: string;
-  description: string;
-  topics: string[];
-};
-
-const modules: Module[] = [
-  {
-    to: "/geometry",
-    index: "01",
-    tag: "TOPIC 01 · MOLECULAR ARCHITECTURE",
-    title: "Molecule Geometry",
-    accent: "Geometry",
-    description:
-      "Electron domains around a central atom repel each other.  In order to find the lowest possible energy state, molecules will place themselves as far away as possible from each other, resulting in predictable Add bonding and lone pairs to a live VSEPR builder and watch real electron repulsion predict the correct 3D shape.",
-    topics: ["VSEPR", "Electron domains", "Bond angles", "Lone pairs"],
-  },
-  {
-    to: "/hybridization",
-    index: "02",
-    tag: "TOPIC 02 · ORBITAL MIXING",
-    title: "Hybridization",
-    accent: "Hybridization",
-    description:
-      "Before bonding with each other, orbitals in atoms have to merge. See how s and p orbitals combine into sp, sp² and sp³ hybrids, and why the blend ratio fixes the molecule's angles and shape.",
-    topics: ["sp / sp² / sp³", "Orbital promotion", "π bonds", "Geometry link"],
-  },
-  {
-    to: "/kinetics",
-    index: "03",
-    tag: "TOPIC 03 · REACTION RATES",
-    title: "Collision Kinetics",
-    accent: "Kinetics",
-    description:
-      "A reaction only fires when molecules collide with enough energy and the right orientation. Shift the Maxwell–Boltzmann distribution, raise activation energy, or add a catalyst to see how few collisions actually clear the barrier.",
-    topics: ["Activation energy", "Maxwell–Boltzmann", "Catalysis", "Arrhenius"],
-  },
-  {
-    to: "/equilibrium",
-    index: "04",
-    tag: "TOPIC 04 · CHEMICAL DYNAMICS",
-    title: "Dynamic Equilibrium",
-    accent: "Equilibrium",
-    description:
-      "Watch forward and reverse reaction rates equalize in a live, rotatable 3D vessel. Disturb pressure, temperature and concentration, then compare Qc to Kc to predict how Le Chatelier's principle restores balance.",
-    topics: ["Le Chatelier", "Qc vs Kc", "Haber–Bosch", "Water-gas shift"],
-  },
-  {
-    to: "/everyday",
-    index: "05",
-    tag: "TOPIC 05 · IN THE WORLD",
-    title: "Chemistry in Daily Life",
-    accent: "Daily Life",
-    description:
-      "Long-form explainers on the chemistry that quietly shapes daily life — chirality and drug safety, why plastics become microplastics, ocean acidification, blood buffers and the Montreal Protocol. Less simulation, more awareness.",
-    topics: ["Chirality", "Microplastics", "Ocean pH", "Blood buffers"],
-  },
-];
 
 export const Route = createFileRoute("/")({
   head: () => ({
