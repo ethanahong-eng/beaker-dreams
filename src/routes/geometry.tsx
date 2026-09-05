@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { VseprBuilder } from "@/components/VseprBuilder";
 import { SectionNav } from "@/components/SectionNav";
+import { NextTopicNav } from "@/components/NextTopicNav";
 
 const sections = [
   { id: "theory", label: "Theory" },
@@ -126,6 +127,9 @@ function GeometryPage() {
           <VseprBuilder mode="geometry" />
         </div>
       </section>
+
+      <NextTopicNav currentSlug="geometry" />
+
       <SectionNav items={sections} />
     </main>
   );

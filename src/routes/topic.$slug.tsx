@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SectionNav } from "@/components/SectionNav";
+import { NextTopicNav } from "@/components/NextTopicNav";
 import { VseprBuilder } from "@/components/VseprBuilder";
 import { HybridizationSim } from "@/components/HybridizationSim";
 import { CollisionSim } from "@/components/CollisionSim";
@@ -162,14 +163,7 @@ function TopicPage() {
         </section>
       ) : null}
 
-      <div className="border-t border-border pt-10">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 border-b border-accent pb-1 text-[10px] font-bold uppercase text-accent"
-        >
-          ← All topics
-        </Link>
-      </div>
+      <NextTopicNav currentSlug={topic.slug} />
 
       <SectionNav items={sections} />
     </main>

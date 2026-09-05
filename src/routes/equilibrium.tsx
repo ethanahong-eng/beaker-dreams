@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EquilibriumSim } from "@/components/EquilibriumSim";
 import { SectionNav } from "@/components/SectionNav";
+import { NextTopicNav } from "@/components/NextTopicNav";
 
 const sections = [
   { id: "significance", label: "Significance" },
@@ -352,6 +353,9 @@ function EquilibriumPage() {
           <EquilibriumSim />
         </div>
       </section>
+
+      <NextTopicNav currentSlug="equilibrium" />
+
       <SectionNav items={sections} />
     </main>
   );

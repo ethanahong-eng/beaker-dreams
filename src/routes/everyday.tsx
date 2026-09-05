@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SectionNav } from "@/components/SectionNav";
+import { NextTopicNav } from "@/components/NextTopicNav";
 
 export const Route = createFileRoute("/everyday")({
   head: () => ({
@@ -96,8 +97,9 @@ function EverydayPage() {
           Chemistry in <span className="text-accent">Daily Life</span>
         </h1>
         <p className="text-lg leading-relaxed text-muted-foreground">
-          Not everything worth understanding fits inside a simulation. These are longer reads on the chemistry
-          that shapes medicine, food, climate and policy — the ideas most worth spreading beyond the lab.
+          Not everything worth understanding fits inside a simulation. These are longer reads on the
+          chemistry that shapes medicine, food, climate and policy — the ideas most worth spreading
+          beyond the lab.
         </p>
       </header>
 
@@ -116,7 +118,11 @@ function EverydayPage() {
 
       <div className="mt-20 space-y-24">
         {essays.map((e, i) => (
-          <article key={e.title} id={`essay-${i}`} className="grid scroll-mt-24 gap-10 md:grid-cols-12">
+          <article
+            key={e.title}
+            id={`essay-${i}`}
+            className="grid scroll-mt-24 gap-10 md:grid-cols-12"
+          >
             <div className="md:col-span-4">
               <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
                 {String(i + 1).padStart(2, "0")} / {e.tag}
@@ -140,16 +146,16 @@ function EverydayPage() {
       <section className="mt-24 border border-border bg-card/70 p-10">
         <h2 className="mb-4 text-2xl font-bold italic">A closing thought</h2>
         <p className="max-w-3xl leading-relaxed text-muted-foreground">
-          Every topic on this page reduces to the three ideas you can play with in the simulations: equilibria
-          that shift when you disturb them, rates governed by an energy barrier, and protons moving between
-          molecules. Chemistry is not a list of facts to memorise — it is a small set of behaviours applied at
-          wildly different scales, from a beaker to an ocean.
+          Every topic on this page reduces to the three ideas you can play with in the simulations:
+          equilibria that shift when you disturb them, rates governed by an energy barrier, and
+          protons moving between molecules. Chemistry is not a list of facts to memorise — it is a
+          small set of behaviours applied at wildly different scales, from a beaker to an ocean.
         </p>
       </section>
 
-      <SectionNav
-        items={essays.map((e, i) => ({ id: `essay-${i}`, label: e.tag }))}
-      />
+      <NextTopicNav currentSlug="everyday" />
+
+      <SectionNav items={essays.map((e, i) => ({ id: `essay-${i}`, label: e.tag }))} />
     </main>
   );
 }
