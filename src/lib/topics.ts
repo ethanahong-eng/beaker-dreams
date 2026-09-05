@@ -1,9 +1,5 @@
 export type BuiltInPath =
-  | "/geometry"
-  | "/hybridization"
-  | "/kinetics"
-  | "/equilibrium"
-  | "/everyday";
+  "/geometry" | "/hybridization" | "/kinetics" | "/equilibrium" | "/everyday";
 
 export type SimKey =
   | "vsepr"
@@ -18,7 +14,13 @@ export type TopicLesson = {
   /** Sections of written lesson content. */
   significance: string[];
   theory: { heading: string; body: string[] }[];
-  simulation?: { key: SimKey; heading: string; caption: string };
+  simulation?: {
+    key: SimKey;
+    heading: string;
+    caption: string;
+    /** Tunes the "vsepr" simulation toward what this specific lesson teaches. */
+    mode?: "geometry" | "lewis" | "resonance";
+  };
 };
 
 export type Topic = {
@@ -107,9 +109,10 @@ export const topics: Topic[] = [
       ],
       simulation: {
         key: "vsepr",
-        heading: "From dots to three dimensions",
+        heading: "Spot the formal charge, then minimize it",
         caption:
-          "Once the electron count is settled, the domains arrange themselves in space. Add bonding pairs and lone pairs and watch the predicted geometry follow.",
+          'Every atom here shows its formal charge as a blue (+) or red (−) arrow, computed from the same octet-completion convention used to draw a Lewis structure by hand. Toggle "Show ideal bonding" to see which bonds should change order to reach the lowest possible charge separation for the skeleton you\'ve built.',
+        mode: "lewis",
       },
     },
   },
@@ -232,6 +235,13 @@ export const topics: Topic[] = [
           ],
         },
       ],
+      simulation: {
+        key: "vsepr",
+        heading: "Build a structure, spot the ambiguity",
+        caption:
+          "Build something like CO₂ with its bonds drawn asymmetrically, or close a ring with alternating single/double bonds like benzene — any resonance-eligible atoms and bonds glow on their own the moment they exist, instead of waiting for you to click the right atom to find them.",
+        mode: "resonance",
+      },
     },
   },
 
@@ -268,7 +278,8 @@ export const topics: Topic[] = [
       simulation: {
         key: "mechanism",
         heading: "Step by step in three dimensions",
-        caption: "Follow a reaction through its elementary steps and watch the intermediate appear and disappear.",
+        caption:
+          "Follow a reaction through its elementary steps and watch the intermediate appear and disappear.",
       },
     },
   },
@@ -401,7 +412,8 @@ export const topics: Topic[] = [
       simulation: {
         key: "blindTitration",
         heading: "Find the unknown",
-        caption: "Titrate an unidentified acid and use the curve's landmarks to work out what it is.",
+        caption:
+          "Titrate an unidentified acid and use the curve's landmarks to work out what it is.",
       },
     },
   },

@@ -12,6 +12,7 @@
 
 import {
   bondBetween,
+  bondKey,
   findRing,
   neighborsOf,
   type AtomId,
@@ -87,4 +88,58 @@ export function ringResonanceAt(
   }
   const alternates = orders.every((o, i) => o !== orders[(i + 1) % n]);
   return alternates ? { ringSize: n } : null;
+}
+
+export type ResonanceHighlights = {
+  atomIds: Set<AtomId>;
+  bondKeys: Set<string>;
+  notes: string[];
+};
+
+// The per-atom checks above are written to answer "does resonance apply
+// here?" for one clicked atom. Spotting resonance without already knowing
+// where to look is exactly the harder skill this scan is meant to make
+// easier -- it runs both checks over every atom/the one supported ring and
+// collects everything they find into a single highlight set, so a
+// resonance-eligible structure lights up on its own the moment it exists.
+export function allResonanceHighlights(
+  atoms: MoleculeAtom[],
+  bonds: MoleculeBond[],
+): ResonanceHighlights {
+  const atomIds = new Set<AtomId>();
+  const bondKeys = new Set<string>();
+  const notes: string[] = [];
+
+  for (const atom of atoms) {
+    const branch = branchResonanceAt(atoms, bonds, atom.id);
+    if (!branch) continue;
+    atomIds.add(atom.id);
+    for (const nId of neighborsOf(bonds, atom.id)) {
+      const n = atoms.find((a) => a.id === nId);
+      if (!n || n.element !== branch.element || neighborsOf(bonds, nId).length !== 1) continue;
+      atomIds.add(nId);
+      bondKeys.add(bondKey(atom.id, nId));
+    }
+    const orderWord = (o: number) => (o === 1 ? "single" : o === 2 ? "double" : "triple");
+    notes.push(
+      `${branch.count} equivalent atoms around this center could swap which one holds the ${branch.orders.map(orderWord).join("/")} bond.`,
+    );
+  }
+
+  const ring = findRing(atoms, bonds);
+  if (ring) {
+    const alt = ringResonanceAt(atoms, bonds, ring.members[0]!);
+    if (alt) {
+      for (const id of ring.members) atomIds.add(id);
+      const n = ring.members.length;
+      for (let i = 0; i < n; i++) {
+        bondKeys.add(bondKey(ring.members[i]!, ring.members[(i + 1) % n]!));
+      }
+      notes.push(
+        `This ${alt.ringSize}-membered ring's alternating bonds could start on either bond.`,
+      );
+    }
+  }
+
+  return { atomIds, bondKeys, notes };
 }

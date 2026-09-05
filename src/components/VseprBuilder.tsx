@@ -3,6 +3,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
@@ -38,7 +39,8 @@ import {
 } from "@/lib/molecule";
 import { embedMolecule, type EmbeddedAtom } from "@/lib/embed";
 import { totalBondEnergy } from "@/lib/energy";
-import { branchResonanceAt, ringResonanceAt } from "@/lib/resonance";
+import { branchResonanceAt, ringResonanceAt, allResonanceHighlights } from "@/lib/resonance";
+import { formalCharges, findIdealBondOrders } from "@/lib/formalCharge";
 import { HYBRID_TYPES } from "@/lib/hybridization";
 import {
   rotate3d,
@@ -53,6 +55,14 @@ import {
 import { AxisGizmo } from "@/components/AxisGizmo";
 
 type Tool = "add" | "bondOrder" | "bond" | "remove" | "angle" | "torsion";
+
+// Each topic that embeds this builder gets the same real chemistry engine,
+// tuned toward what that lesson is actually teaching: "lewis" turns on the
+// formal-charge overlay for the Lewis-structures/formal-charge lesson,
+// "resonance" turns on automatic resonance highlighting for that lesson,
+// and "geometry" (the default) is the plain VSEPR builder used by the
+// geometry page and every other topic that just embeds the shape builder.
+export type VseprMode = "geometry" | "lewis" | "resonance";
 
 function hybridLabelForDomains(n: number): string {
   const found = Object.values(HYBRID_TYPES).find((h) => h.domains === n);
@@ -80,7 +90,7 @@ function buildableDeck(): MoleculeTarget[] {
   return shuffledDeck().filter(isBuildableTarget);
 }
 
-export function VseprBuilder() {
+export function VseprBuilder({ mode: topicMode = "geometry" }: { mode?: VseprMode } = {}) {
   const [atoms, setAtoms] = useState<MoleculeAtom[]>([]);
   const [bonds, setBonds] = useState<MoleculeBond[]>([]);
   const [rootId, setRootId] = useState<AtomId>(0);
@@ -92,6 +102,7 @@ export function VseprBuilder() {
   const [angleSelection, setAngleSelection] = useState<AtomId[]>([]);
   const [bondSelection, setBondSelection] = useState<AtomId[]>([]);
   const [lonePairWeight, setLonePairWeight] = useState(DEFAULT_LONE_PAIR_WEIGHT);
+  const [showIdealCharge, setShowIdealCharge] = useState(false);
   const [rejectMsg, setRejectMsg] = useState<string | null>(null);
   const rejectTimerRef = useRef<number | null>(null);
 
@@ -206,7 +217,13 @@ export function VseprBuilder() {
     setChecked(null);
   };
 
-  const attemptAdd = (element: ElementSymbol) => {
+  // Holding Shift keeps the selection on the current (usually central) atom
+  // instead of jumping to the atom just placed -- the difference between
+  // building a long chain (the default: each add moves on to the newest
+  // atom) and quickly attaching many substituents to one center (shift:
+  // stay put so the next click attaches there too) without reselecting the
+  // center by hand between every single atom.
+  const attemptAdd = (element: ElementSymbol, keepSelection = false) => {
     const result = tryAddAtom(
       atoms,
       bonds,
@@ -220,7 +237,7 @@ export function VseprBuilder() {
     }
     setAtoms(result.atoms);
     setBonds(result.bonds);
-    if (result.newId !== undefined) setSelectedAtom(result.newId);
+    if (!keepSelection && result.newId !== undefined) setSelectedAtom(result.newId);
     setRejectMsg(null);
     setChecked(null);
   };
@@ -388,6 +405,26 @@ export function VseprBuilder() {
     [atoms, bonds, selectedAtom],
   );
 
+  const charges = useMemo(
+    () => (topicMode === "lewis" && hasMolecule ? formalCharges(atoms, bonds) : null),
+    [topicMode, atoms, bonds, hasMolecule],
+  );
+  const idealBonds = useMemo(
+    () =>
+      topicMode === "lewis" && showIdealCharge && hasMolecule
+        ? findIdealBondOrders(atoms, bonds)
+        : null,
+    [topicMode, showIdealCharge, atoms, bonds, hasMolecule],
+  );
+  const totalAbsCharge = useMemo(
+    () => (charges ? [...charges.values()].reduce((s, c) => s + Math.abs(c), 0) : 0),
+    [charges],
+  );
+  const resonanceHighlights = useMemo(
+    () => (topicMode === "resonance" && hasMolecule ? allResonanceHighlights(atoms, bonds) : null),
+    [topicMode, atoms, bonds, hasMolecule],
+  );
+
   const measuredAngle =
     angleSelection.length === 3
       ? (() => {
@@ -440,6 +477,10 @@ export function VseprBuilder() {
     const offsets = bond.order === 1 ? [0] : bond.order === 2 ? [-2.6, 2.6] : [-4.5, 0, 4.5];
     const isTorsionSelected =
       torsionBond && bondKey(torsionBond.a, torsionBond.b) === bondKey(bond.a, bond.b);
+    const isResonanceHighlighted =
+      resonanceHighlights?.bondKeys.has(bondKey(bond.a, bond.b)) ?? false;
+    const idealOrder = idealBonds?.orders.get(bondKey(bond.a, bond.b));
+    const idealDiffers = idealOrder !== undefined && idealOrder !== bond.order;
     items.push({
       z: (pa.p.z + pb.p.z) / 2,
       key: `bond-${bond.a}-${bond.b}`,
@@ -460,6 +501,19 @@ export function VseprBuilder() {
             strokeWidth={16}
             style={{ pointerEvents: "all" }}
           />
+          {(isResonanceHighlighted || idealDiffers) && (
+            <line
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke={idealDiffers ? "#f59e0b" : "var(--accent)"}
+              strokeWidth={9}
+              strokeOpacity={0.3}
+              strokeDasharray={idealDiffers ? "4 3" : undefined}
+              style={{ pointerEvents: "none" }}
+            />
+          )}
           {offsets.map((off, i) => (
             <line
               key={i}
@@ -467,11 +521,30 @@ export function VseprBuilder() {
               y1={y1 + perpY * off}
               x2={x2 + perpX * off}
               y2={y2 + perpY * off}
-              stroke={isTorsionSelected ? "var(--accent)" : "var(--muted-foreground)"}
-              strokeWidth={isTorsionSelected ? 3 : 2}
+              stroke={
+                isTorsionSelected
+                  ? "var(--accent)"
+                  : isResonanceHighlighted
+                    ? "var(--accent)"
+                    : "var(--muted-foreground)"
+              }
+              strokeWidth={isTorsionSelected || isResonanceHighlighted ? 3 : 2}
               style={{ pointerEvents: "none" }}
             />
           ))}
+          {idealDiffers && (
+            <text
+              x={(x1 + x2) / 2}
+              y={(y1 + y2) / 2 - 6}
+              textAnchor="middle"
+              fontSize="9"
+              fontWeight="bold"
+              fill="#f59e0b"
+              style={{ pointerEvents: "none" }}
+            >
+              →{idealOrder === 1 ? "—" : idealOrder === 2 ? "=" : "≡"}
+            </text>
+          )}
         </g>
       ),
     });
@@ -485,6 +558,7 @@ export function VseprBuilder() {
     const isSelected = selectedAtom === atom.id;
     const isAngleSelected = angleSelection.includes(atom.id);
     const isBondSelected = bondSelection.includes(atom.id);
+    const isResonanceHighlighted = resonanceHighlights?.atomIds.has(atom.id) ?? false;
     items.push({
       z: p.z,
       key: `atom-${atom.id}`,
@@ -495,6 +569,17 @@ export function VseprBuilder() {
           className="cursor-pointer"
           data-atom-id={atom.id}
         >
+          {isResonanceHighlighted && (
+            <circle
+              cx={x}
+              cy={y}
+              r={r + 8}
+              fill="none"
+              stroke="var(--accent)"
+              strokeWidth={2.5}
+              className="animate-pulse"
+            />
+          )}
           {(isSelected || isAngleSelected || isBondSelected) && (
             <circle
               cx={x}
@@ -517,6 +602,46 @@ export function VseprBuilder() {
         </g>
       ),
     });
+
+    const fc = charges?.get(atom.id) ?? 0;
+    if (fc !== 0) {
+      const positive = fc > 0;
+      const bx = x + r * 0.75;
+      const by = y - r * 0.75;
+      items.push({
+        z: p.z + 0.01,
+        key: `fc-${atom.id}`,
+        node: (
+          <g
+            key={`fc-${atom.id}`}
+            transform={`translate(${bx}, ${by})`}
+            style={{ pointerEvents: "none" }}
+          >
+            <circle
+              r={9}
+              fill="var(--card)"
+              stroke={positive ? "#3b82f6" : "#ef4444"}
+              strokeWidth={1.5}
+            />
+            <path
+              d={positive ? "M0,-4.5 L4,3.5 L-4,3.5 Z" : "M0,4.5 L4,-3.5 L-4,-3.5 Z"}
+              fill={positive ? "#3b82f6" : "#ef4444"}
+            />
+            {Math.abs(fc) > 1 && (
+              <text
+                x={13}
+                y={4}
+                fontSize="10"
+                fontWeight="bold"
+                fill={positive ? "#3b82f6" : "#ef4444"}
+              >
+                {Math.abs(fc)}
+              </text>
+            )}
+          </g>
+        ),
+      });
+    }
 
     if (emb) {
       emb.loneDirs.forEach((dir, i) => {
@@ -686,6 +811,49 @@ export function VseprBuilder() {
           </p>
         )}
 
+        {topicMode === "lewis" && hasMolecule && (
+          <p className="rounded-lg border border-accent/30 bg-accent/10 p-3 font-mono text-[11px] leading-relaxed text-accent">
+            Total formal-charge separation: Σ|charge| = {totalAbsCharge}.{" "}
+            {totalAbsCharge === 0
+              ? "Every atom completes its shell with no charge left over — the neutral, unseparated structure."
+              : "The blue/red arrows above mark exactly where charge is separated in this structure."}
+          </p>
+        )}
+
+        {topicMode === "lewis" && hasMolecule && showIdealCharge && (
+          <p className="rounded-lg border p-3 font-mono text-[11px] leading-relaxed border-[#f59e0b]/30 bg-[#f59e0b]/10 text-[#f59e0b]">
+            {idealBonds === null
+              ? `Ideal bonding is only computed for skeletons with a few bonds — this one has too many to search live.`
+              : idealBonds.matchesCurrent
+                ? `This is already a formal-charge-minimizing structure for this skeleton (best possible Σ|charge| = ${idealBonds.totalAbsCharge}).`
+                : `Amber-outlined bonds should change order to reach the lowest possible Σ|charge| = ${idealBonds.totalAbsCharge} for this skeleton — the arrow shows which order each one should become.`}
+          </p>
+        )}
+
+        {topicMode === "resonance" && hasMolecule && (
+          <div className="rounded-lg border border-accent/30 bg-accent/10 p-3">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-accent">
+              {resonanceHighlights && resonanceHighlights.notes.length > 0
+                ? "Resonance spotted — highlighted above"
+                : "No resonance in this exact structure"}
+            </p>
+            {resonanceHighlights && resonanceHighlights.notes.length > 0 ? (
+              resonanceHighlights.notes.map((note) => (
+                <p key={note} className="mt-2 font-mono text-[11px] leading-relaxed text-accent">
+                  {note}
+                </p>
+              ))
+            ) : (
+              <p className="mt-2 font-mono text-[11px] leading-relaxed text-accent">
+                Try a structure with two identical terminal atoms carrying different bond orders
+                (like CO₂ drawn asymmetrically), or close a ring with alternating single/double
+                bonds (like benzene) — resonance-eligible bonds and atoms glow the moment they
+                exist.
+              </p>
+            )}
+          </div>
+        )}
+
         {hasMolecule && (
           <p className="font-mono text-[10px] leading-relaxed text-muted-foreground">
             Bond energy is estimated by summing real bond dissociation energies, filling in gaps
@@ -751,6 +919,27 @@ export function VseprBuilder() {
             </div>
           )}
 
+          {topicMode === "lewis" && (
+            <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-border p-3">
+              <div>
+                <p className="text-xs font-medium">Show ideal bonding</p>
+                <p className="mt-1 font-mono text-[10px] leading-relaxed text-muted-foreground">
+                  Outlines which bonds should change order to minimize formal charge
+                </p>
+              </div>
+              <button
+                onClick={() => setShowIdealCharge((v) => !v)}
+                className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-bold uppercase transition-colors ${
+                  showIdealCharge
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-border hover:bg-secondary"
+                }`}
+              >
+                {showIdealCharge ? "On" : "Off"}
+              </button>
+            </div>
+          )}
+
           <h4 className="mb-3 text-xs font-medium">Tools</h4>
           <div className="mb-5 grid grid-cols-3 gap-2 sm:grid-cols-6">
             <ToolButton label="Add" active={tool === "add"} onClick={() => setTool_("add")} />
@@ -811,11 +1000,19 @@ export function VseprBuilder() {
                     <ElementTile
                       key={el}
                       el={el}
-                      onClick={() => attemptAdd(el)}
+                      onClick={(e) => attemptAdd(el, e.shiftKey)}
                       disabled={atomLimitReached}
                     />
                   ))}
                 </div>
+                {hasMolecule && (
+                  <p className="mt-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
+                    Hold <span className="text-accent">Shift</span> while clicking an atom above to
+                    keep building off the atom you already have selected, instead of jumping to the
+                    one you just placed — the fast way to grow a single center outward rather than a
+                    chain.
+                  </p>
+                )}
                 {atomLimitReached && (
                   <p className="mt-2 font-mono text-[10px] text-muted-foreground">
                     {MAX_ATOMS}-atom limit reached — remove a leaf atom to add a different one.
@@ -865,9 +1062,12 @@ export function VseprBuilder() {
               <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
                 Click two existing atoms in a row to bond them directly — the only way to close a
                 ring, since every other tool only ever attaches a brand-new atom. Only one ring is
-                supported at a time, up to {MAX_RING_SIZE} atoms, and the local VSEPR angle at each
-                ring atom rarely matches the ring's own angle exactly — this view shows the flat,
-                unstrained approximation rather than a real chair or boat pucker.
+                supported at a time, up to {MAX_RING_SIZE} atoms. An even-membered ring puckers out
+                of plane — a real chair, for an all-single-bond six-ring — just far enough for each
+                ring atom's own simulated bond angle to actually be reached; a ring whose atoms
+                already want ~120° (an aromatic ring) solves out flat instead. Odd-membered rings
+                stay in the flat, regular-polygon approximation, since a clean pucker doesn't fit
+                them the same way.
               </p>
             </div>
           )}
@@ -1009,7 +1209,7 @@ function ElementTile({
   disabled,
 }: {
   el: ElementSymbol;
-  onClick: () => void;
+  onClick: (e: ReactMouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
 }) {
   const info = ELEMENTS[el];
