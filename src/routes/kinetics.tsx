@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RateSim } from "@/components/RateSim";
 import { CollisionSim } from "@/components/CollisionSim";
 import { ReactionMechanism3D } from "@/components/ReactionMechanism3D";
 import { SectionNav } from "@/components/SectionNav";
@@ -7,9 +6,8 @@ import { SectionNav } from "@/components/SectionNav";
 const sections = [
   { id: "significance", label: "Significance" },
   { id: "theory", label: "Theory" },
-  { id: "simulation", label: "Simulation" },
-  { id: "collisions", label: "Collision lab" },
   { id: "mechanism", label: "Reaction mechanism" },
+  { id: "collisions", label: "Collision lab" },
 ];
 
 export const Route = createFileRoute("/kinetics")({
@@ -19,13 +17,13 @@ export const Route = createFileRoute("/kinetics")({
       {
         name: "description",
         content:
-          "See how temperature, activation energy and catalysts change the fraction of successful collisions in a live kinetics simulation.",
+          "Watch a real SN2 substitution succeed or fail atom by atom, then see the same energy-and-orientation requirements checked across a whole population of colliding molecules.",
       },
       { property: "og:title", content: "Reaction Kinetics Simulation — Valence Lab" },
       {
         property: "og:description",
         content:
-          "An interactive Maxwell-Boltzmann distribution explaining what actually controls reaction rate.",
+          "A 3D reaction mechanism and a live collision simulator explaining what actually controls reaction rate.",
       },
     ],
   }),
@@ -44,8 +42,8 @@ function KineticsPage() {
         </h1>
         <p className="text-lg leading-relaxed text-muted-foreground">
           A reaction only happens when molecules collide with enough energy and the right
-          orientation. Shift the energy distribution and watch how few — or how many — collisions
-          clear the activation barrier.
+          orientation. Watch a single real reaction succeed or fail atom by atom, then see those
+          same two requirements checked across a whole population of colliding molecules.
         </p>
       </header>
 
@@ -89,7 +87,7 @@ function KineticsPage() {
         <section className="mb-10 grid gap-6 rounded-2xl border border-border bg-card p-8 md:grid-cols-3">
           <div className="md:col-span-1">
             <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
-              About this demo
+              Key idea
             </span>
             <h2 className="mt-3 text-xl font-bold">Reading the Maxwell–Boltzmann curve</h2>
           </div>
@@ -126,8 +124,8 @@ function KineticsPage() {
             <h2 className="mb-6 text-3xl font-bold italic">What a catalyst really does</h2>
             <p className="leading-relaxed text-muted-foreground">
               A catalyst never adds energy. It opens a different pathway with a lower barrier, so
-              the same population of molecules suddenly qualifies. Toggle the catalyst and note the
-              shaded area grows while the curve itself stays put.
+              the same population of molecules suddenly qualifies — the shaded area beyond Ea grows,
+              even though the underlying energy curve never moves.
             </p>
             <p className="mt-4 leading-relaxed text-muted-foreground">
               A catalyst is also regenerated, so a tiny amount services an enormous number of cycles
@@ -161,36 +159,40 @@ function KineticsPage() {
           </div>
           <div>
             <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
-              Try this
+              Below
             </h3>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Set Ea to 60 kJ/mol and step the temperature from 300 K to 310 K, watching the
-              percentage above Ea. Then return to 300 K and switch on the catalyst — note how much
-              temperature it substitutes for.
+              Watch a single real reaction succeed or fail atom by atom, then see the same
+              energy-and-orientation requirements checked across a whole population of colliding
+              molecules at once.
             </p>
           </div>
         </section>
       </section>
 
       <section
-        id="simulation"
-        aria-labelledby="simulation-heading"
+        id="mechanism"
+        aria-labelledby="mechanism-heading"
         className="mt-24 scroll-mt-24 border-t border-border pt-16"
       >
         <div className="mb-10 max-w-3xl">
           <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
-            Section 03 · Simulation
+            Section 03 · Reaction Mechanism
           </span>
-          <h2 id="simulation-heading" className="mt-3 text-3xl font-bold">
-            Shift the energy distribution
+          <h2 id="mechanism-heading" className="mt-3 text-3xl font-bold">
+            Watch a reaction happen, atom by atom
           </h2>
           <p className="mt-4 leading-relaxed text-muted-foreground">
-            Adjust temperature and activation energy, then compare those changes with a catalyst to
-            see how each alters the fraction of collisions able to react.
+            A collision only succeeds when two conditions are both met: enough energy to react, and
+            the right orientation to react. Here they're checked on an actual reaction — a bromide
+            ion substituting for chloride on a carbon atom (SN2) — instead of as an abstract
+            pass/fail. Watch what a real collision looks like in three dimensions: the incoming ion
+            has to arrive from directly opposite the leaving group, at enough speed to reach bonding
+            distance, or nothing happens at all.
           </p>
         </div>
         <div>
-          <RateSim />
+          <ReactionMechanism3D />
         </div>
       </section>
 
@@ -207,42 +209,16 @@ function KineticsPage() {
             Watch individual collisions succeed or fail
           </h2>
           <p className="mt-4 leading-relaxed text-muted-foreground">
-            The curve above shows the population's energy distribution. This is what a single
-            collision looks like: each A + B hit is checked for both enough energy and a good enough
-            alignment between the two particles' reactive faces — gray means the collision was too
-            weak, yellow means it had the energy but missed the angle, and green means it actually
-            reacted. Tune the steric factor to see how much orientation alone can throttle a
-            reaction that has plenty of energy to spare.
+            The reaction above shows those same two requirements — energy and orientation — on one
+            real collision. Here they're checked across a whole population at once: each A + B hit
+            is tested for both enough energy and a good enough alignment between the two particles'
+            reactive faces — gray means the collision was too weak, yellow means it had the energy
+            but missed the angle, and green means it actually reacted. Tune the steric factor to see
+            how much orientation alone can throttle a reaction that has plenty of energy to spare.
           </p>
         </div>
         <div>
           <CollisionSim />
-        </div>
-      </section>
-
-      <section
-        id="mechanism"
-        aria-labelledby="mechanism-heading"
-        className="mt-24 scroll-mt-24 border-t border-border pt-16"
-      >
-        <div className="mb-10 max-w-3xl">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
-            Section 05 · Reaction Mechanism
-          </span>
-          <h2 id="mechanism-heading" className="mt-3 text-3xl font-bold">
-            Watch a reaction happen, atom by atom
-          </h2>
-          <p className="mt-4 leading-relaxed text-muted-foreground">
-            The collision lab treats "enough energy" and "the right orientation" as abstract
-            pass/fail checks. Here they are the same two requirements, but on an actual reaction: a
-            bromide ion substituting for chloride on a carbon atom (SN2). Watch what a real
-            collision looks like in three dimensions — the incoming ion has to arrive from directly
-            opposite the leaving group, at enough speed to reach bonding distance, or nothing
-            happens at all.
-          </p>
-        </div>
-        <div>
-          <ReactionMechanism3D />
         </div>
       </section>
       <SectionNav items={sections} />
