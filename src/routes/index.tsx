@@ -62,9 +62,9 @@ function HomePage() {
       {/* Stat strip */}
       <section className="mb-24 grid grid-cols-2 border border-border bg-card/60 md:grid-cols-4">
         {[
-          { k: "4", v: "Interactive modules" },
-          { k: "3", v: "SIMULATIONS" },
-          { k: "6", v: "Daily-life essays" },
+          { k: String(topics.length), v: "Topics" },
+          { k: String(units.length), v: "Units" },
+          { k: "7", v: "SIMULATIONS" },
           { k: "0", v: "Equations to memorize first" },
         ].map((s) => (
           <div key={s.v} className="border-b border-r border-border p-8 text-center md:border-b-0">
@@ -76,57 +76,41 @@ function HomePage() {
         ))}
       </section>
 
-      {/* Modules */}
+      {/* Topic library */}
       <section className="mb-20">
         <div className="mb-12 flex items-end justify-between border-b border-primary pb-4">
           <h2 className="font-display text-3xl font-bold text-primary">
             Lessons
           </h2>
           <span className="text-[10px] font-bold uppercase text-muted-foreground">
-            05 / 05
+            {topics.length} topics · {units.length} units
           </span>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          {modules.map((m) => (
-            <Link
-              key={m.to}
-              to={m.to}
-              className="group relative flex flex-col border border-border bg-card/70 p-8 transition-all hover:border-primary hover:shadow-sm"
-            >
-              <div className="mb-6 flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground">
-                  {m.tag}
-                </span>
-                <span className="font-display text-3xl font-bold text-border transition-colors group-hover:text-accent">
-                  {m.index}
-                </span>
-              </div>
-              <h3 className="mb-4 font-display text-2xl font-bold">
-                {m.title.replace(m.accent, "")}
-                <span className="text-accent">{m.accent}</span>
-              </h3>
-              <p className="mb-6 flex-1 text-sm leading-relaxed text-muted-foreground">
-                {m.description}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {m.topics.map((t) => (
-                  <span
-                    key={t}
-                    className="border border-border px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground"
-                  >
-                    {t}
+        <div className="space-y-16">
+          {units.map((unit) => {
+            const unitTopics = topics.filter((t) => t.unit === unit);
+            if (unitTopics.length === 0) return null;
+            return (
+              <div key={unit}>
+                <div className="mb-8 flex items-center gap-4">
+                  <h3 className="font-display text-xl font-bold">{unit}</h3>
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                    {unitTopics.length} topics
                   </span>
-                ))}
+                </div>
+                <div className="grid gap-8 md:grid-cols-2">
+                  {unitTopics.map((t) => (
+                    <TopicCard key={t.slug} topic={t} />
+                  ))}
+                </div>
               </div>
-              <span className="mt-6 inline-flex w-fit items-center gap-2 border-b border-accent pb-1 text-[10px] font-bold uppercase text-accent">
-                Enter module
-                <span className="transition-transform group-hover:translate-x-1">→</span>
-              </span>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       </section>
+
 
       {/* Approach */}
       <section className="mb-20 grid gap-12 border-t border-border pt-16 md:grid-cols-3">
