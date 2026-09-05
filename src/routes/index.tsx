@@ -153,6 +153,7 @@ function HomePage() {
 }
 
 function TopicCard({ topic }: { topic: Topic }) {
+  const [before, after] = topic.title.split(topic.accent);
   const cardClass =
     "group relative flex flex-col border border-border bg-card/70 p-8 transition-all hover:border-primary hover:shadow-sm";
 
@@ -167,8 +168,9 @@ function TopicCard({ topic }: { topic: Topic }) {
         </span>
       </div>
       <h3 className="mb-4 font-display text-2xl font-bold">
-        {topic.title.replace(topic.accent, "")}
+        {before}
         <span className="text-accent">{topic.accent}</span>
+        {after}
       </h3>
       <p className="mb-6 flex-1 text-sm leading-relaxed text-muted-foreground">
         {topic.description}

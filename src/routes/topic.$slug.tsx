@@ -84,7 +84,7 @@ function TopicPage() {
     ...(lesson.simulation ? [{ id: "simulation", label: "Simulation" }] : []),
   ];
 
-  const titleTail = topic.title.replace(topic.accent, "");
+  const [before, after] = topic.title.split(topic.accent);
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-16">
@@ -93,8 +93,9 @@ function TopicPage() {
           {`TOPIC ${topic.index}: ${topic.unit}`}
         </div>
         <h1 className="mb-6 font-display text-5xl font-bold md:text-6xl">
-          {titleTail}
+          {before}
           <span className="text-accent">{topic.accent}</span>
+          {after}
         </h1>
         <p className="text-lg leading-relaxed text-muted-foreground">{topic.description}</p>
       </header>
