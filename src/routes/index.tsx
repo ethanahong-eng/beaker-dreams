@@ -151,3 +151,56 @@ function HomePage() {
     </main>
   );
 }
+
+function TopicCard({ topic }: { topic: Topic }) {
+  const cardClass =
+    "group relative flex flex-col border border-border bg-card/70 p-8 transition-all hover:border-primary hover:shadow-sm";
+
+  const inner = (
+    <>
+      <div className="mb-6 flex items-center justify-between">
+        <span className="text-[10px] font-bold uppercase text-muted-foreground">
+          {`TOPIC ${topic.index} · ${topic.unit}`}
+        </span>
+        <span className="font-display text-3xl font-bold text-border transition-colors group-hover:text-accent">
+          {topic.index}
+        </span>
+      </div>
+      <h3 className="mb-4 font-display text-2xl font-bold">
+        {topic.title.replace(topic.accent, "")}
+        <span className="text-accent">{topic.accent}</span>
+      </h3>
+      <p className="mb-6 flex-1 text-sm leading-relaxed text-muted-foreground">
+        {topic.description}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {topic.topics.map((t) => (
+          <span
+            key={t}
+            className="border border-border px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground"
+          >
+            {t}
+          </span>
+        ))}
+      </div>
+      <span className="mt-6 inline-flex w-fit items-center gap-2 border-b border-accent pb-1 text-[10px] font-bold uppercase text-accent">
+        Open lesson
+        <span className="transition-transform group-hover:translate-x-1">→</span>
+      </span>
+    </>
+  );
+
+  if (topic.builtIn) {
+    return (
+      <Link to={topic.builtIn} className={cardClass}>
+        {inner}
+      </Link>
+    );
+  }
+
+  return (
+    <Link to="/topic/$slug" params={{ slug: topic.slug }} className={cardClass}>
+      {inner}
+    </Link>
+  );
+}
