@@ -9,7 +9,7 @@ import {
   DEFAULT_LONE_PAIR_WEIGHT,
   type Domain,
 } from "@/lib/vsepr";
-import { HYBRID_TYPES, HYBRID_ORDER, type HybridType } from "@/lib/hybridization";
+import { HYBRID_TYPES, HYBRID_ORDER, type HybridType, type HybridInfo } from "@/lib/hybridization";
 import { rotate3d } from "@/lib/project3d";
 import { AxisGizmo } from "@/components/AxisGizmo";
 
@@ -176,6 +176,8 @@ export function HybridizationSim() {
         </div>
 
         <OrbitalMixingDiagram hybridType={hybridType} />
+
+        <OrbitalOverlapDiagram defaultHybridType={hybridType} />
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div className="rounded-lg border border-border bg-card p-4">
@@ -447,6 +449,152 @@ function OrbitalMixingDiagram({ hybridType }: { hybridType: HybridType }) {
           stay pure and unhybridized — not shown above, since they never enter the mix.
         </p>
       )}
+    </div>
+  );
+}
+
+// A single hybrid orbital's shape is genuinely a function of its s
+// character: a hybrid mixes 1 s orbital with `pCount` (+ dCount) p/d
+// orbitals, so the s orbital's share of the mix -- and therefore how
+// spherical vs. directional the resulting lobe looks -- is exactly
+// 1 / domains. sp is half s character (short, fat, the most s-like);
+// sp3d2 is one-sixth s character (long, thin, the most p-like). That
+// same ratio drives both the lobe length and width below, so a sigma
+// bond built from two different hybrid types visibly looks different,
+// not just labeled differently.
+function sCharacterOf(info: HybridInfo): number {
+  return 1 / info.domains;
+}
+
+function BondingLobe({
+  cx,
+  cy,
+  pointRight,
+  sCharacter,
+}: {
+  cx: number;
+  cy: number;
+  pointRight: boolean;
+  sCharacter: number;
+}) {
+  const dir = pointRight ? 1 : -1;
+  const len = 30 + (1 - sCharacter) * 34;
+  const width = 9 + sCharacter * 22;
+  const lobeCx = cx + dir * len * 0.5;
+  const tailR = Math.max(5, len * 0.14);
+  return (
+    <g>
+      <circle cx={cx - dir * tailR * 1.2} cy={cy} r={tailR} fill="var(--accent)" opacity={0.55} />
+      <ellipse cx={lobeCx} cy={cy} rx={len * 0.5} ry={width} fill="var(--accent)" opacity={0.85} />
+      <circle cx={cx} cy={cy} r={5} fill="var(--foreground)" />
+    </g>
+  );
+}
+
+// The second, independently-adjustable atom this diagram adds: picking a
+// hybridization for each side and watching their lobes reach toward one
+// another is literally what "two orbitals combine into a sigma bond"
+// looks like -- the shaded lens where they meet is the shared electron
+// density a real bond is made of, and it visibly widens or narrows as
+// either side's s character changes.
+function OrbitalOverlapDiagram({ defaultHybridType }: { defaultHybridType: HybridType }) {
+  const [typeA, setTypeA] = useState<HybridType>(defaultHybridType);
+  const [typeB, setTypeB] = useState<HybridType>("sp3");
+
+  const infoA = HYBRID_TYPES[typeA];
+  const infoB = HYBRID_TYPES[typeB];
+  const sA = sCharacterOf(infoA);
+  const sB = sCharacterOf(infoB);
+
+  const cxA = 130;
+  const cxB = 330;
+  const cy = 80;
+  const lenA = 30 + (1 - sA) * 34;
+  const lenB = 30 + (1 - sB) * 34;
+  const overlapMidX = cxA + lenA + (cxB - lenB - (cxA + lenA)) / 2;
+  const overlapWidth = Math.max(6, (cxA + lenA - (cxB - lenB)) / 2 + 16);
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h3 className="font-mono text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          Two orbitals combining into a bond
+        </h3>
+        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest">
+          <select
+            value={typeA}
+            onChange={(e) => setTypeA(e.target.value as HybridType)}
+            aria-label="Atom A hybridization"
+            className="rounded border border-border bg-background px-2 py-1 text-accent"
+          >
+            {HYBRID_ORDER.map((t) => (
+              <option key={t} value={t}>
+                {HYBRID_TYPES[t].label}
+              </option>
+            ))}
+          </select>
+          <span className="text-muted-foreground">+</span>
+          <select
+            value={typeB}
+            onChange={(e) => setTypeB(e.target.value as HybridType)}
+            aria-label="Atom B hybridization"
+            className="rounded border border-border bg-background px-2 py-1 text-accent"
+          >
+            {HYBRID_ORDER.map((t) => (
+              <option key={t} value={t}>
+                {HYBRID_TYPES[t].label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <svg viewBox="0 0 460 160" className="h-[150px] w-full">
+        <ellipse
+          cx={overlapMidX}
+          cy={cy}
+          rx={overlapWidth}
+          ry={16 + (sA + sB) * 14}
+          fill="var(--accent)"
+          opacity={0.28}
+        />
+        <BondingLobe cx={cxA} cy={cy} pointRight sCharacter={sA} />
+        <BondingLobe cx={cxB} cy={cy} pointRight={false} sCharacter={sB} />
+        <text
+          x={overlapMidX}
+          y={cy - 34}
+          textAnchor="middle"
+          fontSize="10"
+          fill="var(--accent)"
+          fontFamily="monospace"
+        >
+          σ bond (shared density)
+        </text>
+        <text
+          x={cxA}
+          y={cy + 44}
+          textAnchor="middle"
+          fontSize="10"
+          fill="var(--muted-foreground)"
+          fontFamily="monospace"
+        >
+          {infoA.label} · {(sA * 100).toFixed(0)}% s
+        </text>
+        <text
+          x={cxB}
+          y={cy + 44}
+          textAnchor="middle"
+          fontSize="10"
+          fill="var(--muted-foreground)"
+          fontFamily="monospace"
+        >
+          {infoB.label} · {(sB * 100).toFixed(0)}% s
+        </text>
+      </svg>
+      <p className="mt-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
+        More s character makes a lobe shorter and fatter (more spherical, like sp's 50% s); more p
+        character makes it longer and thinner (more directional, like sp³d²'s ~17% s). A bond forms
+        exactly where the two lobes' electron density overlaps head-on — the shaded lens above.
+      </p>
     </div>
   );
 }

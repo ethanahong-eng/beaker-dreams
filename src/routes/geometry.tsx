@@ -43,14 +43,8 @@ function GeometryPage() {
         </p>
       </header>
 
-      <section
-        id="theory"
-        aria-labelledby="theory-heading"
-        className="mb-20 scroll-mt-24 pt-2"
-      >
-        <span className="text-[10px] font-bold uppercase text-accent">
-          Section 01 · Theory
-        </span>
+      <section id="theory" aria-labelledby="theory-heading" className="mb-20 scroll-mt-24 pt-2">
+        <span className="text-[10px] font-bold uppercase text-accent">Section 01 · Theory</span>
         <h2 id="theory-heading" className="mt-3 text-3xl font-bold">
           Repulsion, not memorization
         </h2>
@@ -95,36 +89,41 @@ function GeometryPage() {
         className="scroll-mt-24 border-t border-border pt-16"
       >
         <div className="mb-10 max-w-3xl">
-          <span className="text-[10px] font-bold uppercase text-accent">
-            Section 02 · Builder
-          </span>
+          <span className="text-[10px] font-bold uppercase text-accent">Section 02 · Builder</span>
           <h2 id="builder-heading" className="mt-3 text-3xl font-bold">
             Build a molecule, one real atom at a time
           </h2>
           <p className="mt-4 leading-relaxed text-muted-foreground">
             Click an atom in the toolkit to place it, then click again to attach the next one to
-            whichever atom is selected — build carbon chains, branches, whatever you like, up to 15
-            atoms, capped so the physics stays fast and the structure stays legible. Every
-            attachment is checked against both atoms' valence electrons before it's allowed to form,
-            and lone pairs are never set by hand — they're whatever electrons are left over once the
-            bonds are drawn.
+            whichever atom is selected. Hold <span className="text-accent">Shift</span> while
+            clicking to keep building off the atom you already have selected instead of jumping to
+            the one you just placed — the fast way to grow a rich, single-center molecule (many
+            substituents around one atom, the classic VSEPR case) rather than drifting into a long
+            chain by default. Chains and branches are still fully supported; letting go of Shift
+            just moves on to whichever atom you added last. Up to 15 atoms total, capped so the
+            physics stays fast and the structure stays legible. Every attachment is checked against
+            both atoms' valence electrons before it's allowed to form, and lone pairs are never set
+            by hand — they're whatever electrons are left over once the bonds are drawn.
           </p>
           <p className="mt-4 leading-relaxed text-muted-foreground">
             The tool bar adds the rest of a real molecular-modeling kit: cycle a bond between
             single, double, and triple (σ vs. π), bond two existing atoms directly to close a ring,
             remove a leaf atom, measure the real angle between any three bonded atoms, or rotate a
             bond's torsion to explore the one degree of freedom VSEPR alone can't pin down. One ring
-            is supported at a time, drawn as a flat regular polygon rather than a real chair or boat
-            pucker. Select an atom whose bonds have a genuine ambiguity — like the two ends of a
-            symmetric double bond, or a fully alternating ring — and the panel calls out the
-            resonance directly: real molecules delocalize evenly across those bonds instead of
-            picking one arrangement. A running total bond energy, estimated from real bond
-            dissociation energies, shows how that energy shifts as the structure changes. Switch to
-            Challenge mode to be given a real molecule's formula and build it atom by atom.
+            is supported at a time; an even-membered ring actually puckers out of plane — a real
+            chair, for an all-single-bond six-ring — just far enough for each ring atom's own
+            simulated bond angle to be reached, while a ring whose atoms already want ~120° (an
+            aromatic ring) solves out flat. Select an atom whose bonds have a genuine ambiguity —
+            like the two ends of a symmetric double bond, or a fully alternating ring — and the
+            panel calls out the resonance directly: real molecules delocalize evenly across those
+            bonds instead of picking one arrangement. A running total bond energy, estimated from
+            real bond dissociation energies, shows how that energy shifts as the structure changes.
+            Switch to Challenge mode to be given a real molecule's formula and build it atom by
+            atom.
           </p>
         </div>
         <div>
-          <VseprBuilder />
+          <VseprBuilder mode="geometry" />
         </div>
       </section>
       <SectionNav items={sections} />

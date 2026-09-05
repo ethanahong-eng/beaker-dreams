@@ -38,10 +38,10 @@ export const Route = createFileRoute("/topic/$slug")({
   component: TopicPage,
 });
 
-function renderSim(key: SimKey) {
+function renderSim(key: SimKey, mode?: "geometry" | "lewis" | "resonance") {
   switch (key) {
     case "vsepr":
-      return <VseprBuilder />;
+      return mode ? <VseprBuilder mode={mode} /> : <VseprBuilder />;
     case "hybridization":
       return <HybridizationSim />;
     case "collision":
@@ -158,7 +158,7 @@ function TopicPage() {
           <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">
             {lesson.simulation.caption}
           </p>
-          <div className="mt-10">{renderSim(lesson.simulation.key)}</div>
+          <div className="mt-10">{renderSim(lesson.simulation.key, lesson.simulation.mode)}</div>
         </section>
       ) : null}
 
