@@ -1,67 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { topics, units, type Topic } from "@/lib/topics";
 
-type Module = {
-  to: "/geometry" | "/hybridization" | "/kinetics" | "/equilibrium" | "/everyday";
-  index: string;
-  tag: string;
-  title: string;
-  accent: string;
-  description: string;
-  topics: string[];
-};
-
-const modules: Module[] = [
-  {
-    to: "/geometry",
-    index: "01",
-    tag: "TOPIC 01 · MOLECULAR ARCHITECTURE",
-    title: "Molecule Geometry",
-    accent: "Geometry",
-    description:
-      "Electron domains around a central atom repel each other.  In order to find the lowest possible energy state, molecules will place themselves as far away as possible from each other, resulting in predictable Add bonding and lone pairs to a live VSEPR builder and watch real electron repulsion predict the correct 3D shape.",
-    topics: ["VSEPR", "Electron domains", "Bond angles", "Lone pairs"],
-  },
-  {
-    to: "/hybridization",
-    index: "02",
-    tag: "TOPIC 02 · ORBITAL MIXING",
-    title: "Hybridization",
-    accent: "Hybridization",
-    description:
-      "Before bonding with each other, orbitals in atoms have to merge. See how s and p orbitals combine into sp, sp² and sp³ hybrids, and why the blend ratio fixes the molecule's angles and shape.",
-    topics: ["sp / sp² / sp³", "Orbital promotion", "π bonds", "Geometry link"],
-  },
-  {
-    to: "/kinetics",
-    index: "03",
-    tag: "TOPIC 03 · REACTION RATES",
-    title: "Collision Kinetics",
-    accent: "Kinetics",
-    description:
-      "A reaction only fires when molecules collide with enough energy and the right orientation. Shift the Maxwell–Boltzmann distribution, raise activation energy, or add a catalyst to see how few collisions actually clear the barrier.",
-    topics: ["Activation energy", "Maxwell–Boltzmann", "Catalysis", "Arrhenius"],
-  },
-  {
-    to: "/equilibrium",
-    index: "04",
-    tag: "TOPIC 04 · CHEMICAL DYNAMICS",
-    title: "Dynamic Equilibrium",
-    accent: "Equilibrium",
-    description:
-      "Watch forward and reverse reaction rates equalize in a live, rotatable 3D vessel. Disturb pressure, temperature and concentration, then compare Qc to Kc to predict how Le Chatelier's principle restores balance.",
-    topics: ["Le Chatelier", "Qc vs Kc", "Haber–Bosch", "Water-gas shift"],
-  },
-  {
-    to: "/everyday",
-    index: "05",
-    tag: "TOPIC 05 · IN THE WORLD",
-    title: "Chemistry in Daily Life",
-    accent: "Daily Life",
-    description:
-      "Long-form explainers on the chemistry that quietly shapes daily life — chirality and drug safety, why plastics become microplastics, ocean acidification, blood buffers and the Montreal Protocol. Less simulation, more awareness.",
-    topics: ["Chirality", "Microplastics", "Ocean pH", "Blood buffers"],
-  },
-];
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -123,9 +62,9 @@ function HomePage() {
       {/* Stat strip */}
       <section className="mb-24 grid grid-cols-2 border border-border bg-card/60 md:grid-cols-4">
         {[
-          { k: "4", v: "Interactive modules" },
-          { k: "3", v: "SIMULATIONS" },
-          { k: "6", v: "Daily-life essays" },
+          { k: String(topics.length), v: "Topics" },
+          { k: String(units.length), v: "Units" },
+          { k: "7", v: "SIMULATIONS" },
           { k: "0", v: "Equations to memorize first" },
         ].map((s) => (
           <div key={s.v} className="border-b border-r border-border p-8 text-center md:border-b-0">
@@ -137,57 +76,41 @@ function HomePage() {
         ))}
       </section>
 
-      {/* Modules */}
+      {/* Topic library */}
       <section className="mb-20">
         <div className="mb-12 flex items-end justify-between border-b border-primary pb-4">
           <h2 className="font-display text-3xl font-bold text-primary">
             Lessons
           </h2>
           <span className="text-[10px] font-bold uppercase text-muted-foreground">
-            05 / 05
+            {topics.length} topics · {units.length} units
           </span>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          {modules.map((m) => (
-            <Link
-              key={m.to}
-              to={m.to}
-              className="group relative flex flex-col border border-border bg-card/70 p-8 transition-all hover:border-primary hover:shadow-sm"
-            >
-              <div className="mb-6 flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground">
-                  {m.tag}
-                </span>
-                <span className="font-display text-3xl font-bold text-border transition-colors group-hover:text-accent">
-                  {m.index}
-                </span>
-              </div>
-              <h3 className="mb-4 font-display text-2xl font-bold">
-                {m.title.replace(m.accent, "")}
-                <span className="text-accent">{m.accent}</span>
-              </h3>
-              <p className="mb-6 flex-1 text-sm leading-relaxed text-muted-foreground">
-                {m.description}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {m.topics.map((t) => (
-                  <span
-                    key={t}
-                    className="border border-border px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground"
-                  >
-                    {t}
+        <div className="space-y-16">
+          {units.map((unit) => {
+            const unitTopics = topics.filter((t) => t.unit === unit);
+            if (unitTopics.length === 0) return null;
+            return (
+              <div key={unit}>
+                <div className="mb-8 flex items-center gap-4">
+                  <h3 className="font-display text-xl font-bold">{unit}</h3>
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                    {unitTopics.length} topics
                   </span>
-                ))}
+                </div>
+                <div className="grid gap-8 md:grid-cols-2">
+                  {unitTopics.map((t) => (
+                    <TopicCard key={t.slug} topic={t} />
+                  ))}
+                </div>
               </div>
-              <span className="mt-6 inline-flex w-fit items-center gap-2 border-b border-accent pb-1 text-[10px] font-bold uppercase text-accent">
-                Enter module
-                <span className="transition-transform group-hover:translate-x-1">→</span>
-              </span>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       </section>
+
 
       {/* Approach */}
       <section className="mb-20 grid gap-12 border-t border-border pt-16 md:grid-cols-3">
@@ -226,5 +149,60 @@ function HomePage() {
         </div>
       </section>
     </main>
+  );
+}
+
+function TopicCard({ topic }: { topic: Topic }) {
+  const [before, after] = topic.title.split(topic.accent);
+  const cardClass =
+    "group relative flex flex-col border border-border bg-card/70 p-8 transition-all hover:border-primary hover:shadow-sm";
+
+  const inner = (
+    <>
+      <div className="mb-6 flex items-center justify-between">
+        <span className="text-[10px] font-bold uppercase text-muted-foreground">
+          {`TOPIC ${topic.index} · ${topic.unit}`}
+        </span>
+        <span className="font-display text-3xl font-bold text-border transition-colors group-hover:text-accent">
+          {topic.index}
+        </span>
+      </div>
+      <h3 className="mb-4 font-display text-2xl font-bold">
+        {before}
+        <span className="text-accent">{topic.accent}</span>
+        {after}
+      </h3>
+      <p className="mb-6 flex-1 text-sm leading-relaxed text-muted-foreground">
+        {topic.description}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {topic.topics.map((t) => (
+          <span
+            key={t}
+            className="border border-border px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground"
+          >
+            {t}
+          </span>
+        ))}
+      </div>
+      <span className="mt-6 inline-flex w-fit items-center gap-2 border-b border-accent pb-1 text-[10px] font-bold uppercase text-accent">
+        Open lesson
+        <span className="transition-transform group-hover:translate-x-1">→</span>
+      </span>
+    </>
+  );
+
+  if (topic.builtIn) {
+    return (
+      <Link to={topic.builtIn} className={cardClass}>
+        {inner}
+      </Link>
+    );
+  }
+
+  return (
+    <Link to="/topic/$slug" params={{ slug: topic.slug }} className={cardClass}>
+      {inner}
+    </Link>
   );
 }

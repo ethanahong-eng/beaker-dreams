@@ -15,6 +15,7 @@ import { Route as EverydayRouteImport } from './routes/everyday'
 import { Route as GeometryRouteImport } from './routes/geometry'
 import { Route as HybridizationRouteImport } from './routes/hybridization'
 import { Route as KineticsRouteImport } from './routes/kinetics'
+import { Route as TopicSlugRouteImport } from './routes/topic.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const KineticsRoute = KineticsRouteImport.update({
   path: '/kinetics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TopicSlugRoute = TopicSlugRouteImport.update({
+  id: '/topic/$slug',
+  path: '/topic/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/geometry': typeof GeometryRoute
   '/hybridization': typeof HybridizationRoute
   '/kinetics': typeof KineticsRoute
+  '/topic/$slug': typeof TopicSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/geometry': typeof GeometryRoute
   '/hybridization': typeof HybridizationRoute
   '/kinetics': typeof KineticsRoute
+  '/topic/$slug': typeof TopicSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/geometry': typeof GeometryRoute
   '/hybridization': typeof HybridizationRoute
   '/kinetics': typeof KineticsRoute
+  '/topic/$slug': typeof TopicSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/geometry'
     | '/hybridization'
     | '/kinetics'
+    | '/topic/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/geometry'
     | '/hybridization'
     | '/kinetics'
+    | '/topic/$slug'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/geometry'
     | '/hybridization'
     | '/kinetics'
+    | '/topic/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +118,7 @@ export interface RootRouteChildren {
   GeometryRoute: typeof GeometryRoute
   HybridizationRoute: typeof HybridizationRoute
   KineticsRoute: typeof KineticsRoute
+  TopicSlugRoute: typeof TopicSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KineticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/topic/$slug': {
+      id: '/topic/$slug'
+      path: '/topic/$slug'
+      fullPath: '/topic/$slug'
+      preLoaderRoute: typeof TopicSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   GeometryRoute: GeometryRoute,
   HybridizationRoute: HybridizationRoute,
   KineticsRoute: KineticsRoute,
+  TopicSlugRoute: TopicSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
