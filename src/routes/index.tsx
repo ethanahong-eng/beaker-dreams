@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { topics, units, type Topic } from "@/lib/topics";
-
+import { TopicLink } from "@/components/TopicLink";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,26 +35,26 @@ function HomePage() {
             INTERACTIVE CHEMISTRY
           </span>
         </div>
-         <h1 className="font-display text-5xl font-bold leading-tight md:text-7xl">
-           Molecular structures and behaviors
-         </h1>
+        <h1 className="font-display text-5xl font-bold leading-tight md:text-7xl">
+          Molecular structures and behaviors
+        </h1>
         <p className="mx-auto mt-8 max-w-2xl text-lg italic leading-relaxed text-muted-foreground">
-            Chemistry doesn't have to be confusing with the right visuals.  Each page here pairs a
-           live simulation with the history and theory behind it.  Not only will you better understand
-           the chemistry principles, but you'll also learn how and why
+          Chemistry doesn't have to be confusing with the right visuals. Each page here pairs a live
+          simulation with the history and theory behind it. Not only will you better understand the
+          chemistry principles, but you'll also learn how and why
         </p>
         <div className="mt-10 flex flex-wrap justify-center gap-4">
-          <Link
-            to="/geometry"
+          <TopicLink
+            topic={topics[0]!}
             className="border border-primary bg-primary px-7 py-3 text-xs font-bold uppercase text-primary-foreground transition-colors hover:bg-transparent hover:text-primary"
           >
-             DIGITAL LAB
-          </Link>
+            DIGITAL LAB
+          </TopicLink>
           <Link
             to="/everyday"
             className="border border-primary bg-transparent px-7 py-3 text-xs font-bold uppercase text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
           >
-             DAILY-LIFE APPLICATION
+            DAILY-LIFE APPLICATION
           </Link>
         </div>
       </section>
@@ -69,9 +69,7 @@ function HomePage() {
         ].map((s) => (
           <div key={s.v} className="border-b border-r border-border p-8 text-center md:border-b-0">
             <div className="font-display text-4xl font-bold text-primary">{s.k}</div>
-            <div className="mt-2 text-[10px] font-bold uppercase text-muted-foreground">
-              {s.v}
-            </div>
+            <div className="mt-2 text-[10px] font-bold uppercase text-muted-foreground">{s.v}</div>
           </div>
         ))}
       </section>
@@ -79,9 +77,7 @@ function HomePage() {
       {/* Topic library */}
       <section className="mb-20">
         <div className="mb-12 flex items-end justify-between border-b border-primary pb-4">
-          <h2 className="font-display text-3xl font-bold text-primary">
-            Lessons
-          </h2>
+          <h2 className="font-display text-3xl font-bold text-primary">Lessons</h2>
           <span className="text-[10px] font-bold uppercase text-muted-foreground">
             {topics.length} topics · {units.length} units
           </span>
@@ -111,21 +107,20 @@ function HomePage() {
         </div>
       </section>
 
-
       {/* Approach */}
       <section className="mb-20 grid gap-12 border-t border-border pt-16 md:grid-cols-3">
         <div className="md:col-span-1">
-          <span className="text-[10px] font-bold uppercase text-accent">
-            How the lab works
-          </span>
-          <h2 className="mt-3 font-display text-3xl font-bold">Learn about a topic, how it works, then apply those skills in a digital lab</h2>
+          <span className="text-[10px] font-bold uppercase text-accent">How the lab works</span>
+          <h2 className="mt-3 font-display text-3xl font-bold">
+            Learn about a topic, how it works, then apply those skills in a digital lab
+          </h2>
         </div>
         <div className="space-y-8 md:col-span-2">
           {[
             {
               n: "01",
               t: "Significance",
-               d: "Every page opens with the history and stakes — why this reaction fed a city, ruined a drug, or decided a treaty — so the equation has a reason before you touch a slider.",
+              d: "Every page opens with the history and stakes — why this reaction fed a city, ruined a drug, or decided a treaty — so the equation has a reason before you touch a slider.",
             },
             {
               n: "02",
@@ -192,17 +187,9 @@ function TopicCard({ topic }: { topic: Topic }) {
     </>
   );
 
-  if (topic.builtIn) {
-    return (
-      <Link to={topic.builtIn} className={cardClass}>
-        {inner}
-      </Link>
-    );
-  }
-
   return (
-    <Link to="/topic/$slug" params={{ slug: topic.slug }} className={cardClass}>
+    <TopicLink topic={topic} className={cardClass}>
       {inner}
-    </Link>
+    </TopicLink>
   );
 }

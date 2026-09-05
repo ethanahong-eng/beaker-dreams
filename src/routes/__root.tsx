@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -11,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { units, topics, topicsBySlug } from "../lib/topics";
+import { TopicLink } from "../components/TopicLink";
 
 function BeakerLogo({ className }: { className?: string }) {
   return (
@@ -28,12 +31,7 @@ function BeakerLogo({ className }: { className?: string }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path
-        d="M7.5 14h9"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
+      <path d="M7.5 14h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
       <path
         d="M8.8 16.5c1.6-.6 3 .3 3.4.9.5.7 2 1.2 3.2.6"
         stroke="currentColor"
@@ -152,67 +150,84 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+/** Which unit (if any) the current page belongs to, so its nav item can stay highlighted. */
+function useActiveUnit(): string | undefined {
+  const pathname = useLocation({ select: (loc) => loc.pathname });
+  if (pathname.startsWith("/topic/")) {
+    return topicsBySlug.get(pathname.slice("/topic/".length))?.unit;
+  }
+  return topics.find((t) => t.builtIn === pathname)?.unit;
+}
+
+function UnitNavItem({ unit, active }: { unit: string; active: boolean }) {
+  const unitTopics = topics.filter((t) => t.unit === unit);
+  const first = unitTopics[0]!;
+
+  return (
+    <div className="group relative">
+      <TopicLink
+        topic={first}
+        className={`flex items-center gap-1.5 border-b py-1 transition-colors hover:border-primary hover:text-primary ${
+          active ? "border-primary text-primary" : "border-transparent"
+        }`}
+      >
+        {unit}
+        <svg
+          viewBox="0 0 10 6"
+          className="h-2 w-2.5 fill-current opacity-60 transition-transform group-hover:-rotate-180"
+          aria-hidden="true"
+        >
+          <path d="M0 0l5 6 5-6z" />
+        </svg>
+      </TopicLink>
+
+      <div className="invisible absolute left-1/2 top-full -translate-x-1/2 pt-3 opacity-0 transition-opacity duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+        <div className="w-64 border border-border bg-background p-2 shadow-lg">
+          {unitTopics.map((t) => (
+            <TopicLink
+              key={t.slug}
+              topic={t}
+              className="block px-3 py-2.5 text-[11px] normal-case tracking-normal text-foreground transition-colors hover:bg-accent/10 hover:text-accent"
+              activeProps={{ className: "bg-accent/10 text-accent" }}
+            >
+              <span className="mr-2 font-display text-accent">{t.index}</span>
+              {t.title}
+            </TopicLink>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const activeUnit = useActiveUnit();
 
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background font-sans text-foreground selection:bg-accent/20">
         <nav className="sticky top-0 z-50 border-b border-border bg-background/95 px-6 py-5">
           <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center border border-primary bg-primary text-primary-foreground">
-              <BeakerLogo className="h-5 w-5" />
-            </span>
-            <span className="font-display text-lg font-bold uppercase">
-              Valence.lab
-            </span>
-          </Link>
-          <div className="hidden items-center gap-7 text-[11px] font-bold uppercase text-muted-foreground md:flex">
-            <Link
-              to="/"
-              className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
-              activeProps={{ className: "border-primary text-primary" }}
-              activeOptions={{ exact: true }}
-            >
-              Home
+            <Link to="/" className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center border border-primary bg-primary text-primary-foreground">
+                <BeakerLogo className="h-5 w-5" />
+              </span>
+              <span className="font-display text-lg font-bold uppercase">Valence.lab</span>
             </Link>
-            <Link
-              to="/geometry"
-              className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
-              activeProps={{ className: "border-primary text-primary" }}
-            >
-              Geometry
-            </Link>
-            <Link
-              to="/hybridization"
-              className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
-              activeProps={{ className: "border-primary text-primary" }}
-            >
-              Hybridization
-            </Link>
-            <Link
-              to="/kinetics"
-              className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
-              activeProps={{ className: "border-primary text-primary" }}
-            >
-              Kinetics
-            </Link>
-            <Link
-              to="/equilibrium"
-              className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
-              activeProps={{ className: "border-primary text-primary" }}
-            >
-              Equilibrium
-            </Link>
-            <Link
-              to="/everyday"
-              className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
-              activeProps={{ className: "border-primary text-primary" }}
-            >
-              Daily Life
-            </Link>
-          </div>
+            <div className="hidden items-center gap-6 text-[11px] font-bold uppercase text-muted-foreground lg:flex">
+              <Link
+                to="/"
+                className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
+                activeProps={{ className: "border-primary text-primary" }}
+                activeOptions={{ exact: true }}
+              >
+                Home
+              </Link>
+              {units.map((unit) => (
+                <UnitNavItem key={unit} unit={unit} active={unit === activeUnit} />
+              ))}
+            </div>
           </div>
         </nav>
 
@@ -231,21 +246,15 @@ function RootComponent() {
               <Link to="/" className="transition-colors hover:text-foreground">
                 Home
               </Link>
-              <Link to="/geometry" className="transition-colors hover:text-foreground">
-                Geometry
-              </Link>
-              <Link to="/hybridization" className="transition-colors hover:text-foreground">
-                Hybridization
-              </Link>
-              <Link to="/kinetics" className="transition-colors hover:text-foreground">
-                Kinetics
-              </Link>
-              <Link to="/equilibrium" className="transition-colors hover:text-foreground">
-                Equilibrium
-              </Link>
-              <Link to="/everyday" className="transition-colors hover:text-foreground">
-                Daily Life
-              </Link>
+              {units.map((unit) => (
+                <TopicLink
+                  key={unit}
+                  topic={topics.find((t) => t.unit === unit)!}
+                  className="transition-colors hover:text-foreground"
+                >
+                  {unit}
+                </TopicLink>
+              ))}
             </div>
           </div>
         </footer>

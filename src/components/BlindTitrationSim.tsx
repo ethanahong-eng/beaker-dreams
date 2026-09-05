@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 // Same acid/base math as TitrationSim, but played as a game: the numeric
 // pH and the curve are hidden. The only feedback is the flask's indicator
@@ -59,11 +59,20 @@ function mix(hex1: string, hex2: string, t: number) {
   return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
 }
 
+// A fixed starting round so server and client render identically on mount —
+// Math.random() inside a useState initializer would otherwise pick a
+// different indicator on the server than on the client and break hydration.
+const initialRound: Round = { pKa: 5, indicator: INDICATORS[0]! };
+
 export function BlindTitrationSim() {
-  const [round, setRound] = useState<Round>(() => randomRound());
+  const [round, setRound] = useState<Round>(initialRound);
   const [volume, setVolume] = useState(0);
   const [dropId, setDropId] = useState(0);
   const [guess, setGuess] = useState<number | null>(null);
+
+  useEffect(() => {
+    setRound(randomRound());
+  }, []);
 
   const ph = Math.max(0, Math.min(14, phAt(volume, round.pKa)));
   const { indicator } = round;
