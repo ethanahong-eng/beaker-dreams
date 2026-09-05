@@ -111,7 +111,7 @@ export const topics: Topic[] = [
         key: "vsepr",
         heading: "Spot the formal charge, then minimize it",
         caption:
-          'Every atom here shows its formal charge as a blue (+) or red (−) arrow, computed from the same octet-completion convention used to draw a Lewis structure by hand. Toggle "Show ideal bonding" to see which bonds should change order to reach the lowest possible charge separation for the skeleton you\'ve built.',
+          'Every atom here shows its formal charge as a blue "+" or red "−", computed from the same octet-completion convention used to draw a Lewis structure by hand. Toggle "Show ideal bonding" to see which bonds should change order to reach the lowest possible charge separation for the skeleton you\'ve built.',
         mode: "lewis",
       },
     },
