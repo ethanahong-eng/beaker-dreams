@@ -623,10 +623,16 @@ export function VseprBuilder({ mode: topicMode = "geometry" }: { mode?: VseprMod
               stroke={positive ? "#3b82f6" : "#ef4444"}
               strokeWidth={1.5}
             />
-            <path
-              d={positive ? "M0,-4.5 L4,3.5 L-4,3.5 Z" : "M0,4.5 L4,-3.5 L-4,-3.5 Z"}
+            <text
+              x={0}
+              y={3.5}
+              textAnchor="middle"
+              fontSize="11"
+              fontWeight="bold"
               fill={positive ? "#3b82f6" : "#ef4444"}
-            />
+            >
+              {positive ? "+" : "−"}
+            </text>
             {Math.abs(fc) > 1 && (
               <text
                 x={13}
@@ -816,7 +822,7 @@ export function VseprBuilder({ mode: topicMode = "geometry" }: { mode?: VseprMod
             Total formal-charge separation: Σ|charge| = {totalAbsCharge}.{" "}
             {totalAbsCharge === 0
               ? "Every atom completes its shell with no charge left over — the neutral, unseparated structure."
-              : "The blue/red arrows above mark exactly where charge is separated in this structure."}
+              : "The blue/red symbols above mark exactly where charge is separated in this structure."}
           </p>
         )}
 
