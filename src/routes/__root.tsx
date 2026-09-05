@@ -97,7 +97,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Nunito+Sans:wght@400;600;700&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),
   shellComponent: RootShell,
@@ -129,8 +129,8 @@ function RootComponent() {
         <nav className="sticky top-0 z-50 border-b border-border bg-background/95 px-6 py-5">
           <div className="mx-auto flex max-w-7xl items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center border border-primary bg-primary font-display text-sm font-bold text-primary-foreground">
-              V
+            <span className="flex h-9 w-9 items-center justify-center border border-primary bg-primary text-primary-foreground">
+              <BeakerLogo className="h-5 w-5" />
             </span>
             <span className="font-display text-lg font-bold uppercase">
               Valence.lab
