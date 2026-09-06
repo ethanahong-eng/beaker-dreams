@@ -55,7 +55,7 @@ export const topics: Topic[] = [
     title: "Beyond Bohr: The Quantum Atom",
     accent: "Quantum Atom",
     description:
-      "Bohr's planetary model, which was initially developed in 1913 predicted that electrons orbit around the nuclues in predictable patters.  His model helped to predict behaviors for only patches hydrogen. Wave–particle duality and the uncertainty principle are what actually force chemistry to abandon fixed electron trajectories.",
+      "Bohr's planetary model, which was initially developed in 1913 predicted that electrons orbit around the nucleus in predictable patters.  His model helped to predict behaviors such as spectral lines for hydrogen, but it failed on more complex molecules. Scientist later confirmed that atoms have wave–particle duality thus requiring a new model.",
     topics: [
       "Wave–particle duality",
       "de Broglie wavelength",
