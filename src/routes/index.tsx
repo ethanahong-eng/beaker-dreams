@@ -29,12 +29,6 @@ function HomePage() {
     <main className="mx-auto max-w-7xl px-6 py-16">
       {/* Hero */}
       <section className="mb-24 border-b border-border pb-16 text-center">
-        <div className="mb-8 inline-flex items-center gap-3 border-y border-border px-6 py-3">
-          <span className="h-2 w-2 rounded-full bg-accent" />
-          <span className="text-[10px] font-bold uppercase text-muted-foreground">
-            INTERACTIVE CHEMISTRY
-          </span>
-        </div>
         <h1 className="font-display text-5xl font-bold leading-tight md:text-7xl">
            Chemistry
         </h1>
