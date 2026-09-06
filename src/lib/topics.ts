@@ -8,7 +8,8 @@ export type SimKey =
   | "equilibrium"
   | "mechanism"
   | "titration"
-  | "blindTitration";
+  | "blindTitration"
+  | "orbital";
 
 export type TopicLesson = {
   /** Sections of written lesson content. */
@@ -153,10 +154,16 @@ export const topics: Topic[] = [
         {
           heading: "Radial probability distribution",
           body: [
-            "The probability of finding the electron in a thin spherical shell at radius r is not |R(r)|² alone but 4πr²|R(r)|² dr — the extra r² factor is the volume of that shell, which grows with distance from the nucleus. This is why an orbital like 2s, whose R(r) is actually largest at r=0, still has its most probable electron distance well away from the nucleus once that geometric factor is included.",
+            "The probability of finding the electron in a thin spherical shell at radius r is not |R(r)|² alone but r²|R(r)|² dr — the extra r² factor is the volume of that shell, which grows with distance from the nucleus. This is why an orbital like 2s, whose R(r) is actually largest at r=0, still has its most probable electron distance well away from the nucleus once that geometric factor is included.",
           ],
         },
       ],
+      simulation: {
+        key: "orbital",
+        heading: "From wavefunction to electron cloud",
+        caption:
+          "Pick any hydrogen-like orbital from 1s to 4f and see its actual wavefunction plotted through the nucleus, then a real Monte Carlo sample of its 3D probability density — count the sign changes in the graph and the nodes match n − l − 1 (radial) and l (angular) exactly.",
+      },
     },
   },
   {

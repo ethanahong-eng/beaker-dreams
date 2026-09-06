@@ -8,6 +8,7 @@ import { EquilibriumSim } from "@/components/EquilibriumSim";
 import { ReactionMechanism3D } from "@/components/ReactionMechanism3D";
 import { TitrationSim } from "@/components/TitrationSim";
 import { BlindTitrationSim } from "@/components/BlindTitrationSim";
+import { OrbitalSim } from "@/components/OrbitalSim";
 import { topicsBySlug, type SimKey } from "@/lib/topics";
 
 export const Route = createFileRoute("/topic/$slug")({
@@ -55,6 +56,8 @@ function renderSim(key: SimKey, mode?: "geometry" | "lewis" | "resonance") {
       return <TitrationSim />;
     case "blindTitration":
       return <BlindTitrationSim />;
+    case "orbital":
+      return <OrbitalSim />;
   }
 }
 
