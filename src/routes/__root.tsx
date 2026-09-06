@@ -234,7 +234,12 @@ function RootComponent() {
             </Link>
             <div className="hidden items-center gap-6 text-[11px] font-bold uppercase text-muted-foreground lg:flex">
               {units.map((unit) => (
-                <UnitNavItem key={unit} unit={unit} active={unit === activeUnit} />
+                <UnitNavItem
+                  key={unit}
+                  unit={unit}
+                  active={unit === activeUnit}
+                  topics={topics}
+                />
               ))}
             </div>
           </div>
