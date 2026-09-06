@@ -216,7 +216,10 @@ function UnitNavItem({
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const activeUnit = useActiveUnit();
+  const topics = Route.useLoaderData();
+  const units = unitsOf(topics);
+  const activeUnit = useActiveUnit(topics);
+
 
   return (
     <QueryClientProvider client={queryClient}>
