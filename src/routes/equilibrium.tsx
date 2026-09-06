@@ -33,7 +33,7 @@ function EquilibriumPage() {
     <main className="mx-auto max-w-7xl px-6 py-16">
       <header className="mb-16 max-w-3xl border-b border-border pb-12">
         <div className="mb-5 inline-block border-y border-border px-4 py-2 text-[10px] font-bold uppercase text-accent">
-          TOPIC 04: CHEMICAL DYNAMICS
+          TOPIC 18: CHEMICAL DYNAMICS
         </div>
         <h1 className="mb-6 font-display text-5xl font-bold md:text-6xl">
           Dynamic <span className="text-accent">Equilibrium</span>
@@ -315,6 +315,32 @@ function EquilibriumPage() {
               cell. Because pressure can't help an equal-mole equilibrium, engineers lean on
               catalysts and staged cooling instead — Le Chatelier's absence is as instructive as its
               presence.
+            </p>
+          </div>
+        </section>
+
+        <section className="mt-16 grid gap-16 border-t border-border pt-16 md:grid-cols-2">
+          <div>
+            <h2 className="mb-6 text-3xl font-bold italic">Where Kc actually comes from</h2>
+            <p className="leading-relaxed text-muted-foreground">
+              Kc is not an independent postulate — it is a restatement of Gibbs free energy. At any
+              point in a reaction, ΔG = ΔG° + RT ln Q. At equilibrium the system has nothing left to
+              gain by shifting further, so ΔG = 0 and Q has settled to K, which reduces the equation
+              to <span className="text-accent">ΔG° = −RT ln K</span>. A large negative ΔG° forces K
+              to be enormous; a positive ΔG° forces K below 1. The equilibrium constant explored in
+              this simulation is thermodynamics wearing a different name.
+            </p>
+          </div>
+          <div>
+            <h2 className="mb-6 text-3xl font-bold italic">Why temperature is different</h2>
+            <p className="leading-relaxed text-muted-foreground">
+              Every other disturbance in the simulation moves Qc without moving Kc at all.
+              Temperature is the one variable that changes K itself, and how much is quantified by
+              the van 't Hoff equation, ln(K₂/K₁) = −(ΔH°/R)(1/T₂ − 1/T₁) — derived by combining ΔG°
+              = ΔH° − TΔS° with ΔG° = −RT ln K and assuming ΔH° and ΔS° are roughly
+              temperature-independent. For this exothermic shift reaction, ΔH° &lt; 0, so raising T
+              makes ln K decrease: exactly why heating the vessel favors CO and H₂O over CO₂ and H₂,
+              even though it speeds up both directions at once.
             </p>
           </div>
         </section>
