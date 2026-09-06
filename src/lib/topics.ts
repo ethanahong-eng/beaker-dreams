@@ -64,8 +64,8 @@ export const topics: Topic[] = [
     ],
     lesson: {
       significance: [
-        "An electron orbiting a nucleus classically is a charge undergoing centripetal acceleration, and accelerating charges radiate energy — a straightforward consequence of classical electromagnetism that predicts every atom should collapse almost instantly. Bohr's 1913 model sidestepped the problem with an ad hoc postulate (angular momentum is quantized as L = nħ) that correctly reproduced hydrogen's line spectrum, but it had no justification beyond fitting the data, and it fails outright for any atom with more than one electron.",
-        'The real fix came from treating matter itself as wavelike. De Broglie\'s 1924 hypothesis and the Heisenberg uncertainty principle it led to make the very idea of an electron following a fixed orbital path meaningless — not just hard to measure, but physically undefined. Every rule this unit builds (orbital shapes, nodes, periodic trends) follows from replacing "where is the electron" with "what is the probability amplitude for the electron."',
+        "Theoretically, an electron orbiting a nucleus should collapse: losing energy until it spirals into the nucleus. Bohr's 1913 model sidestepped the problem sidestepped this problem by suggesting that electrons can only orbit the nucleus at fixed orbits.  This correctly reproduced hydrogen's line spectrum, but since it had no real justification behind it, it failed for any atom with more than one electron.",
+        'A few years after Bohr\'s model, a solution came, which involved describing atoms with both wave and particle behaviors. It was determined that electrons do not orbit fixed orbital path meaningless — not just hard to measure, but physically undefined. Every rule this unit builds (orbital shapes, nodes, periodic trends) follows from replacing "where is the electron" with "what is the probability amplitude for the electron."',
       ],
       theory: [
         {
