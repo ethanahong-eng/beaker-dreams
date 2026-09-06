@@ -55,7 +55,7 @@ export const topics: Topic[] = [
     title: "Beyond Bohr: The Quantum Atom",
     accent: "Quantum Atom",
     description:
-      "Classical mechanics predicts every atom should collapse in about 10⁻¹¹ seconds, and Bohr's planetary model only patches hydrogen. Wave–particle duality and the uncertainty principle are what actually force chemistry to abandon fixed electron trajectories.",
+      "Bohr's planetary model, which was initially developed in 1913 predicted that electrons orbit around the nuclues in predictable patters.  His model helped to predict behaviors for only patches hydrogen. Wave–particle duality and the uncertainty principle are what actually force chemistry to abandon fixed electron trajectories.",
     topics: [
       "Wave–particle duality",
       "de Broglie wavelength",
