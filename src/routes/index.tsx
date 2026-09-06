@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Learn hard chemistry topics through interactive simulations: molecular geometry, orbital hybridization, reaction kinetics and dynamic equilibrium — plus the chemistry that shapes daily life.",
+          "Learn chemistry from the atom up, at a college level: solving the Schrödinger equation, molecular geometry, orbital hybridization, reaction kinetics and dynamic equilibrium — plus the chemistry that shapes daily life.",
       },
       { property: "og:title", content: "Valence Lab — Interactive Chemistry Simulations" },
       {
@@ -65,7 +65,7 @@ function HomePage() {
           { k: String(topics.length), v: "Topics" },
           { k: String(units.length), v: "Units" },
           { k: "7", v: "SIMULATIONS" },
-          { k: "0", v: "Equations to memorize first" },
+          { k: "0", v: "Formulas handed down without derivation" },
         ].map((s) => (
           <div key={s.v} className="border-b border-r border-border p-8 text-center md:border-b-0">
             <div className="font-display text-4xl font-bold text-primary">{s.k}</div>
