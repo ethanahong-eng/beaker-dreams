@@ -36,7 +36,7 @@ function HomePage() {
           </span>
         </div>
         <h1 className="font-display text-5xl font-bold leading-tight md:text-7xl">
-          Molecular structures and behaviors
+           Chemistry
         </h1>
         <p className="mx-auto mt-8 max-w-2xl text-lg italic leading-relaxed text-muted-foreground">
           Chemistry doesn't have to be confusing with the right visuals. Each page here pairs a live
