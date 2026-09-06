@@ -107,42 +107,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Approach */}
-      <section className="mb-20 grid gap-12 border-t border-border pt-16 md:grid-cols-3">
-        <div className="md:col-span-1">
-          <span className="text-[10px] font-bold uppercase text-accent">How the lab works</span>
-          <h2 className="mt-3 font-display text-3xl font-bold">
-            Learn about a topic, how it works, then apply those skills in a digital lab
-          </h2>
-        </div>
-        <div className="space-y-8 md:col-span-2">
-          {[
-            {
-              n: "01",
-              t: "Significance",
-              d: "Every page opens with the history and stakes — why this reaction fed a city, ruined a drug, or decided a treaty — so the equation has a reason before you touch a slider.",
-            },
-            {
-              n: "02",
-              t: "Theory",
-              d: "Plain-language derivations sit next to the demo, defining Qc, activation energy, and pKa in the same frame where you'll see them move.",
-            },
-            {
-              n: "03",
-              t: "Simulation",
-              d: "Interactive, real-time visualizations let you disturb a system and watch Le Chatelier's principle, catalysis, or buffering push it back toward balance.",
-            },
-          ].map((s) => (
-            <div key={s.n} className="flex gap-6">
-              <span className="font-display text-sm font-bold text-accent">{s.n}</span>
-              <div>
-                <h3 className="mb-2 font-bold">{s.t}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{s.d}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
     </main>
   );
 }

@@ -216,14 +216,6 @@ function RootComponent() {
               <span className="font-display text-lg font-bold uppercase">Valence.lab</span>
             </Link>
             <div className="hidden items-center gap-6 text-[11px] font-bold uppercase text-muted-foreground lg:flex">
-              <Link
-                to="/"
-                className="border-b border-transparent py-1 transition-colors hover:border-primary hover:text-primary"
-                activeProps={{ className: "border-primary text-primary" }}
-                activeOptions={{ exact: true }}
-              >
-                Home
-              </Link>
               {units.map((unit) => (
                 <UnitNavItem key={unit} unit={unit} active={unit === activeUnit} />
               ))}
