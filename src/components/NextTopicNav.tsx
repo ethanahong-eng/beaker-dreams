@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { topics } from "@/lib/topics";
+import type { Topic } from "@/lib/topics";
 import { TopicLink } from "@/components/TopicLink";
 
 /** Footer nav shown at the bottom of every topic page: back to the library, and on to the next lesson in the curriculum. */
-export function NextTopicNav({ currentSlug }: { currentSlug: string }) {
+export function NextTopicNav({ topics, currentSlug }: { topics: Topic[]; currentSlug: string }) {
   const index = topics.findIndex((t) => t.slug === currentSlug);
   const next = index >= 0 ? topics[index + 1] : undefined;
 
