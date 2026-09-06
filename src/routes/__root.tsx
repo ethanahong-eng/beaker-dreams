@@ -12,7 +12,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { units, topics, topicsBySlug } from "../lib/topics";
+import { unitsOf, type Topic } from "../lib/topics";
+import { topicsQueryOptions } from "../lib/topics-query";
 import { TopicLink } from "../components/TopicLink";
 
 function BeakerLogo({ className }: { className?: string }) {
