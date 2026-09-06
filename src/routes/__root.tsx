@@ -104,7 +104,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: ({ context }) => context.queryClient.ensureQueryData(topicsQueryOptions),
+  loader: async ({ context }): Promise<Topic[]> => {
+    try {
+      return await context.queryClient.ensureQueryData(topicsQueryOptions);
+    } catch {
+      // The header/footer nav degrades gracefully if the lesson library is unreachable.
+      return [];
+    }
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
