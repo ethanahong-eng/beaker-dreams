@@ -153,17 +153,29 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 /** Which unit (if any) the current page belongs to, so its nav item can stay highlighted. */
-function useActiveUnit(): string | undefined {
+function useActiveUnit(topics: Topic[]): string | undefined {
   const pathname = useLocation({ select: (loc) => loc.pathname });
   if (pathname.startsWith("/topic/")) {
-    return topicsBySlug.get(pathname.slice("/topic/".length))?.unit;
+    const slug = pathname.slice("/topic/".length);
+    return topics.find((t) => t.slug === slug)?.unit;
   }
   return topics.find((t) => t.builtIn === pathname)?.unit;
 }
 
-function UnitNavItem({ unit, active }: { unit: string; active: boolean }) {
+function UnitNavItem({
+  unit,
+  active,
+  topics,
+}: {
+  unit: string;
+  active: boolean;
+  topics: Topic[];
+}) {
   const unitTopics = topics.filter((t) => t.unit === unit);
-  const first = unitTopics[0]!;
+  const first = unitTopics[0];
+  if (!first) return null;
+
+
 
   return (
     <div className="group relative">
