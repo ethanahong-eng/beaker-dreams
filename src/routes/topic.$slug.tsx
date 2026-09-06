@@ -10,6 +10,7 @@ import { TitrationSim } from "@/components/TitrationSim";
 import { BlindTitrationSim } from "@/components/BlindTitrationSim";
 import { OrbitalSim } from "@/components/OrbitalSim";
 import { topicsQueryOptions } from "@/lib/topics-query";
+import { TOPIC_OVERRIDES } from "@/lib/topicOverrides";
 import type { SimKey } from "@/lib/topics";
 
 export const Route = createFileRoute("/topic/$slug")({
@@ -86,11 +87,25 @@ function TopicNotFound() {
 function TopicPage() {
   const { topic } = Route.useLoaderData();
   const lesson = topic.lesson!;
+  // Additive, code-only extensions keyed by slug -- see topicOverrides.tsx
+  // for why (the lesson content and its simulation slot now live in a
+  // database this codebase can only read, so a topic can't be edited from
+  // here directly, but it can be extended without touching that data).
+  const override = TOPIC_OVERRIDES[topic.slug];
+  const simulation =
+    override?.simulation ??
+    (lesson.simulation
+      ? {
+          heading: lesson.simulation.heading,
+          caption: lesson.simulation.caption,
+          render: () => renderSim(lesson.simulation!.key, lesson.simulation!.mode),
+        }
+      : null);
 
   const sections = [
     { id: "significance", label: "Significance" },
     { id: "theory", label: "Theory" },
-    ...(lesson.simulation ? [{ id: "simulation", label: "Simulation" }] : []),
+    ...(simulation ? [{ id: "simulation", label: "Simulation" }] : []),
   ];
 
   const [before, after] = topic.title.split(topic.accent);
@@ -118,7 +133,7 @@ function TopicPage() {
           Section 01 · Significance
         </span>
         <h2 id="significance-heading" className="mt-3 text-3xl font-bold">
-          {"\n"}
+          Why it matters
         </h2>
         <div className="mt-8 grid gap-10 md:grid-cols-2">
           {lesson.significance.map((p) => (
@@ -134,7 +149,7 @@ function TopicPage() {
           Section 02 · Theory
         </span>
         <h2 id="theory-heading" className="mt-3 text-3xl font-bold">
-          {"\n"}
+          The underlying principle
         </h2>
         <div className="mt-8 space-y-10">
           {lesson.theory.map((block) => (
@@ -149,10 +164,16 @@ function TopicPage() {
               </div>
             </div>
           ))}
+          {override?.extraTheory?.map((block) => (
+            <div key={block.heading} className="border-l-2 border-border pl-6">
+              <h3 className="mb-4 font-display text-xl font-bold">{block.heading}</h3>
+              {block.body}
+            </div>
+          ))}
         </div>
       </section>
 
-      {lesson.simulation ? (
+      {simulation ? (
         <section
           id="simulation"
           aria-labelledby="simulation-heading"
@@ -162,12 +183,12 @@ function TopicPage() {
             Section 03 · Simulation
           </span>
           <h2 id="simulation-heading" className="mt-3 text-3xl font-bold">
-            {lesson.simulation.heading}
+            {simulation.heading}
           </h2>
           <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">
-            {lesson.simulation.caption}
+            {simulation.caption}
           </p>
-          <div className="mt-10">{renderSim(lesson.simulation.key, lesson.simulation.mode)}</div>
+          <div className="mt-10">{simulation.render()}</div>
         </section>
       ) : null}
 
