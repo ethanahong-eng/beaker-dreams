@@ -12,7 +12,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { units, topics, topicsBySlug } from "../lib/topics";
+import { unitsOf, type Topic } from "../lib/topics";
+import { topicsQueryOptions } from "../lib/topics-query";
 import { TopicLink } from "../components/TopicLink";
 
 function BeakerLogo({ className }: { className?: string }) {
@@ -103,6 +104,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  loader: async ({ context }): Promise<Topic[]> => {
+    try {
+      return await context.queryClient.ensureQueryData(topicsQueryOptions);
+    } catch {
+      // The header/footer nav degrades gracefully if the lesson library is unreachable.
+      return [];
+    }
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -151,17 +160,29 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 /** Which unit (if any) the current page belongs to, so its nav item can stay highlighted. */
-function useActiveUnit(): string | undefined {
+function useActiveUnit(topics: Topic[]): string | undefined {
   const pathname = useLocation({ select: (loc) => loc.pathname });
   if (pathname.startsWith("/topic/")) {
-    return topicsBySlug.get(pathname.slice("/topic/".length))?.unit;
+    const slug = pathname.slice("/topic/".length);
+    return topics.find((t) => t.slug === slug)?.unit;
   }
   return topics.find((t) => t.builtIn === pathname)?.unit;
 }
 
-function UnitNavItem({ unit, active }: { unit: string; active: boolean }) {
+function UnitNavItem({
+  unit,
+  active,
+  topics,
+}: {
+  unit: string;
+  active: boolean;
+  topics: Topic[];
+}) {
   const unitTopics = topics.filter((t) => t.unit === unit);
-  const first = unitTopics[0]!;
+  const first = unitTopics[0];
+  if (!first) return null;
+
+
 
   return (
     <div className="group relative">
@@ -202,7 +223,10 @@ function UnitNavItem({ unit, active }: { unit: string; active: boolean }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const activeUnit = useActiveUnit();
+  const topics = Route.useLoaderData();
+  const units = unitsOf(topics);
+  const activeUnit = useActiveUnit(topics);
+
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -217,7 +241,12 @@ function RootComponent() {
             </Link>
             <div className="hidden items-center gap-6 text-[11px] font-bold uppercase text-muted-foreground lg:flex">
               {units.map((unit) => (
-                <UnitNavItem key={unit} unit={unit} active={unit === activeUnit} />
+                <UnitNavItem
+                  key={unit}
+                  unit={unit}
+                  active={unit === activeUnit}
+                  topics={topics}
+                />
               ))}
             </div>
           </div>

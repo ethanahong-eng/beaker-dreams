@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { topics, units, type Topic } from "@/lib/topics";
+import { unitsOf, type Topic } from "@/lib/topics";
+import { topicsQueryOptions } from "@/lib/topics-query";
 import { TopicLink } from "@/components/TopicLink";
 
 export const Route = createFileRoute("/")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(topicsQueryOptions),
   head: () => ({
     meta: [
       { title: "Valence Lab — Interactive Chemistry Simulations" },
@@ -21,10 +23,25 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  errorComponent: LibraryError,
   component: HomePage,
 });
 
+function LibraryError() {
+  return (
+    <main className="mx-auto max-w-3xl px-6 py-24 text-center">
+      <h1 className="font-display text-4xl font-bold">Lessons unavailable</h1>
+      <p className="mt-4 text-muted-foreground">
+        The lesson library couldn't be loaded just now. Please refresh the page.
+      </p>
+    </main>
+  );
+}
+
 function HomePage() {
+  const topics = Route.useLoaderData();
+  const units = unitsOf(topics);
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-16">
       {/* Hero */}
@@ -38,12 +55,14 @@ function HomePage() {
           chemistry principles, but you'll also learn how and why
         </p>
         <div className="mt-10 flex flex-wrap justify-center gap-4">
-          <TopicLink
-            topic={topics[0]!}
-            className="border border-primary bg-primary px-7 py-3 text-xs font-bold uppercase text-primary-foreground transition-colors hover:bg-transparent hover:text-primary"
-          >
-            DIGITAL LAB
-          </TopicLink>
+          {topics[0] ? (
+            <TopicLink
+              topic={topics[0]}
+              className="border border-primary bg-primary px-7 py-3 text-xs font-bold uppercase text-primary-foreground transition-colors hover:bg-transparent hover:text-primary"
+            >
+              DIGITAL LAB
+            </TopicLink>
+          ) : null}
           <Link
             to="/everyday"
             className="border border-primary bg-transparent px-7 py-3 text-xs font-bold uppercase text-primary transition-colors hover:bg-primary hover:text-primary-foreground"

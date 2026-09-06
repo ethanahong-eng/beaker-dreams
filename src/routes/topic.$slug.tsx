@@ -9,16 +9,18 @@ import { ReactionMechanism3D } from "@/components/ReactionMechanism3D";
 import { TitrationSim } from "@/components/TitrationSim";
 import { BlindTitrationSim } from "@/components/BlindTitrationSim";
 import { OrbitalSim } from "@/components/OrbitalSim";
-import { topicsBySlug, type SimKey } from "@/lib/topics";
+import { topicsQueryOptions } from "@/lib/topics-query";
+import type { SimKey } from "@/lib/topics";
 
 export const Route = createFileRoute("/topic/$slug")({
-  loader: ({ params }) => {
-    const topic = topicsBySlug.get(params.slug);
+  loader: async ({ params, context }) => {
+    const topics = await context.queryClient.ensureQueryData(topicsQueryOptions);
+    const topic = topics.find((t) => t.slug === params.slug);
     if (!topic || !topic.lesson) throw notFound();
     return { topic };
   },
-  head: ({ params }) => {
-    const topic = topicsBySlug.get(params.slug);
+  head: ({ loaderData }) => {
+    const topic = loaderData?.topic;
     if (!topic) {
       return {
         meta: [{ title: "Topic not found — Valence Lab" }, { name: "robots", content: "noindex" }],
@@ -37,6 +39,7 @@ export const Route = createFileRoute("/topic/$slug")({
     };
   },
   notFoundComponent: TopicNotFound,
+  errorComponent: TopicNotFound,
   component: TopicPage,
 });
 
@@ -58,6 +61,8 @@ function renderSim(key: SimKey, mode?: "geometry" | "lewis" | "resonance") {
       return <BlindTitrationSim />;
     case "orbital":
       return <OrbitalSim />;
+    default:
+      return null;
   }
 }
 
