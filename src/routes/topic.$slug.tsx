@@ -113,7 +113,7 @@ function TopicPage() {
           Section 01 · Significance
         </span>
         <h2 id="significance-heading" className="mt-3 text-3xl font-bold">
-          Why it matters
+          {"\n"}
         </h2>
         <div className="mt-8 grid gap-10 md:grid-cols-2">
           {lesson.significance.map((p) => (
@@ -129,7 +129,7 @@ function TopicPage() {
           Section 02 · Theory
         </span>
         <h2 id="theory-heading" className="mt-3 text-3xl font-bold">
-          The underlying principle
+          {"\n"}
         </h2>
         <div className="mt-8 space-y-10">
           {lesson.theory.map((block) => (
