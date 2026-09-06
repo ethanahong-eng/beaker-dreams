@@ -1,4 +1,10 @@
-import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import {
   ORBITALS,
   rMaxFor,
@@ -6,6 +12,7 @@ import {
   radialDistribution,
   sampleOrbitalPoints,
   type Orientation,
+  type OrbitalPoint,
 } from "@/lib/orbitals";
 import { rotate3d, vLength, vScale, type Vec3 } from "@/lib/project3d";
 import { AxisGizmo } from "@/components/AxisGizmo";
@@ -34,11 +41,14 @@ export function OrbitalSim() {
 
   // Real samples drawn from the electron's actual |psi|^2 probability
   // density -- an honest Monte Carlo electron cloud, not a fixed lobe
-  // shape stood in for it.
-  const points = useMemo(
-    () => sampleOrbitalPoints(spec.n, spec.l, orientation, POINT_COUNT),
-    [spec.n, spec.l, orientation],
-  );
+  // shape stood in for it. Sampled in an effect (client-side only) rather
+  // than during render: baking a random draw into the server-rendered
+  // HTML would never match the client's own re-draw and trip a hydration
+  // mismatch.
+  const [points, setPoints] = useState<OrbitalPoint[]>([]);
+  useEffect(() => {
+    setPoints(sampleOrbitalPoints(spec.n, spec.l, orientation, POINT_COUNT));
+  }, [spec.n, spec.l, orientation]);
   const boundingRadius = useMemo(
     () => Math.max(0.6, ...points.map((p) => vLength(p.pos as Vec3))),
     [points],

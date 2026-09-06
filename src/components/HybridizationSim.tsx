@@ -12,6 +12,7 @@ import {
 import { HYBRID_TYPES, HYBRID_ORDER, type HybridType, type HybridInfo } from "@/lib/hybridization";
 import { rotate3d } from "@/lib/project3d";
 import { AxisGizmo } from "@/components/AxisGizmo";
+import { Math as MathBlock } from "@/components/Math";
 
 export function HybridizationSim() {
   const [hybridType, setHybridType] = useState<HybridType>("sp3");
@@ -365,8 +366,130 @@ function HybridLobe({ cx, cy, angleDeg }: { cx: number; cy: number; angleDeg: nu
   );
 }
 
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+// A single mixing hybrid, drawn as two orbitals crossfading into one: the
+// gray parent p-lobe pair (front toward the bond axis, back away from it)
+// shrinks and fades out while the teal hybrid shape -- a big constructive
+// lobe on the same front side plus a small destructive-interference tail
+// on the back side -- grows and fades in. Same-side addition (front) makes
+// the wave taller there; opposite-side subtraction (back) makes it nearly
+// cancel, which is *why* the tail is small instead of another full lobe.
+function MixingHybridLobe({
+  cx,
+  cy,
+  angleDeg,
+  t,
+}: {
+  cx: number;
+  cy: number;
+  angleDeg: number;
+  t: number;
+}) {
+  const rad = (angleDeg * Math.PI) / 180;
+  const ux = Math.cos(rad);
+  const uy = Math.sin(rad);
+
+  const pLobeLen = 34;
+  const pLobeWidth = 11;
+  const bigLen = 46;
+
+  const frontLen = lerp(pLobeLen, bigLen, t);
+  const frontWidth = lerp(pLobeWidth, bigLen * 0.24, t);
+  const frontCx = cx + ux * frontLen * 0.5;
+  const frontCy = cy + uy * frontLen * 0.5;
+
+  const backLen = lerp(pLobeLen, bigLen * 0.35, t);
+  const backWidth = lerp(pLobeWidth, bigLen * 0.17, t);
+  const backCx = cx - ux * backLen * 0.5;
+  const backCy = cy - uy * backLen * 0.5;
+
+  return (
+    <g>
+      <ellipse
+        cx={frontCx}
+        cy={frontCy}
+        rx={frontLen * 0.5}
+        ry={frontWidth}
+        transform={`rotate(${angleDeg} ${frontCx} ${frontCy})`}
+        fill="rgba(148, 163, 184, 0.9)"
+        opacity={1 - t}
+      />
+      <ellipse
+        cx={backCx}
+        cy={backCy}
+        rx={backLen * 0.5}
+        ry={backWidth}
+        transform={`rotate(${angleDeg} ${backCx} ${backCy})`}
+        fill="rgba(148, 163, 184, 0.9)"
+        opacity={1 - t}
+      />
+      <ellipse
+        cx={frontCx}
+        cy={frontCy}
+        rx={frontLen * 0.5}
+        ry={frontWidth}
+        transform={`rotate(${angleDeg} ${frontCx} ${frontCy})`}
+        fill="var(--accent)"
+        opacity={t * 0.85}
+      />
+      <circle
+        cx={backCx}
+        cy={backCy}
+        r={Math.max(3, backLen * 0.22)}
+        fill="var(--accent)"
+        opacity={t * 0.55}
+      />
+    </g>
+  );
+}
+
 function OrbitalMixingDiagram({ hybridType }: { hybridType: HybridType }) {
   const info = HYBRID_TYPES[hybridType];
+  const sCharacter = sCharacterOf(info);
+  const [t, setT] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  const dirRef = useRef(1);
+
+  useEffect(() => {
+    setT(0);
+    dirRef.current = 1;
+  }, [hybridType]);
+
+  useEffect(() => {
+    if (!playing) return;
+    let raf = 0;
+    let last = performance.now();
+    const HOLD_MS = 700;
+    let holdUntil = 0;
+    const tick = (now: number) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      if (now < holdUntil) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+      setT((prev) => {
+        const next = prev + dirRef.current * 0.35 * dt;
+        if (next >= 1) {
+          holdUntil = now + HOLD_MS;
+          dirRef.current = -1;
+          return 1;
+        }
+        if (next <= 0) {
+          holdUntil = now + HOLD_MS;
+          dirRef.current = 1;
+          return 0;
+        }
+        return next;
+      });
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [playing, hybridType]);
 
   const before: Array<{ kind: "s" | "p" | "d" }> = [
     { kind: "s" },
@@ -383,6 +506,7 @@ function OrbitalMixingDiagram({ hybridType }: { hybridType: HybridType }) {
   const clusterCx = 375;
   const clusterCy = rowY;
   const angles = Array.from({ length: info.domains }, (_, i) => -90 + (360 / info.domains) * i);
+  const beforeOpacity = 1 - 0.85 * t;
 
   return (
     <div className="rounded-xl border border-border bg-card p-6">
@@ -396,12 +520,14 @@ function OrbitalMixingDiagram({ hybridType }: { hybridType: HybridType }) {
         </span>
       </div>
       <svg viewBox="0 0 460 190" className="h-[180px] w-full">
-        {before.map((orb, i) => {
-          const cx = startX + i * spacing;
-          if (orb.kind === "s") return <SOrbital key={i} cx={cx} cy={rowY} />;
-          if (orb.kind === "p") return <POrbital key={i} cx={cx} cy={rowY} />;
-          return <DOrbital key={i} cx={cx} cy={rowY} />;
-        })}
+        <g opacity={beforeOpacity}>
+          {before.map((orb, i) => {
+            const cx = startX + i * spacing;
+            if (orb.kind === "s") return <SOrbital key={i} cx={cx} cy={rowY} />;
+            if (orb.kind === "p") return <POrbital key={i} cx={cx} cy={rowY} />;
+            return <DOrbital key={i} cx={cx} cy={rowY} />;
+          })}
+        </g>
         <text
           x={startX + (lastBeforeX - startX) / 2}
           y={rowY + 60}
@@ -425,11 +551,28 @@ function OrbitalMixingDiagram({ hybridType }: { hybridType: HybridType }) {
           points={`${arrowX2},${rowY - 6} ${arrowX2 + 12},${rowY} ${arrowX2},${rowY + 6}`}
           fill="var(--muted-foreground)"
         />
+        <text
+          x={(arrowX1 + arrowX2) / 2}
+          y={rowY - 12}
+          textAnchor="middle"
+          fontSize="9"
+          fill="var(--muted-foreground)"
+          fontFamily="monospace"
+        >
+          mixing: {(t * 100).toFixed(0)}%
+        </text>
 
         {angles.map((a, i) => (
-          <HybridLobe key={i} cx={clusterCx} cy={clusterCy} angleDeg={a} />
+          <MixingHybridLobe key={i} cx={clusterCx} cy={clusterCy} angleDeg={a} t={t} />
         ))}
-        <circle cx={clusterCx} cy={clusterCy} r={4} fill="var(--foreground)" />
+        <circle cx={clusterCx} cy={clusterCy} r={lerp(4, 4, t)} fill="var(--foreground)" />
+        <circle
+          cx={clusterCx}
+          cy={clusterCy}
+          r={lerp(13, 0, t)}
+          fill="rgba(148, 163, 184, 0.9)"
+          opacity={1 - t}
+        />
         <text
           x={clusterCx}
           y={rowY + 60}
@@ -441,14 +584,48 @@ function OrbitalMixingDiagram({ hybridType }: { hybridType: HybridType }) {
           {info.label} hybrid orbitals
         </text>
       </svg>
-      {(info.leftoverP > 0 || info.leftoverD > 0) && (
-        <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-          {info.leftoverP > 0
-            ? `${info.leftoverP} p orbital${info.leftoverP === 1 ? "" : "s"}`
-            : `${info.leftoverD} d orbital${info.leftoverD === 1 ? "" : "s"}`}{" "}
-          stay pure and unhybridized — not shown above, since they never enter the mix.
-        </p>
-      )}
+
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={Math.round(t * 100)}
+        onChange={(e) => {
+          setPlaying(false);
+          setT(Number(e.target.value) / 100);
+        }}
+        aria-label="Orbital mixing progress"
+        className="mt-1 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-[var(--accent)]"
+      />
+      <div className="mt-2 flex items-center justify-between">
+        <button
+          onClick={() => setPlaying((p) => !p)}
+          className="rounded-full border border-border px-3 py-1 font-mono text-[10px] font-bold uppercase transition-colors hover:bg-secondary"
+        >
+          {playing ? "Pause" : "Play"} mixing
+        </button>
+        {(info.leftoverP > 0 || info.leftoverD > 0) && (
+          <p className="font-mono text-[10px] text-muted-foreground">
+            {info.leftoverP > 0
+              ? `${info.leftoverP} p orbital${info.leftoverP === 1 ? "" : "s"}`
+              : `${info.leftoverD} d orbital${info.leftoverD === 1 ? "" : "s"}`}{" "}
+            stay pure — not shown, since they never enter the mix.
+          </p>
+        )}
+      </div>
+
+      <div className="mt-4 rounded-lg border border-border bg-background p-3">
+        <MathBlock
+          tex={`\\psi_{\\text{hybrid}} = \\sqrt{\\tfrac{1}{${info.domains}}}\\,\\phi_s \\;\\pm\\; \\sqrt{\\tfrac{${info.domains - 1}}{${info.domains}}}\\,\\phi_p`}
+        />
+      </div>
+      <p className="mt-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
+        A hybrid isn't a new orbital drawn from scratch — it's a weighted sum of the atom's own s
+        and p wavefunctions ({(sCharacter * 100).toFixed(0)}% s character here). Where the + sign
+        adds constructively (the front, toward the bond) the lobe grows; where it's effectively
+        subtracted (the back) the wave nearly cancels, leaving the small tail. That's the "+" and
+        the front/back asymmetry above, not two independent choices.
+      </p>
     </div>
   );
 }
