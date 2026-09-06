@@ -17,7 +17,7 @@ export const Route = createFileRoute("/topic/$slug")({
     const topics = await context.queryClient.ensureQueryData(topicsQueryOptions);
     const topic = topics.find((t) => t.slug === params.slug);
     if (!topic || !topic.lesson) throw notFound();
-    return { topic, topics };
+    return { topic };
   },
   head: ({ loaderData }) => {
     const topic = loaderData?.topic;
@@ -84,7 +84,7 @@ function TopicNotFound() {
 }
 
 function TopicPage() {
-  const { topic, topics } = Route.useLoaderData();
+  const { topic } = Route.useLoaderData();
   const lesson = topic.lesson!;
 
   const sections = [
@@ -171,7 +171,7 @@ function TopicPage() {
         </section>
       ) : null}
 
-      <NextTopicNav topics={topics} currentSlug={topic.slug} />
+      <NextTopicNav currentSlug={topic.slug} />
 
       <SectionNav items={sections} />
     </main>

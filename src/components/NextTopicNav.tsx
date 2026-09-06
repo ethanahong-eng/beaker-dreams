@@ -1,9 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import type { Topic } from "@/lib/topics";
+import { useQuery } from "@tanstack/react-query";
+import { topicsQueryOptions } from "@/lib/topics-query";
 import { TopicLink } from "@/components/TopicLink";
 
 /** Footer nav shown at the bottom of every topic page: back to the library, and on to the next lesson in the curriculum. */
-export function NextTopicNav({ topics, currentSlug }: { topics: Topic[]; currentSlug: string }) {
+export function NextTopicNav({ currentSlug }: { currentSlug: string }) {
+  const { data } = useQuery(topicsQueryOptions);
+  const topics = data ?? [];
   const index = topics.findIndex((t) => t.slug === currentSlug);
   const next = index >= 0 ? topics[index + 1] : undefined;
 
