@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SectionNav } from "@/components/SectionNav";
 import { NextTopicNav } from "@/components/NextTopicNav";
@@ -9,9 +10,13 @@ import { ReactionMechanism3D } from "@/components/ReactionMechanism3D";
 import { TitrationSim } from "@/components/TitrationSim";
 import { BlindTitrationSim } from "@/components/BlindTitrationSim";
 import { OrbitalSim } from "@/components/OrbitalSim";
+import { LessonBody } from "@/components/LessonBody";
+import { ReviewLevelToggle } from "@/components/ReviewLevelToggle";
+import { ReviewQuestions } from "@/components/ReviewQuestions";
 import { topicsQueryOptions } from "@/lib/topics-query";
 import { TOPIC_OVERRIDES } from "@/lib/topicOverrides";
 import type { SimKey } from "@/lib/topics";
+import type { Level } from "@/lib/reviewContent";
 
 export const Route = createFileRoute("/topic/$slug")({
   loader: async ({ params, context }) => {
@@ -92,6 +97,8 @@ function TopicPage() {
   // database this codebase can only read, so a topic can't be edited from
   // here directly, but it can be extended without touching that data).
   const override = TOPIC_OVERRIDES[topic.slug];
+  const [level, setLevel] = useState<Level>("hard");
+  const easy = level === "easy" ? override?.easy : undefined;
   const simulation =
     override?.simulation ??
     (lesson.simulation
@@ -124,6 +131,8 @@ function TopicPage() {
         <p className="text-lg leading-relaxed text-muted-foreground">{topic.description}</p>
       </header>
 
+      {override?.easy && <ReviewLevelToggle level={level} onChange={setLevel} />}
+
       <section
         id="significance"
         aria-labelledby="significance-heading"
@@ -136,7 +145,7 @@ function TopicPage() {
           Why it matters
         </h2>
         <div className="mt-8 grid gap-10 md:grid-cols-2">
-          {lesson.significance.map((p) => (
+          {(easy?.significance ?? lesson.significance).map((p) => (
             <p key={p.slice(0, 40)} className="leading-relaxed text-muted-foreground">
               {p}
             </p>
@@ -151,26 +160,33 @@ function TopicPage() {
         <h2 id="theory-heading" className="mt-3 text-3xl font-bold">
           The underlying principle
         </h2>
-        <div className="mt-8 space-y-10">
-          {lesson.theory.map((block) => (
-            <div key={block.heading} className="border-l-2 border-border pl-6">
-              <h3 className="mb-4 font-display text-xl font-bold">{block.heading}</h3>
-              <div className="space-y-4">
-                {block.body.map((p) => (
-                  <p key={p.slice(0, 40)} className="leading-relaxed text-muted-foreground">
-                    {p}
-                  </p>
-                ))}
+        {easy ? (
+          <div className="mt-8">
+            <LessonBody theory={easy.theory} />
+            <ReviewQuestions questions={easy.reviewQuestions} />
+          </div>
+        ) : (
+          <div className="mt-8 space-y-10">
+            {lesson.theory.map((block) => (
+              <div key={block.heading} className="border-l-2 border-border pl-6">
+                <h3 className="mb-4 font-display text-xl font-bold">{block.heading}</h3>
+                <div className="space-y-4">
+                  {block.body.map((p) => (
+                    <p key={p.slice(0, 40)} className="leading-relaxed text-muted-foreground">
+                      {p}
+                    </p>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-          {override?.extraTheory?.map((block) => (
-            <div key={block.heading} className="border-l-2 border-border pl-6">
-              <h3 className="mb-4 font-display text-xl font-bold">{block.heading}</h3>
-              {block.body}
-            </div>
-          ))}
-        </div>
+            ))}
+            {override?.extraTheory?.map((block) => (
+              <div key={block.heading} className="border-l-2 border-border pl-6">
+                <h3 className="mb-4 font-display text-xl font-bold">{block.heading}</h3>
+                {block.body}
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {simulation ? (
