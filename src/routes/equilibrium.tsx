@@ -1,13 +1,86 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { EquilibriumSim } from "@/components/EquilibriumSim";
 import { SectionNav } from "@/components/SectionNav";
 import { NextTopicNav } from "@/components/NextTopicNav";
+import { LessonBody } from "@/components/LessonBody";
+import { ReviewLevelToggle } from "@/components/ReviewLevelToggle";
+import { ReviewQuestions } from "@/components/ReviewQuestions";
+import type { EasyContent, Level } from "@/lib/reviewContent";
 
 const sections = [
   { id: "significance", label: "Significance" },
   { id: "theory", label: "Theory" },
   { id: "simulation", label: "Simulation" },
 ];
+
+const EASY: EasyContent = {
+  significance: [
+    'Most reactions don\'t run to completion — they run until the forward and reverse reactions are happening at the same rate, then stop changing. That balance point, equilibrium, is why a sealed bottle of soda keeps its fizz for a while and why industrial reactors are designed around a specific temperature and pressure instead of just "more heat, more product."',
+    "The water-gas shift reaction, CO + H₂O ⇌ CO₂ + H₂, is a real example: it's how industry squeezes extra hydrogen out of leftover carbon monoxide. Knowing how to predict which way an equilibrium will shift when you change a condition is what lets engineers (and AP Chemistry students) control reactions instead of just watching them happen.",
+  ],
+  theory: [
+    {
+      heading: "Qc vs. Kc: predicting which way a reaction shifts",
+      body: [
+        "Kc is the value of the reaction quotient once a reaction has settled into equilibrium — it's fixed for a given reaction at a given temperature. Qc is calculated the exact same way (products over reactants, each raised to its coefficient) but can be computed at any moment, not just at equilibrium.",
+        "Comparing the two tells you which direction the reaction still needs to move: if Qc < Kc, there aren't enough products yet, so the reaction shifts forward to make more. If Qc > Kc, there are too many products, so it shifts in reverse to make more reactants. If Qc = Kc, the system is already at equilibrium and there's no net shift in either direction.",
+      ],
+    },
+    {
+      heading: "Le Chatelier's principle: how disturbances shift the balance",
+      body: [
+        "Le Chatelier's principle says that when you disturb a system at equilibrium, it shifts in whichever direction partially cancels out that disturbance. Add more of a reactant and the system shifts forward to consume some of it; remove a product and the system shifts forward to replace some of it.",
+        "Pressure works the same way, but only when the two sides of the equation have different numbers of gas moles. Compressing the container favors whichever side has fewer gas molecules, since shifting that way relieves some of the added pressure. If both sides have the same number of gas moles — like CO + H₂O ⇌ CO₂ + H₂ — squeezing the container speeds up both directions equally and the equilibrium position doesn't move at all.",
+        "Temperature changes shift equilibrium too, but they're different from every other disturbance: they don't just move the position, they change the value of K itself (more on that next).",
+      ],
+    },
+    {
+      heading: "Why temperature is the exception",
+      body: [
+        "Changing concentration or pressure moves Qc away from Kc and lets the reaction shift back to the same Kc it started with — the constant itself never changes. Temperature is the one variable that actually changes the value of K.",
+        "Which way K moves depends on whether the reaction is exothermic or endothermic. You can treat heat as if it were a reactant or product: in an exothermic reaction, heat is released, so it behaves like a product, and raising the temperature is like adding more of a product — the equilibrium shifts backward (toward reactants), decreasing K. In an endothermic reaction, heat is absorbed, so it behaves like a reactant, and raising the temperature shifts the equilibrium forward (toward products), increasing K. Cooling does the opposite in each case.",
+      ],
+    },
+  ],
+  reviewQuestions: [
+    {
+      question:
+        "For a reaction where Qc > Kc, which direction will the reaction shift to reach equilibrium?",
+      answer: "In reverse (toward reactants)",
+      explanation:
+        "Qc > Kc means there is currently too much product relative to reactant compared to the equilibrium ratio, so the reaction runs in reverse until Qc drops back down to Kc.",
+    },
+    {
+      question:
+        "A reaction has the same number of moles of gas on both sides of the equation. What happens to its equilibrium position if you increase the container pressure?",
+      answer: "Nothing — the equilibrium position doesn't shift.",
+      explanation:
+        "Pressure changes only shift equilibrium when the two sides have different numbers of gas moles, since shifting toward the side with fewer moles is what relieves the added pressure. With equal moles on both sides, compression speeds up the forward and reverse reactions equally, so the ratio of products to reactants never changes.",
+    },
+    {
+      question:
+        "For an exothermic reaction, does increasing the temperature increase or decrease K?",
+      answer: "Decrease K",
+      explanation:
+        "In an exothermic reaction heat is a product, so raising the temperature acts like adding more product. The equilibrium shifts backward toward reactants, which means less product relative to reactant at the new equilibrium — a smaller K.",
+    },
+    {
+      question:
+        "What is the key difference between Qc and Kc that lets you use them to predict a reaction's direction?",
+      answer:
+        "Kc is the fixed value at equilibrium; Qc is the same expression calculated at any moment, so comparing them shows how far the system is from equilibrium and which way it needs to move.",
+      explanation:
+        "Both are calculated with the identical expression (products over reactants, raised to their coefficients). Kc only applies once the system has stopped changing; Qc can be evaluated at any snapshot in time, which is exactly what makes the comparison useful for prediction.",
+    },
+    {
+      question: "Does adding a catalyst change the value of Kc?",
+      answer: "No.",
+      explanation:
+        "A catalyst speeds up both the forward and reverse reactions equally, so the system reaches equilibrium faster — but it doesn't change where that equilibrium lies. Only temperature changes K.",
+    },
+  ],
+};
 
 export const Route = createFileRoute("/equilibrium")({
   head: () => ({
@@ -29,6 +102,7 @@ export const Route = createFileRoute("/equilibrium")({
 });
 
 function EquilibriumPage() {
+  const [level, setLevel] = useState<Level>("hard");
   return (
     <main className="mx-auto max-w-7xl px-6 py-16">
       <header className="mb-16 max-w-3xl border-b border-border pb-12">
@@ -45,6 +119,8 @@ function EquilibriumPage() {
         </p>
       </header>
 
+      <ReviewLevelToggle level={level} onChange={setLevel} />
+
       <section
         id="significance"
         aria-labelledby="significance-heading"
@@ -56,24 +132,34 @@ function EquilibriumPage() {
         <h2 id="significance-heading" className="mt-3 text-3xl font-bold">
           The reaction that makes the world's hydrogen
         </h2>
-        <div className="mt-8 grid gap-10 md:grid-cols-2">
-          <p className="leading-relaxed text-muted-foreground">
-            Steam reforming turns natural gas into syngas — a mixture of carbon monoxide and
-            hydrogen — but the leftover CO is a poison to downstream catalysts and a wasted source
-            of fuel. The water-gas shift reaction, CO + H₂O ⇌ CO₂ + H₂, solves both problems at
-            once: react that CO with steam and it becomes more H₂ plus CO₂ that is far easier to
-            remove. It is the equilibrium quietly running upstream of the Haber–Bosch process,
-            supplying the hydrogen that Haber–Bosch combines with nitrogen to make ammonia.
-          </p>
-          <p className="leading-relaxed text-muted-foreground">
-            That makes it an equilibrium with real economic and environmental stakes, not only a
-            classroom rule. Industrial shift reactors run two stages — hot for speed, cool for a
-            favorable equilibrium position — because temperature pulls those two goals in opposite
-            directions. The same reaction now sits at the center of "blue hydrogen" and
-            carbon-capture proposals, since the CO₂ it produces is far easier to separate and store
-            than CO ever was.
-          </p>
-        </div>
+        {level === "easy" ? (
+          <div className="mt-8 grid gap-10 md:grid-cols-2">
+            {EASY.significance!.map((p, i) => (
+              <p key={i} className="leading-relaxed text-muted-foreground">
+                {p}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-8 grid gap-10 md:grid-cols-2">
+            <p className="leading-relaxed text-muted-foreground">
+              Steam reforming turns natural gas into syngas — a mixture of carbon monoxide and
+              hydrogen — but the leftover CO is a poison to downstream catalysts and a wasted source
+              of fuel. The water-gas shift reaction, CO + H₂O ⇌ CO₂ + H₂, solves both problems at
+              once: react that CO with steam and it becomes more H₂ plus CO₂ that is far easier to
+              remove. It is the equilibrium quietly running upstream of the Haber–Bosch process,
+              supplying the hydrogen that Haber–Bosch combines with nitrogen to make ammonia.
+            </p>
+            <p className="leading-relaxed text-muted-foreground">
+              That makes it an equilibrium with real economic and environmental stakes, not only a
+              classroom rule. Industrial shift reactors run two stages — hot for speed, cool for a
+              favorable equilibrium position — because temperature pulls those two goals in opposite
+              directions. The same reaction now sits at the center of "blue hydrogen" and
+              carbon-capture proposals, since the CO₂ it produces is far easier to separate and
+              store than CO ever was.
+            </p>
+          </div>
+        )}
       </section>
 
       <section id="theory" aria-labelledby="theory-heading" className="scroll-mt-24">
@@ -86,276 +172,292 @@ function EquilibriumPage() {
           </h2>
         </div>
 
-        <section className="mb-10 grid gap-6 border border-border bg-card/70 p-8 md:grid-cols-3">
-          <div className="md:col-span-1">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
-              About this demo
-            </span>
-            <h2 className="mt-3 text-xl font-bold">What you're looking at</h2>
-          </div>
-          <div className="space-y-4 text-sm leading-relaxed text-muted-foreground md:col-span-2">
-            <p>
-              The vessel holds CO, H₂O, CO₂, and H₂ interconverting continuously in a container you
-              can rotate and zoom around. Every collision between a CO and an H₂O molecule is a
-              chance for the forward reaction; every collision between a CO₂ and an H₂ is a chance
-              for the reverse. Both are checked, and both happen, in the very same instant — the
-              orange flashes are the forward reaction firing, the blue flashes are the reverse.
-              Nothing ever stops: at equilibrium the two rates have simply matched, which is what
-              makes it <em>dynamic</em> rather than static.
-            </p>
-            <p>
-              Each control disturbs the balance in a different way. Concentration and pressure move
-              Qc and let the system relax back to the same Kc; temperature moves Kc itself, because
-              this reaction releases heat running forward and absorbs it running in reverse. Watch
-              the readouts, not just the particles.
-            </p>
-          </div>
-        </section>
-
-        <section className="mt-16 grid gap-16 border-t border-border pt-16 md:grid-cols-2">
-          <div>
-            <h2 className="mb-6 text-3xl font-bold italic">The Reaction Quotient (Qc)</h2>
-            <p className="mb-6 leading-relaxed text-muted-foreground">
-              Unlike the equilibrium constant Kc, which describes the stable state, the reaction
-              quotient Qc can be calculated at any moment. Comparing Qc to Kc predicts which way the
-              reaction will shift to reach equilibrium.
-            </p>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <span className="font-mono font-bold text-accent">{"Qc < Kc:"}</span>
-                <span className="text-sm">
-                  Reaction proceeds forward (right) to form more products.
+        {level === "easy" ? (
+          <>
+            <LessonBody theory={EASY.theory} />
+            <ReviewQuestions questions={EASY.reviewQuestions} />
+          </>
+        ) : (
+          <>
+            <section className="mb-10 grid gap-6 border border-border bg-card/70 p-8 md:grid-cols-3">
+              <div className="md:col-span-1">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-accent">
+                  About this demo
                 </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="font-mono font-bold text-accent">{"Qc > Kc:"}</span>
-                <span className="text-sm">
-                  Reaction proceeds backward (left) to form more reactants.
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="font-mono font-bold text-accent">{"Qc = Kc:"}</span>
-                <span className="text-sm">
-                  Rates are matched. Molecules keep reacting, but concentrations hold steady.
-                </span>
-              </li>
-            </ul>
-            <p className="mt-6 leading-relaxed text-muted-foreground">
-              Temperature is the only control that changes Kc itself. Every other disturbance —
-              adding reactant, squeezing the vessel — moves Qc and lets the system settle back to
-              the same Kc.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-8">
-            <svg
-              viewBox="0 0 400 290"
-              className="mb-6 w-full"
-              role="img"
-              aria-labelledby="seesaw-title"
-            >
-              <title id="seesaw-title">
-                Seesaw balance diagram with CO + H2O on one pan and CO2 + H2 on the other,
-                illustrating equilibrium shift
-              </title>
-              <line
-                x1="80"
-                y1="110"
-                x2="320"
-                y2="70"
-                stroke="var(--foreground)"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <path
-                d="M170,240 L200,90 L230,240"
-                fill="none"
-                stroke="var(--foreground)"
-                strokeWidth="3"
-                strokeLinejoin="round"
-              />
-              <line
-                x1="150"
-                y1="240"
-                x2="250"
-                y2="240"
-                stroke="var(--foreground)"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <circle
-                cx="200"
-                cy="90"
-                r="6"
-                fill="var(--card)"
-                stroke="var(--foreground)"
-                strokeWidth="3"
-              />
+                <h2 className="mt-3 text-xl font-bold">What you're looking at</h2>
+              </div>
+              <div className="space-y-4 text-sm leading-relaxed text-muted-foreground md:col-span-2">
+                <p>
+                  The vessel holds CO, H₂O, CO₂, and H₂ interconverting continuously in a container
+                  you can rotate and zoom around. Every collision between a CO and an H₂O molecule
+                  is a chance for the forward reaction; every collision between a CO₂ and an H₂ is a
+                  chance for the reverse. Both are checked, and both happen, in the very same
+                  instant — the orange flashes are the forward reaction firing, the blue flashes are
+                  the reverse. Nothing ever stops: at equilibrium the two rates have simply matched,
+                  which is what makes it <em>dynamic</em> rather than static.
+                </p>
+                <p>
+                  Each control disturbs the balance in a different way. Concentration and pressure
+                  move Qc and let the system relax back to the same Kc; temperature moves Kc itself,
+                  because this reaction releases heat running forward and absorbs it running in
+                  reverse. Watch the readouts, not just the particles.
+                </p>
+              </div>
+            </section>
 
-              <line
-                x1="80"
-                y1="110"
-                x2="55"
-                y2="190"
-                stroke="var(--muted-foreground)"
-                strokeWidth="2"
-              />
-              <line
-                x1="80"
-                y1="110"
-                x2="105"
-                y2="190"
-                stroke="var(--muted-foreground)"
-                strokeWidth="2"
-              />
-              <path
-                d="M55,190 Q80,212 105,190"
-                fill="none"
-                stroke="var(--foreground)"
-                strokeWidth="2.5"
-              />
-              <text
-                x="80"
-                y="228"
-                textAnchor="middle"
-                fontSize="16"
-                fontWeight="700"
-                fill="var(--foreground)"
-                fontFamily="var(--font-mono)"
-              >
-                CO + H₂O
-              </text>
+            <section className="mt-16 grid gap-16 border-t border-border pt-16 md:grid-cols-2">
+              <div>
+                <h2 className="mb-6 text-3xl font-bold italic">The Reaction Quotient (Qc)</h2>
+                <p className="mb-6 leading-relaxed text-muted-foreground">
+                  Unlike the equilibrium constant Kc, which describes the stable state, the reaction
+                  quotient Qc can be calculated at any moment. Comparing Qc to Kc predicts which way
+                  the reaction will shift to reach equilibrium.
+                </p>
+                <ul className="space-y-4">
+                  <li className="flex items-start gap-3">
+                    <span className="font-mono font-bold text-accent">{"Qc < Kc:"}</span>
+                    <span className="text-sm">
+                      Reaction proceeds forward (right) to form more products.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="font-mono font-bold text-accent">{"Qc > Kc:"}</span>
+                    <span className="text-sm">
+                      Reaction proceeds backward (left) to form more reactants.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="font-mono font-bold text-accent">{"Qc = Kc:"}</span>
+                    <span className="text-sm">
+                      Rates are matched. Molecules keep reacting, but concentrations hold steady.
+                    </span>
+                  </li>
+                </ul>
+                <p className="mt-6 leading-relaxed text-muted-foreground">
+                  Temperature is the only control that changes Kc itself. Every other disturbance —
+                  adding reactant, squeezing the vessel — moves Qc and lets the system settle back
+                  to the same Kc.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card p-8">
+                <svg
+                  viewBox="0 0 400 290"
+                  className="mb-6 w-full"
+                  role="img"
+                  aria-labelledby="seesaw-title"
+                >
+                  <title id="seesaw-title">
+                    Seesaw balance diagram with CO + H2O on one pan and CO2 + H2 on the other,
+                    illustrating equilibrium shift
+                  </title>
+                  <line
+                    x1="80"
+                    y1="110"
+                    x2="320"
+                    y2="70"
+                    stroke="var(--foreground)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M170,240 L200,90 L230,240"
+                    fill="none"
+                    stroke="var(--foreground)"
+                    strokeWidth="3"
+                    strokeLinejoin="round"
+                  />
+                  <line
+                    x1="150"
+                    y1="240"
+                    x2="250"
+                    y2="240"
+                    stroke="var(--foreground)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  <circle
+                    cx="200"
+                    cy="90"
+                    r="6"
+                    fill="var(--card)"
+                    stroke="var(--foreground)"
+                    strokeWidth="3"
+                  />
 
-              <line
-                x1="320"
-                y1="70"
-                x2="295"
-                y2="190"
-                stroke="var(--muted-foreground)"
-                strokeWidth="2"
-              />
-              <line
-                x1="320"
-                y1="70"
-                x2="345"
-                y2="190"
-                stroke="var(--muted-foreground)"
-                strokeWidth="2"
-              />
-              <path
-                d="M295,190 Q320,212 345,190"
-                fill="none"
-                stroke="var(--foreground)"
-                strokeWidth="2.5"
-              />
-              <text
-                x="320"
-                y="228"
-                textAnchor="middle"
-                fontSize="16"
-                fontWeight="700"
-                fill="var(--accent)"
-                fontFamily="var(--font-mono)"
-              >
-                CO₂ + H₂
-              </text>
+                  <line
+                    x1="80"
+                    y1="110"
+                    x2="55"
+                    y2="190"
+                    stroke="var(--muted-foreground)"
+                    strokeWidth="2"
+                  />
+                  <line
+                    x1="80"
+                    y1="110"
+                    x2="105"
+                    y2="190"
+                    stroke="var(--muted-foreground)"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M55,190 Q80,212 105,190"
+                    fill="none"
+                    stroke="var(--foreground)"
+                    strokeWidth="2.5"
+                  />
+                  <text
+                    x="80"
+                    y="228"
+                    textAnchor="middle"
+                    fontSize="16"
+                    fontWeight="700"
+                    fill="var(--foreground)"
+                    fontFamily="var(--font-mono)"
+                  >
+                    CO + H₂O
+                  </text>
 
-              <line
-                x1="20"
-                y1="245"
-                x2="380"
-                y2="245"
-                stroke="var(--muted-foreground)"
-                strokeWidth="1.5"
-                strokeDasharray="6 6"
-              />
+                  <line
+                    x1="320"
+                    y1="70"
+                    x2="295"
+                    y2="190"
+                    stroke="var(--muted-foreground)"
+                    strokeWidth="2"
+                  />
+                  <line
+                    x1="320"
+                    y1="70"
+                    x2="345"
+                    y2="190"
+                    stroke="var(--muted-foreground)"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M295,190 Q320,212 345,190"
+                    fill="none"
+                    stroke="var(--foreground)"
+                    strokeWidth="2.5"
+                  />
+                  <text
+                    x="320"
+                    y="228"
+                    textAnchor="middle"
+                    fontSize="16"
+                    fontWeight="700"
+                    fill="var(--accent)"
+                    fontFamily="var(--font-mono)"
+                  >
+                    CO₂ + H₂
+                  </text>
 
-              <g stroke="var(--accent)" strokeWidth="3" fill="var(--accent)" strokeLinecap="round">
-                <line x1="150" y1="25" x2="215" y2="25" />
-                <polygon points="215,17 233,25 215,33" />
-                <line x1="150" y1="272" x2="215" y2="272" />
-                <polygon points="215,264 233,272 215,280" />
-              </g>
-            </svg>
-            <p className="text-center font-mono text-xs text-muted-foreground">
-              Fig 1.2: Visual representation of the equilibrium seesaw.
-            </p>
-          </div>
-        </section>
+                  <line
+                    x1="20"
+                    y1="245"
+                    x2="380"
+                    y2="245"
+                    stroke="var(--muted-foreground)"
+                    strokeWidth="1.5"
+                    strokeDasharray="6 6"
+                  />
 
-        <section className="mt-16 grid gap-10 border-t border-border pt-16 md:grid-cols-3">
-          <div>
-            <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
-              Le Chatelier, precisely
-            </h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              A system at equilibrium responds to a disturbance by shifting in the direction that
-              partially offsets it. Partially is the key word: the system never fully undoes your
-              change, it only moves to a new balance point closer to the old one.
-            </p>
-          </div>
-          <div>
-            <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
-              Why pressure does nothing here
-            </h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              One mole of CO plus one mole of H₂O becomes one mole of CO₂ plus one mole of H₂ — the
-              same number of gas molecules on both sides. Squeeze the vessel in the simulation and
-              pressure climbs, collisions get more frequent, and the reaction runs faster in both
-              directions at once, but the equilibrium ratio never moves. Compressing a reaction only
-              shifts it when the two sides disagree on how many molecules they occupy.
-            </p>
-          </div>
-          <div>
-            <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
-              Where this shows up
-            </h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Industrial shift reactors sit downstream of steam reforming, converting leftover CO
-              into more hydrogen before it ever reaches a Haber–Bosch ammonia converter or a fuel
-              cell. Because pressure can't help an equal-mole equilibrium, engineers lean on
-              catalysts and staged cooling instead — Le Chatelier's absence is as instructive as its
-              presence.
-            </p>
-          </div>
-        </section>
+                  <g
+                    stroke="var(--accent)"
+                    strokeWidth="3"
+                    fill="var(--accent)"
+                    strokeLinecap="round"
+                  >
+                    <line x1="150" y1="25" x2="215" y2="25" />
+                    <polygon points="215,17 233,25 215,33" />
+                    <line x1="150" y1="272" x2="215" y2="272" />
+                    <polygon points="215,264 233,272 215,280" />
+                  </g>
+                </svg>
+                <p className="text-center font-mono text-xs text-muted-foreground">
+                  Fig 1.2: Visual representation of the equilibrium seesaw.
+                </p>
+              </div>
+            </section>
 
-        <section className="mt-16 grid gap-16 border-t border-border pt-16 md:grid-cols-2">
-          <div>
-            <h2 className="mb-6 text-3xl font-bold italic">Where Kc actually comes from</h2>
-            <p className="leading-relaxed text-muted-foreground">
-              Kc is not an independent postulate — it is a restatement of Gibbs free energy. At any
-              point in a reaction, ΔG = ΔG° + RT ln Q. At equilibrium the system has nothing left to
-              gain by shifting further, so ΔG = 0 and Q has settled to K, which reduces the equation
-              to <span className="text-accent">ΔG° = −RT ln K</span>. A large negative ΔG° forces K
-              to be enormous; a positive ΔG° forces K below 1. The equilibrium constant explored in
-              this simulation is thermodynamics wearing a different name.
-            </p>
-          </div>
-          <div>
-            <h2 className="mb-6 text-3xl font-bold italic">Why temperature is different</h2>
-            <p className="leading-relaxed text-muted-foreground">
-              Every other disturbance in the simulation moves Qc without moving Kc at all.
-              Temperature is the one variable that changes K itself, and how much is quantified by
-              the van 't Hoff equation, ln(K₂/K₁) = −(ΔH°/R)(1/T₂ − 1/T₁) — derived by combining ΔG°
-              = ΔH° − TΔS° with ΔG° = −RT ln K and assuming ΔH° and ΔS° are roughly
-              temperature-independent. For this exothermic shift reaction, ΔH° &lt; 0, so raising T
-              makes ln K decrease: exactly why heating the vessel favors CO and H₂O over CO₂ and H₂,
-              even though it speeds up both directions at once.
-            </p>
-          </div>
-        </section>
+            <section className="mt-16 grid gap-10 border-t border-border pt-16 md:grid-cols-3">
+              <div>
+                <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
+                  Le Chatelier, precisely
+                </h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  A system at equilibrium responds to a disturbance by shifting in the direction
+                  that partially offsets it. Partially is the key word: the system never fully
+                  undoes your change, it only moves to a new balance point closer to the old one.
+                </p>
+              </div>
+              <div>
+                <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
+                  Why pressure does nothing here
+                </h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  One mole of CO plus one mole of H₂O becomes one mole of CO₂ plus one mole of H₂ —
+                  the same number of gas molecules on both sides. Squeeze the vessel in the
+                  simulation and pressure climbs, collisions get more frequent, and the reaction
+                  runs faster in both directions at once, but the equilibrium ratio never moves.
+                  Compressing a reaction only shifts it when the two sides disagree on how many
+                  molecules they occupy.
+                </p>
+              </div>
+              <div>
+                <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
+                  Where this shows up
+                </h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Industrial shift reactors sit downstream of steam reforming, converting leftover
+                  CO into more hydrogen before it ever reaches a Haber–Bosch ammonia converter or a
+                  fuel cell. Because pressure can't help an equal-mole equilibrium, engineers lean
+                  on catalysts and staged cooling instead — Le Chatelier's absence is as instructive
+                  as its presence.
+                </p>
+              </div>
+            </section>
 
-        <section className="mt-16 rounded-2xl border border-border bg-card p-8">
-          <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
-            Common misconception
-          </h3>
-          <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Equilibrium does not mean equal amounts. A very large Kc means products dominate; a very
-            small one means the reaction barely proceeds. What is equal at equilibrium is the pair
-            of rates, not the pair of concentrations. Adding a catalyst reaches that state faster
-            without changing where it lands.
-          </p>
-        </section>
+            <section className="mt-16 grid gap-16 border-t border-border pt-16 md:grid-cols-2">
+              <div>
+                <h2 className="mb-6 text-3xl font-bold italic">Where Kc actually comes from</h2>
+                <p className="leading-relaxed text-muted-foreground">
+                  Kc is not an independent postulate — it is a restatement of Gibbs free energy. At
+                  any point in a reaction, ΔG = ΔG° + RT ln Q. At equilibrium the system has nothing
+                  left to gain by shifting further, so ΔG = 0 and Q has settled to K, which reduces
+                  the equation to <span className="text-accent">ΔG° = −RT ln K</span>. A large
+                  negative ΔG° forces K to be enormous; a positive ΔG° forces K below 1. The
+                  equilibrium constant explored in this simulation is thermodynamics wearing a
+                  different name.
+                </p>
+              </div>
+              <div>
+                <h2 className="mb-6 text-3xl font-bold italic">Why temperature is different</h2>
+                <p className="leading-relaxed text-muted-foreground">
+                  Every other disturbance in the simulation moves Qc without moving Kc at all.
+                  Temperature is the one variable that changes K itself, and how much is quantified
+                  by the van 't Hoff equation, ln(K₂/K₁) = −(ΔH°/R)(1/T₂ − 1/T₁) — derived by
+                  combining ΔG° = ΔH° − TΔS° with ΔG° = −RT ln K and assuming ΔH° and ΔS° are
+                  roughly temperature-independent. For this exothermic shift reaction, ΔH° &lt; 0,
+                  so raising T makes ln K decrease: exactly why heating the vessel favors CO and H₂O
+                  over CO₂ and H₂, even though it speeds up both directions at once.
+                </p>
+              </div>
+            </section>
+
+            <section className="mt-16 rounded-2xl border border-border bg-card p-8">
+              <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-accent">
+                Common misconception
+              </h3>
+              <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+                Equilibrium does not mean equal amounts. A very large Kc means products dominate; a
+                very small one means the reaction barely proceeds. What is equal at equilibrium is
+                the pair of rates, not the pair of concentrations. Adding a catalyst reaches that
+                state faster without changing where it lands.
+              </p>
+            </section>
+          </>
+        )}
       </section>
 
       <section

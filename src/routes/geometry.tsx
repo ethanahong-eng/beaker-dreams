@@ -1,12 +1,66 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { VseprBuilder } from "@/components/VseprBuilder";
 import { SectionNav } from "@/components/SectionNav";
 import { NextTopicNav } from "@/components/NextTopicNav";
+import { ReviewLevelToggle } from "@/components/ReviewLevelToggle";
+import { ReviewQuestions } from "@/components/ReviewQuestions";
+import type { EasyContent, Level } from "@/lib/reviewContent";
 
 const sections = [
   { id: "theory", label: "Theory" },
   { id: "builder", label: "Molecule builder" },
 ];
+
+// This page has no significance section in hard mode, and its theory
+// section is plain paragraph pairs with no sub-headings at all -- the easy
+// tier matches that exact plainness rather than inventing structure that
+// isn't there, so the "heading" fields below are unused (the paragraphs
+// are rendered flat, not through the shared headed-block LessonBody).
+const EASY: EasyContent = {
+  theory: [
+    {
+      heading: "AP Review",
+      body: [
+        "VSEPR theory predicts a molecule's 3D shape using one simple idea: the negatively charged domains around a central atom — bonds and lone pairs alike — repel each other and spread out as far apart as possible. Count the domains, and the shape follows automatically.",
+        "Two domains give a linear shape (180°), three give trigonal planar (120°), and four give tetrahedral (109.5°) — the same starting geometries whether every domain is a bond or some are lone pairs.",
+        "Lone pairs take up more space than bonding pairs because they aren't stretched between two nuclei, so they push harder on their neighbors. That's why ammonia (NH₃, one lone pair) has a bond angle slightly less than 109.5°, and water (H₂O, two lone pairs) is compressed even further, to about 104.5°.",
+        "The overall arrangement of domains (electron geometry) and the shape you'd see tracing only the atoms (molecular geometry) can differ once lone pairs are involved — a lone pair still occupies a direction in space and still repels, it's just invisible once you look at where the atoms themselves ended up.",
+      ],
+    },
+  ],
+  reviewQuestions: [
+    {
+      question:
+        "A central atom has 4 bonding domains and 0 lone pairs. What molecular geometry results?",
+      answer: "Tetrahedral",
+      explanation:
+        "Four electron domains spread out as far as possible in 3D space. Since all four are bonding pairs, the molecular geometry matches the electron geometry exactly.",
+    },
+    {
+      question:
+        "Why does water (H₂O, ~104.5°) have a smaller bond angle than ammonia (NH₃, ~107°), even though both start from a tetrahedral electron geometry?",
+      answer:
+        "Water has two lone pairs versus ammonia's one, and lone pairs repel more strongly than bonding pairs, compressing the angle further.",
+      explanation:
+        "Each additional lone pair adds extra repulsion that isn't balanced by a nucleus on the other end, pushing the remaining bonds closer together.",
+    },
+    {
+      question:
+        "A central atom has 3 bonding domains and 1 lone pair. What is its molecular geometry?",
+      answer: "Trigonal pyramidal",
+      explanation:
+        "The electron geometry of all 4 domains is tetrahedral, but since one domain is a lone pair (invisible when tracing only atoms), the visible molecular shape is trigonal pyramidal — the classic ammonia shape.",
+    },
+    {
+      question: "Why do lone pairs repel more strongly than bonding pairs?",
+      answer:
+        "A lone pair is held by only one nucleus rather than stretched between two, so its electron density is more concentrated and pushes harder on neighboring domains.",
+      explanation:
+        "A bonding pair's electron density is shared between (and pulled toward) two nuclei, spreading it out and reducing its repulsive push compared to a lone pair anchored to just one atom.",
+    },
+  ],
+};
 
 export const Route = createFileRoute("/geometry")({
   head: () => ({
@@ -28,6 +82,7 @@ export const Route = createFileRoute("/geometry")({
 });
 
 function GeometryPage() {
+  const [level, setLevel] = useState<Level>("hard");
   return (
     <main className="mx-auto max-w-7xl px-6 py-16">
       <header className="mb-16 max-w-3xl border-b border-border pb-12">
@@ -44,44 +99,64 @@ function GeometryPage() {
         </p>
       </header>
 
+      <ReviewLevelToggle level={level} onChange={setLevel} />
+
       <section id="theory" aria-labelledby="theory-heading" className="mb-20 scroll-mt-24 pt-2">
         <span className="text-[10px] font-bold uppercase text-accent">Section 01 · Theory</span>
         <h2 id="theory-heading" className="mt-3 text-3xl font-bold">
           Repulsion, not memorization
         </h2>
-        <div className="mt-8 grid gap-10 md:grid-cols-2">
-          <p className="leading-relaxed text-muted-foreground">
-            Most students learn VSEPR as a lookup table: four domains means tetrahedral, five means
-            trigonal bipyramidal, and so on. But the shapes aren't arbitrary — they're what you get
-            when you let point charges on a sphere push each other as far apart as possible and let
-            them settle.
-          </p>
-          <p className="leading-relaxed text-muted-foreground">
-            Lone pairs occupy more space than bonding pairs, since they aren't stretched between two
-            nuclei, so they repel harder. That single asymmetry is why ammonia's bond angle sits
-            below the ideal tetrahedral angle, and why water's sits lower still. The builder below
-            simulates that repulsion directly rather than asserting the answer.
-          </p>
-        </div>
-        <div className="mt-10 grid gap-10 md:grid-cols-2">
-          <p className="leading-relaxed text-muted-foreground">
-            A real molecule with more than one heavy atom isn't one VSEPR problem — it's several,
-            stitched together bond by bond. A working full quantum-mechanical calculation (DFT or
-            even a minimal ab initio method) needs iterative matrix diagonalization over basis-set
-            integrals, which takes seconds to minutes even on server hardware — far too slow to
-            redraw live as a student drags atoms around in a browser with no backend.
-          </p>
-          <p className="leading-relaxed text-muted-foreground">
-            So the builder runs the same real electron-domain repulsion physics independently at
-            every bonded center, then rotates each atom's whole local result as a rigid unit to line
-            it up with the shared bond back to its neighbor — the same distance-geometry shortcut
-            real cheminformatics tools like RDKit's ETKDG use to generate fast 3D structures without
-            full quantum optimization. It's honest chemistry, just not the slowest possible version
-            of it. The one thing this approach can't decide on its own — the twist around a bond,
-            which real molecules are also free to rotate through — is exposed directly as its own
-            tool rather than guessed.
-          </p>
-        </div>
+        {level === "easy" ? (
+          <>
+            <div className="mt-8 grid gap-10 md:grid-cols-2">
+              {EASY.theory
+                .flatMap((b) => b.body)
+                .map((p, i) => (
+                  <p key={i} className="leading-relaxed text-muted-foreground">
+                    {p}
+                  </p>
+                ))}
+            </div>
+            <ReviewQuestions questions={EASY.reviewQuestions} />
+          </>
+        ) : (
+          <>
+            <div className="mt-8 grid gap-10 md:grid-cols-2">
+              <p className="leading-relaxed text-muted-foreground">
+                Most students learn VSEPR as a lookup table: four domains means tetrahedral, five
+                means trigonal bipyramidal, and so on. But the shapes aren't arbitrary — they're
+                what you get when you let point charges on a sphere push each other as far apart as
+                possible and let them settle.
+              </p>
+              <p className="leading-relaxed text-muted-foreground">
+                Lone pairs occupy more space than bonding pairs, since they aren't stretched between
+                two nuclei, so they repel harder. That single asymmetry is why ammonia's bond angle
+                sits below the ideal tetrahedral angle, and why water's sits lower still. The
+                builder below simulates that repulsion directly rather than asserting the answer.
+              </p>
+            </div>
+            <div className="mt-10 grid gap-10 md:grid-cols-2">
+              <p className="leading-relaxed text-muted-foreground">
+                A real molecule with more than one heavy atom isn't one VSEPR problem — it's
+                several, stitched together bond by bond. A working full quantum-mechanical
+                calculation (DFT or even a minimal ab initio method) needs iterative matrix
+                diagonalization over basis-set integrals, which takes seconds to minutes even on
+                server hardware — far too slow to redraw live as a student drags atoms around in a
+                browser with no backend.
+              </p>
+              <p className="leading-relaxed text-muted-foreground">
+                So the builder runs the same real electron-domain repulsion physics independently at
+                every bonded center, then rotates each atom's whole local result as a rigid unit to
+                line it up with the shared bond back to its neighbor — the same distance-geometry
+                shortcut real cheminformatics tools like RDKit's ETKDG use to generate fast 3D
+                structures without full quantum optimization. It's honest chemistry, just not the
+                slowest possible version of it. The one thing this approach can't decide on its own
+                — the twist around a bond, which real molecules are also free to rotate through — is
+                exposed directly as its own tool rather than guessed.
+              </p>
+            </div>
+          </>
+        )}
       </section>
 
       <section
