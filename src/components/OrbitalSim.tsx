@@ -10,17 +10,32 @@ import {
   rMaxFor,
   wavefunctionAlongProbe,
   radialDistribution,
+  radialNodeRadii,
   sampleOrbitalPoints,
+  sectionPlaneFor,
+  wavefunctionTex,
   type Orientation,
   type OrbitalPoint,
 } from "@/lib/orbitals";
 import { rotate3d, vLength, vScale, type Vec3 } from "@/lib/project3d";
 import { AxisGizmo } from "@/components/AxisGizmo";
+import { Math as MathBlock } from "@/components/Math";
+import { OrbitalCrossSection } from "@/components/OrbitalCrossSection";
+import { OrbitalPolarPlot } from "@/components/OrbitalPolarPlot";
+
+const SUBSCRIPT_DIGITS = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"] as const;
 
 const POINT_COUNT = 1400;
 const GRAPH_SAMPLES = 240;
 
-type GraphMode = "wave" | "distribution";
+type GraphMode = "wave" | "distribution" | "section" | "polar";
+
+const GRAPH_MODES: { key: GraphMode; pill: string; heading: string }[] = [
+  { key: "wave", pill: "ψ(r)", heading: "Wavefunction along the lobe axis" },
+  { key: "distribution", pill: "r²R(r)²", heading: "Radial distribution function" },
+  { key: "section", pill: "ψ slice", heading: "Cross-section of ψ through the nucleus" },
+  { key: "polar", pill: "Y(θ,φ)", heading: "Angular factor, radius divided out" },
+];
 
 export function OrbitalSim() {
   const [orbitalIndex, setOrbitalIndex] = useState(0);
@@ -44,7 +59,9 @@ export function OrbitalSim() {
   // shape stood in for it. Sampled in an effect (client-side only) rather
   // than during render: baking a random draw into the server-rendered
   // HTML would never match the client's own re-draw and trip a hydration
-  // mismatch.
+  // mismatch. The dependency list is the orbital and nothing else, so
+  // dragging to rotate re-projects the existing points instead of drawing
+  // a whole new cloud on every pointer move.
   const [points, setPoints] = useState<OrbitalPoint[]>([]);
   useEffect(() => {
     setPoints(sampleOrbitalPoints(spec.n, spec.l, orientation, POINT_COUNT));
@@ -54,15 +71,23 @@ export function OrbitalSim() {
     [points],
   );
 
-  const project = (pos: Vec3) => {
-    const norm = vScale(pos, 1 / (boundingRadius * 1.2));
-    const [x, y, z] = rotate3d(norm, yaw, pitch);
-    return { x, y, z };
-  };
+  const projected = useMemo(() => {
+    const inv = 1 / (boundingRadius * 1.2);
+    return points
+      .map((p) => {
+        const [x, y, z] = rotate3d(vScale(p.pos as Vec3, inv), yaw, pitch);
+        return { sign: p.sign, x, y, z };
+      })
+      .sort((a, b) => a.z - b.z);
+  }, [points, boundingRadius, yaw, pitch]);
 
-  const projected = points
-    .map((p) => ({ ...p, proj: project(p.pos as Vec3) }))
-    .sort((a, b) => a.proj.z - b.proj.z);
+  // Which plane to slice: derived from the orientation's own angular
+  // structure rather than a hand-kept table (see sectionPlaneFor). Cached
+  // per orientation in the library, so this reference is stable and the
+  // canvas below does not repaint on every re-render.
+  const plane = sectionPlaneFor(orientation);
+  const nodeRadii = radialNodeRadii(spec.n, spec.l);
+  const tex = wavefunctionTex(spec.n, spec.l, orientation);
 
   // The graph: either the signed wavefunction along the orbital's lobe
   // axis (a real line-plot through the nucleus, mirrored left/right since
@@ -73,8 +98,10 @@ export function OrbitalSim() {
   const halfWidth = rMaxFor(spec.n) * 0.55;
   const xMin = graphMode === "wave" ? -halfWidth : 0;
   const xMax = halfWidth;
+  const isLineGraph = graphMode === "wave" || graphMode === "distribution";
   const graphPoints = useMemo(() => {
     const pts: { t: number; v: number }[] = [];
+    if (!isLineGraph) return pts;
     for (let i = 0; i <= GRAPH_SAMPLES; i++) {
       const t = xMin + ((xMax - xMin) * i) / GRAPH_SAMPLES;
       const v =
@@ -84,7 +111,7 @@ export function OrbitalSim() {
       pts.push({ t, v });
     }
     return pts;
-  }, [spec.n, spec.l, orientation, graphMode, xMin, xMax]);
+  }, [spec.n, spec.l, orientation, graphMode, isLineGraph, xMin, xMax]);
 
   const maxAbsV = Math.max(...graphPoints.map((p) => Math.abs(p.v)), 1e-9);
   const graphW = 460;
@@ -102,6 +129,11 @@ export function OrbitalSim() {
     .map((p, i) => `${i === 0 ? "M" : "L"}${xOf(p.t).toFixed(2)},${yOf(p.v).toFixed(2)}`)
     .join(" ");
   const zeroY = graphMode === "wave" ? padY + plotH / 2 : padY + plotH;
+  // Every radius where R(r) crosses zero, on both sides of the nucleus for
+  // the signed plot since the node is a whole sphere, not a point.
+  const nodeMarks = isLineGraph
+    ? nodeRadii.flatMap((r) => (graphMode === "wave" ? [-r, r] : [r])).filter((t) => t <= xMax)
+    : [];
 
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>) => {
     dragRef.current = { x: e.clientX, y: e.clientY };
@@ -120,6 +152,16 @@ export function OrbitalSim() {
   };
 
   const orientationLabel = spec.orientations.find((o) => o.key === orientation)?.label ?? spec.name;
+  const heading = GRAPH_MODES.find((m) => m.key === graphMode)?.heading ?? "";
+  const caption = {
+    wave: "Plotted along the orbital's own lobe axis, through the nucleus. A sign change away from the center is a radial node (R(r) crossing zero, dashed above); an odd-l orbital also flips sign right at the nucleus from angular parity alone, while an even-l orbital with l>0 just touches zero there without flipping, since R(r) itself vanishes at r=0 whenever l>0.",
+    distribution:
+      "The probability of finding the electron in a thin shell at distance r from the nucleus — always positive, and zero exactly at r=0 because the shell's own volume vanishes there. The dashed lines are the radial nodes, found by solving R(r)=0 numerically; each one separates two humps, so the number of humps is always one more than the number of nodes.",
+    section:
+      "Signed ψ on a flat cut through the nucleus, so lobe phase and angular nodes are directly visible: the sharp colour boundaries are surfaces where ψ changes sign. Brightness follows |ψ|^0.4 rather than |ψ|, because ψ near the nucleus is orders of magnitude larger than out in the lobes and a linear scale would leave everything but the core black. The plane is picked as whichever cut through the nucleus this orbital has the most sign changes in — a coordinate plane for most of them, but 4fxyz vanishes identically on all three, so it gets a diagonal one.",
+    polar:
+      "The angular factor Y(θ,φ) on its own, with the radial factor divided out entirely: distance from the center is |Y| in that direction, colour is its sign. Every place the curve pinches back to the nucleus is an angular node — a direction the electron is never found in, no matter how far out you look. Nothing here has a size in bohr; multiplying these lobes by R(r) is what turns them into the cloud below.",
+  }[graphMode];
 
   return (
     <div className="grid gap-8 lg:grid-cols-12">
@@ -131,67 +173,119 @@ export function OrbitalSim() {
           <p className="text-2xl font-bold">{orientationLabel}</p>
         </div>
 
+        {tex && (
+          <div className="rounded-xl border border-border bg-card p-6">
+            <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              The wavefunction itself
+            </h3>
+            <MathBlock tex={tex} />
+            <p className="mt-3 font-mono text-[10px] leading-relaxed text-muted-foreground">
+              In atomic units (a₀ = 1, Z = 1), so r is in bohr. The left factor is the radial
+              function R{SUBSCRIPT_DIGITS[spec.n] ?? ""}
+              {SUBSCRIPT_DIGITS[spec.l] ?? ""}(r) — it fixes how far out the electron sits and where
+              the spherical nodes fall; the right factor is the real spherical harmonic Y(θ,φ) — it
+              fixes the lobe pattern and the phase. Every curve and every dot on this page is this
+              exact expression evaluated, not a shape fitted to it.
+            </p>
+          </div>
+        )}
+
         <div className="rounded-xl border border-border bg-card p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h3 className="font-mono text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              {graphMode === "wave"
-                ? "Wavefunction along the lobe axis"
-                : "Radial distribution function"}
+              {heading}
             </h3>
             <div className="flex overflow-hidden rounded-full border border-border text-[10px] font-bold uppercase">
-              <button
-                onClick={() => setGraphMode("wave")}
-                className={`px-3 py-1 transition-colors ${graphMode === "wave" ? "bg-accent text-accent-foreground" : "hover:bg-secondary"}`}
-              >
-                ψ(r)
-              </button>
-              <button
-                onClick={() => setGraphMode("distribution")}
-                className={`px-3 py-1 transition-colors ${graphMode === "distribution" ? "bg-accent text-accent-foreground" : "hover:bg-secondary"}`}
-              >
-                r²R(r)²
-              </button>
+              {GRAPH_MODES.map((m) => (
+                <button
+                  key={m.key}
+                  onClick={() => setGraphMode(m.key)}
+                  className={`px-3 py-1 transition-colors ${graphMode === m.key ? "bg-accent text-accent-foreground" : "hover:bg-secondary"}`}
+                >
+                  {m.pill}
+                </button>
+              ))}
             </div>
           </div>
-          <svg viewBox={`0 0 ${graphW} ${graphH}`} className="h-[180px] w-full">
-            <line
-              x1={padX}
-              y1={zeroY}
-              x2={graphW - padX}
-              y2={zeroY}
-              stroke="var(--border)"
-              strokeWidth={1}
+
+          {isLineGraph && (
+            <>
+              <svg viewBox={`0 0 ${graphW} ${graphH}`} className="h-[180px] w-full">
+                <line
+                  x1={padX}
+                  y1={zeroY}
+                  x2={graphW - padX}
+                  y2={zeroY}
+                  stroke="var(--border)"
+                  strokeWidth={1}
+                />
+                <line
+                  x1={xOf(0)}
+                  y1={padY}
+                  x2={xOf(0)}
+                  y2={graphH - padY}
+                  stroke="var(--border)"
+                  strokeWidth={1}
+                  strokeDasharray="3 3"
+                />
+                {nodeMarks.map((t) => (
+                  <g key={t}>
+                    <line
+                      x1={xOf(t)}
+                      y1={padY}
+                      x2={xOf(t)}
+                      y2={graphH - padY}
+                      stroke="var(--muted-foreground)"
+                      strokeWidth={1}
+                      strokeOpacity={0.55}
+                      strokeDasharray="2 4"
+                    />
+                    <text
+                      x={xOf(t)}
+                      y={padY - 4}
+                      fontSize={8}
+                      textAnchor="middle"
+                      fill="var(--muted-foreground)"
+                      fontFamily="ui-monospace, monospace"
+                    >
+                      {Math.abs(t).toFixed(1)}
+                    </text>
+                  </g>
+                ))}
+                <path d={graphPath} fill="none" stroke="var(--accent)" strokeWidth={2} />
+              </svg>
+              <div className="mt-2 flex justify-between font-mono text-[10px] text-muted-foreground">
+                {graphMode === "wave" ? (
+                  <>
+                    <span>−{halfWidth.toFixed(0)} a₀</span>
+                    <span>nucleus</span>
+                    <span>+{halfWidth.toFixed(0)} a₀</span>
+                  </>
+                ) : (
+                  <>
+                    <span>nucleus (r = 0)</span>
+                    <span />
+                    <span>r = +{halfWidth.toFixed(0)} a₀</span>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+
+          {graphMode === "section" && (
+            <OrbitalCrossSection
+              n={spec.n}
+              l={spec.l}
+              orientation={orientation}
+              plane={plane}
+              extent={halfWidth}
             />
-            <line
-              x1={xOf(0)}
-              y1={padY}
-              x2={xOf(0)}
-              y2={graphH - padY}
-              stroke="var(--border)"
-              strokeWidth={1}
-              strokeDasharray="3 3"
-            />
-            <path d={graphPath} fill="none" stroke="var(--accent)" strokeWidth={2} />
-          </svg>
-          <div className="mt-2 flex justify-between font-mono text-[10px] text-muted-foreground">
-            {graphMode === "wave" ? (
-              <>
-                <span>−{halfWidth.toFixed(0)} a₀</span>
-                <span>nucleus</span>
-                <span>+{halfWidth.toFixed(0)} a₀</span>
-              </>
-            ) : (
-              <>
-                <span>nucleus (r = 0)</span>
-                <span />
-                <span>r = +{halfWidth.toFixed(0)} a₀</span>
-              </>
-            )}
-          </div>
+          )}
+
+          {graphMode === "polar" && <OrbitalPolarPlot orientation={orientation} plane={plane} />}
+
           <p className="mt-3 font-mono text-[10px] leading-relaxed text-muted-foreground">
-            {graphMode === "wave"
-              ? "Plotted along the orbital's own lobe axis, through the nucleus. A sign change away from the center is a radial node (R(r) crossing zero); an odd-l orbital also flips sign right at the nucleus from angular parity alone, while an even-l orbital with l>0 just touches zero there without flipping, since R(r) itself vanishes at r=0 whenever l>0."
-              : "The probability of finding the electron in a thin shell at distance r from the nucleus — always positive, and zero exactly at r=0 because the shell's own volume vanishes there. Each additional hump beyond the first is one more radial node."}
+            {caption}
           </p>
         </div>
 
@@ -204,9 +298,9 @@ export function OrbitalSim() {
             onPointerUp={onPointerUp}
           >
             {projected.map((p, i) => {
-              const x = 150 + p.proj.x * 130;
-              const y = 150 + p.proj.y * 130;
-              const depthScale = 1 / (2 - p.proj.z * 0.6);
+              const x = 150 + p.x * 130;
+              const y = 150 + p.y * 130;
+              const depthScale = 1 / (2 - p.z * 0.6);
               return (
                 <circle
                   key={i}
@@ -241,7 +335,7 @@ export function OrbitalSim() {
       <aside className="space-y-6 lg:col-span-4">
         <div className="rounded-xl border border-border bg-card p-6">
           <h3 className="mb-4 font-mono text-xs font-bold uppercase tracking-widest">Orbital</h3>
-          <div className="mb-6 grid grid-cols-4 gap-2">
+          <div className="mb-6 grid grid-cols-5 gap-2">
             {ORBITALS.map((o, i) => (
               <button
                 key={o.name}
@@ -300,6 +394,11 @@ export function OrbitalSim() {
               </div>
             </div>
           </div>
+          {nodeRadii.length > 0 && (
+            <p className="mt-4 font-mono text-[10px] leading-relaxed text-muted-foreground">
+              R(r) = 0 at r = {nodeRadii.map((r) => r.toFixed(2)).join(", ")} a₀
+            </p>
+          )}
         </div>
 
         <div className="rounded-xl bg-primary p-6 text-primary-foreground">
