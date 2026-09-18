@@ -27,11 +27,19 @@ export const topics: Topic[] = [
 
 export const topicsBySlug: Map<string, Topic> = new Map(topics.map((t) => [t.slug, t]));
 
-/** Units actually represented in a list of topics, in the order they appear. */
-export function unitsOf(list: Topic[] = topics): string[] {
+/**
+ * Units actually represented in a list of topics, in the order they appear.
+ *
+ * Pass `leadUnit` to pin one unit first (e.g. the real-world "Chemistry in
+ * the World" unit) without reordering the underlying curriculum otherwise.
+ */
+export function unitsOf(list: Topic[] = topics, leadUnit?: string): string[] {
   const seen: string[] = [];
   for (const topic of list) {
     if (!seen.includes(topic.unit)) seen.push(topic.unit);
+  }
+  if (leadUnit && seen.includes(leadUnit)) {
+    return [leadUnit, ...seen.filter((u) => u !== leadUnit)];
   }
   return seen;
 }

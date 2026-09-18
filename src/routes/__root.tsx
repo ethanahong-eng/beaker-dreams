@@ -205,7 +205,8 @@ function UnitNavItem({ unit, active, topics }: { unit: string; active: boolean; 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const topics = allTopics;
-  const units = unitsOf(topics);
+  const leadUnit = topics.find((t) => t.builtIn === "/everyday")?.unit;
+  const units = unitsOf(topics, leadUnit);
   const activeUnit = useActiveUnit(topics);
 
   return (

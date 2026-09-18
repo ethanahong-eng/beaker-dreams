@@ -38,7 +38,8 @@ function LibraryError() {
 
 function HomePage() {
   const topics = allTopics;
-  const units = unitsOf(topics);
+  const leadUnit = topics.find((t) => t.builtIn === "/everyday")?.unit;
+  const units = unitsOf(topics, leadUnit);
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-16">
