@@ -1,8 +1,8 @@
 /**
  * Types for the chemistry lesson library.
  *
- * The lessons themselves live in the `topics` table in the backend, so new
- * lessons can be added or edited there without touching this codebase.
+ * The lessons themselves live in this directory, one module per unit, so a
+ * lesson can be read and edited straight from the codebase.
  */
 
 export type BuiltInPath =
@@ -44,24 +44,3 @@ export type Topic = {
   builtIn?: BuiltInPath;
   lesson?: TopicLesson;
 };
-
-/**
- * Units in curriculum order, derived from the lessons currently in the database.
- *
- * Pass `leadUnit` to pin one unit first (e.g. the real-world "everyday" unit)
- * without touching the underlying database order otherwise.
- */
-export function unitsOf(topics: Topic[], leadUnit?: string): string[] {
-  const seen: string[] = [];
-  for (const topic of topics) {
-    if (!seen.includes(topic.unit)) seen.push(topic.unit);
-  }
-  if (leadUnit && seen.includes(leadUnit)) {
-    return [leadUnit, ...seen.filter((u) => u !== leadUnit)];
-  }
-  return seen;
-}
-
-export function bySlug(topics: Topic[]): Map<string, Topic> {
-  return new Map(topics.map((t) => [t.slug, t]));
-}

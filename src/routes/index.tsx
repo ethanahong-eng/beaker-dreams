@@ -1,10 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { unitsOf, type Topic } from "@/lib/topics";
-import { topicsQueryOptions } from "@/lib/topics-query";
+import { topics as allTopics, unitsOf, type Topic } from "@/lib/topics";
 import { TopicLink } from "@/components/TopicLink";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(topicsQueryOptions),
   head: () => ({
     meta: [
       { title: "Valence Lab — Interactive Chemistry Simulations" },
@@ -39,7 +37,7 @@ function LibraryError() {
 }
 
 function HomePage() {
-  const topics = Route.useLoaderData();
+  const topics = allTopics;
   const leadUnit = topics.find((t) => t.builtIn === "/everyday")?.unit;
   const units = unitsOf(topics, leadUnit);
 

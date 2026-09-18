@@ -12,8 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { unitsOf, type Topic } from "../lib/topics";
-import { topicsQueryOptions } from "../lib/topics-query";
+import { topics as allTopics, unitsOf, type Topic } from "../lib/topics";
 import { TopicLink } from "../components/TopicLink";
 
 function BeakerLogo({ className }: { className?: string }) {
@@ -104,14 +103,6 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: async ({ context }): Promise<Topic[]> => {
-    try {
-      return await context.queryClient.ensureQueryData(topicsQueryOptions);
-    } catch {
-      // The header/footer nav degrades gracefully if the lesson library is unreachable.
-      return [];
-    }
-  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -213,7 +204,7 @@ function UnitNavItem({ unit, active, topics }: { unit: string; active: boolean; 
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const topics = Route.useLoaderData();
+  const topics = allTopics;
   const leadUnit = topics.find((t) => t.builtIn === "/everyday")?.unit;
   const units = unitsOf(topics, leadUnit);
   const activeUnit = useActiveUnit(topics);

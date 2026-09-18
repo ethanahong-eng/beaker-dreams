@@ -22,10 +22,12 @@ const EASY: EasyContent = {
     {
       heading: "AP Review",
       body: [
-        "VSEPR theory predicts a molecule's 3D shape using one simple idea: the negatively charged domains around a central atom — bonds and lone pairs alike — repel each other and spread out as far apart as possible. Count the domains, and the shape follows automatically.",
+        "VSEPR theory predicts a molecule's 3D shape using one simple idea: the negatively charged domains around a central atom — bonds and lone pairs alike — repel each other and spread out as far apart as possible. A domain is one group of electrons: a lone pair, a single bond, or a whole double or triple bond (a double bond counts once, because both of its pairs sit in the same direction). Count the domains, and the shape follows automatically.",
         "Two domains give a linear shape (180°), three give trigonal planar (120°), and four give tetrahedral (109.5°) — the same starting geometries whether every domain is a bond or some are lone pairs.",
+        "Five domains give a trigonal bipyramid: three positions in a flat triangle 120° apart, plus one directly above and one directly below at 90°. Six give an octahedron, with every neighbor at 90°. These show up for central atoms past the second row, like sulfur, phosphorus, or xenon, which can hold more than eight valence electrons.",
         "Lone pairs take up more space than bonding pairs because they aren't stretched between two nuclei, so they push harder on their neighbors. That's why ammonia (NH₃, one lone pair) has a bond angle slightly less than 109.5°, and water (H₂O, two lone pairs) is compressed even further, to about 104.5°.",
         "The overall arrangement of domains (electron geometry) and the shape you'd see tracing only the atoms (molecular geometry) can differ once lone pairs are involved — a lone pair still occupies a direction in space and still repels, it's just invisible once you look at where the atoms themselves ended up.",
+        "Work one all the way through: SF₄. Sulfur brings 6 valence electrons and each fluorine brings 7, so there are 6 + 4 × 7 = 34 electrons to place. The four S–F single bonds use 8 of them. Giving each fluorine three lone pairs of its own uses 24 more. That leaves 34 − 8 − 24 = 2 electrons, which stay on sulfur as one lone pair. So sulfur has 4 bonding domains + 1 lone pair = 5 domains: the electron geometry is trigonal bipyramidal, the lone pair takes the roomier equatorial position, and the molecular geometry — tracing only the atoms — is a seesaw.",
       ],
     },
   ],
@@ -51,6 +53,13 @@ const EASY: EasyContent = {
       answer: "Trigonal pyramidal",
       explanation:
         "The electron geometry of all 4 domains is tetrahedral, but since one domain is a lone pair (invisible when tracing only atoms), the visible molecular shape is trigonal pyramidal — the classic ammonia shape.",
+    },
+    {
+      question:
+        "SF₄ has four bonded fluorines and one lone pair on sulfur. Name its electron geometry and its molecular geometry.",
+      answer: "Trigonal bipyramidal electron geometry; seesaw molecular geometry.",
+      explanation:
+        "Five domains always arrange as a trigonal bipyramid. The lone pair takes an equatorial position, where it has only two neighbors at 90° instead of three, and ignoring it leaves the four fluorines in a seesaw shape.",
     },
     {
       question: "Why do lone pairs repel more strongly than bonding pairs?",
@@ -124,15 +133,85 @@ function GeometryPage() {
             <div className="mt-8 grid gap-10 md:grid-cols-2">
               <p className="leading-relaxed text-muted-foreground">
                 Most students learn VSEPR as a lookup table: four domains means tetrahedral, five
-                means trigonal bipyramidal, and so on. But the shapes aren't arbitrary — they're
-                what you get when you let point charges on a sphere push each other as far apart as
-                possible and let them settle.
+                means trigonal bipyramidal, and so on. But the table is the answer to a minimization
+                problem, not an axiom. Scatter n identical repelling points on the surface of a
+                sphere, let them relax until the total repulsion — the sum of 1/r over every pair —
+                is as small as it can be, and the arrangements that fall out are exactly the
+                familiar ones: antipodal for two, an equilateral triangle for three, a tetrahedron
+                for four (cos θ = −1/3, so θ = 109.47°), a trigonal bipyramid for five, an
+                octahedron for six.
               </p>
               <p className="leading-relaxed text-muted-foreground">
-                Lone pairs occupy more space than bonding pairs, since they aren't stretched between
-                two nuclei, so they repel harder. That single asymmetry is why ammonia's bond angle
-                sits below the ideal tetrahedral angle, and why water's sits lower still. The
-                builder below simulates that repulsion directly rather than asserting the answer.
+                The repulsion is not really Coulombic, though, and that distinction matters. Two
+                electrons of the same spin are kept apart far more effectively by the Pauli
+                exclusion principle than by their charge: antisymmetry of the wavefunction forces
+                the probability of finding them at the same point to vanish outright. Ronald
+                Gillespie, who gave the model its modern form in the 1950s, later grounded it in the
+                Laplacian of the electron density, which shows real local concentrations of charge
+                around a central atom pointing in exactly the directions VSEPR draws its domains,
+                lone pairs included. The domains are not fictions; they are a coarse map of where
+                electron density genuinely piles up.
+              </p>
+            </div>
+            <div className="mt-10 grid gap-10 md:grid-cols-2">
+              <p className="leading-relaxed text-muted-foreground">
+                A lone pair occupies more angular space than a bonding pair because of where its
+                density sits. Bonding density is drawn outward and shared with a second nucleus, so
+                close to the central atom it subtends a narrow cone. A lone pair answers to one
+                nucleus only, stays in close, and spreads sideways — a fatter cone with a wider
+                bite. That ordering, lone pair–lone pair beating lone pair–bond beating bond–bond,
+                is the whole content of the model's one correction term, and it predicts the
+                observed squeeze: methane's 109.47° gives way to ammonia's 107.8° with one lone
+                pair, and to water's 104.5° with two.
+              </p>
+              <p className="leading-relaxed text-muted-foreground">
+                The same reasoning predicts a second, subtler effect. Swap a hydrogen for a more
+                electronegative substituent and the bonding density is pulled further from the
+                central atom, narrowing its bite and letting the remaining domains close in: OF₂
+                tightens to 103.3° while Cl₂O opens to 110.9°, both from a nominally tetrahedral
+                oxygen with two lone pairs. VSEPR gets the direction of that trend right, which is a
+                large part of why it has survived seventy years of better theories.
+              </p>
+            </div>
+            <div className="mt-10 grid gap-10 md:grid-cols-2">
+              <p className="leading-relaxed text-muted-foreground">
+                Electron geometry counts every domain; molecular geometry names only the arrangement
+                of nuclei. They coincide when there are no lone pairs and diverge the instant there
+                is one. CH₄, NH₃ and H₂O all have tetrahedral electron geometry, and are called
+                tetrahedral, trigonal pyramidal and bent respectively — three names for one
+                underlying arrangement, because a diffraction experiment locates nuclei and cannot
+                see a lone pair at all.
+              </p>
+              <p className="leading-relaxed text-muted-foreground">
+                Five domains are the interesting case, because the trigonal bipyramid is the one
+                common geometry whose sites are not equivalent. An axial position has three
+                neighbours at 90°; an equatorial position has only two. The bulkiest domain
+                therefore takes an equatorial seat, and that single rule generates the entire
+                series: SF₄ is a seesaw, ClF₃ is T-shaped, XeF₂ is linear. The distortions are
+                measurable and point the right way — in SF₄ the axial F–S–F angle bends from 180° to
+                173.1° and the equatorial one from 120° to 101.6°, both leaning away from the lone
+                pair.
+              </p>
+            </div>
+            <div className="mt-10 grid gap-10 md:grid-cols-2">
+              <p className="leading-relaxed text-muted-foreground">
+                VSEPR is a heuristic, not a theory, and it is worth knowing where it breaks. The
+                hydrides of the heavier p-block elements are the cleanest failure: PH₃ bonds at
+                93.3° and H₂S at 92.1°, nowhere near the roughly 107° the model insists on. Those
+                angles sit close to 90° because the central atom barely mixes its s and p orbitals
+                and bonds with something near pure p character — a fact about orbitals, which VSEPR
+                never asks about and therefore cannot anticipate.
+              </p>
+              <p className="leading-relaxed text-muted-foreground">
+                Other failures are stranger. TeCl₆²⁻ and SbBr₆³⁻ are regular octahedra even though
+                the central atom carries a lone pair the model says must distort them; that pair is
+                stereochemically inactive, tucked into a nearly spherical s orbital. Gaseous CaF₂,
+                SrF₂ and BaF₂ are bent rather than linear, because the metal core polarizes and
+                empty d orbitals get involved. Transition-metal complexes are governed by
+                ligand-field stabilization and d-electron count instead, which is how square-planar
+                d⁸ species like [PtCl₄]²⁻ exist at all. VSEPR predicts none of it. It is a rule that
+                summarizes what quantum mechanics produces for one well-behaved corner of the
+                periodic table — enormously useful, and not an account of bonding.
               </p>
             </div>
             <div className="mt-10 grid gap-10 md:grid-cols-2">
