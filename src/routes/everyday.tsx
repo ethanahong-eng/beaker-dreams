@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { SectionNav } from "@/components/SectionNav";
 import { NextTopicNav } from "@/components/NextTopicNav";
 import { ReviewLevelToggle } from "@/components/ReviewLevelToggle";
 import { ReviewQuestions } from "@/components/ReviewQuestions";
+import { EmissionsScrubbingSim } from "@/components/EmissionsScrubbingSim";
 import type { Level, ReviewQuestion } from "@/lib/reviewContent";
 
 export const Route = createFileRoute("/everyday")({
@@ -26,7 +27,17 @@ export const Route = createFileRoute("/everyday")({
   component: EverydayPage,
 });
 
-const essays = [
+type Essay = {
+  tag: string;
+  title: string;
+  lede: string;
+  body: string[];
+  easyBody: string[];
+  /** Optional interactive embed rendered after the essay body. */
+  sim?: () => ReactNode;
+};
+
+const essays: Essay[] = [
   {
     tag: "Stereochemistry",
     title: "Chirality: why a molecule's handedness can decide a life",
@@ -117,6 +128,20 @@ const essays = [
       "The Montreal Protocol, an international agreement to phase out CFCs, is widely considered one of the most successful environmental treaties ever signed — the ozone layer is now measurably recovering as a direct result.",
     ],
   },
+  {
+    tag: "Energy & Policy",
+    title: "Scrubbing a smokestack is a cost-benefit problem, not just a chemistry one",
+    lede: "The same SO₂ that would otherwise become acid rain can be redirected into gypsum — the question is whether it's worth the cost.",
+    body: [
+      "A coal plant's flue gas carries sulfur dioxide from sulfur impurities in the coal. Left alone, that SO₂ drifts into the atmosphere, oxidizes to SO₃, and dissolves in water vapor to form sulfuric acid — acid rain. A flue-gas desulfurization scrubber intercepts it first, reacting it with a limestone slurry to precipitate calcium sulfate (gypsum, a real building material) instead.",
+      "No scrubber is 100% efficient, and running one costs money — so the real-world question a utility (or a regulator) faces is whether the cost of removing another ton of SO₂ is worth what that ton would otherwise cost in acid rain damage, crop loss and respiratory illness. Play with the simulation below to see how that tradeoff moves as the numbers change.",
+    ],
+    easyBody: [
+      "Coal contains sulfur, so burning it releases sulfur dioxide (SO₂), which reacts with water in the air to form sulfuric acid — acid rain. A scrubber reacts the SO₂ with limestone before it can escape, turning it into gypsum (a solid, useful building material) instead of letting it reach the atmosphere.",
+      "No scrubber catches everything, and scrubbers cost money to run. So it comes down to a cost-benefit question: is removing more SO₂ worth what it costs, compared to the damage that SO₂ would otherwise cause? The simulation below lets you test that tradeoff yourself.",
+    ],
+    sim: () => <EmissionsScrubbingSim />,
+  },
 ];
 
 const REVIEW_QUESTIONS: ReviewQuestion[] = [
@@ -156,6 +181,21 @@ const REVIEW_QUESTIONS: ReviewQuestion[] = [
       "It acts as a catalyst — it destroys ozone molecules but is regenerated afterward, so a single atom can destroy many thousands of ozone molecules.",
     explanation:
       "Because it isn't consumed in the reaction, one chlorine atom keeps reacting over and over, which is why even trace amounts of CFCs caused disproportionately large ozone damage.",
+  },
+  {
+    question: "What does a flue-gas scrubber do to the SO₂ in a power plant's exhaust, chemically?",
+    answer:
+      "It reacts the SO₂ with a limestone (calcium carbonate) slurry to form solid calcium sulfate (gypsum) instead of letting the SO₂ escape into the atmosphere.",
+    explanation:
+      "Without a scrubber, that same SO₂ would oxidize in the atmosphere to SO₃ and dissolve in water vapor to form sulfuric acid — acid rain. The scrubber redirects the sulfur into a solid, useful byproduct instead.",
+  },
+  {
+    question:
+      "Why can running an expensive SO₂ scrubber still be a net financial benefit, not just an environmental one?",
+    answer:
+      "Because the health, agricultural and infrastructure damage that a ton of released SO₂ causes is usually worth more than the cost of removing that ton with a scrubber.",
+    explanation:
+      "This is the core idea of cost-benefit analysis applied to pollution control: comparing the cost of prevention against the cost of the damage prevention avoids, rather than treating environmental cost as free.",
   },
 ];
 
@@ -214,6 +254,7 @@ function EverydayPage() {
                   {p}
                 </p>
               ))}
+              {e.sim && <div className="mt-10">{e.sim()}</div>}
             </div>
           </article>
         ))}

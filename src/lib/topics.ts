@@ -6,11 +6,7 @@
  */
 
 export type BuiltInPath =
-  | "/geometry"
-  | "/hybridization"
-  | "/kinetics"
-  | "/equilibrium"
-  | "/everyday";
+  "/geometry" | "/hybridization" | "/kinetics" | "/equilibrium" | "/everyday";
 
 export type SimKey =
   | "vsepr"
@@ -49,11 +45,19 @@ export type Topic = {
   lesson?: TopicLesson;
 };
 
-/** Units in curriculum order, derived from the lessons currently in the database. */
-export function unitsOf(topics: Topic[]): string[] {
+/**
+ * Units in curriculum order, derived from the lessons currently in the database.
+ *
+ * Pass `leadUnit` to pin one unit first (e.g. the real-world "everyday" unit)
+ * without touching the underlying database order otherwise.
+ */
+export function unitsOf(topics: Topic[], leadUnit?: string): string[] {
   const seen: string[] = [];
   for (const topic of topics) {
     if (!seen.includes(topic.unit)) seen.push(topic.unit);
+  }
+  if (leadUnit && seen.includes(leadUnit)) {
+    return [leadUnit, ...seen.filter((u) => u !== leadUnit)];
   }
   return seen;
 }

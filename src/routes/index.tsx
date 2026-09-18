@@ -40,15 +40,14 @@ function LibraryError() {
 
 function HomePage() {
   const topics = Route.useLoaderData();
-  const units = unitsOf(topics);
+  const leadUnit = topics.find((t) => t.builtIn === "/everyday")?.unit;
+  const units = unitsOf(topics, leadUnit);
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-16">
       {/* Hero */}
       <section className="mb-24 border-b border-border pb-16 text-center">
-        <h1 className="font-display text-5xl font-bold leading-tight md:text-7xl">
-           Chemistry
-        </h1>
+        <h1 className="font-display text-5xl font-bold leading-tight md:text-7xl">Chemistry</h1>
         <p className="mx-auto mt-8 max-w-2xl text-lg italic leading-relaxed text-muted-foreground">
           Chemistry doesn't have to be confusing with the right visuals. Each page here pairs a live
           simulation with the history and theory behind it. Not only will you better understand the
@@ -119,7 +118,6 @@ function HomePage() {
           })}
         </div>
       </section>
-
     </main>
   );
 }
