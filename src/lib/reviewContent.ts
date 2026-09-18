@@ -1,8 +1,8 @@
 // Shared shape for every topic page's optional "AP Review" (easy) tier.
 // The "hard" tier is always whatever content already exists on that page
-// (bespoke JSX for the built-in routes, or the DB-driven lesson content for
-// topic.$slug.tsx) -- untouched. This type only describes the new,
-// additive simplified alternative.
+// (bespoke JSX for the built-in routes, or the lesson data in
+// src/lib/topics/ for topic.$slug.tsx) -- untouched. This type only
+// describes the simplified alternative shown alongside it.
 export type Level = "hard" | "easy";
 
 export type ReviewQuestion = {

@@ -1,16 +1,12 @@
 /**
  * Types for the chemistry lesson library.
  *
- * The lessons themselves live in the `topics` table in the backend, so new
- * lessons can be added or edited there without touching this codebase.
+ * The lessons themselves live in this directory, one module per unit, so a
+ * lesson can be read and edited straight from the codebase.
  */
 
 export type BuiltInPath =
-  | "/geometry"
-  | "/hybridization"
-  | "/kinetics"
-  | "/equilibrium"
-  | "/everyday";
+  "/geometry" | "/hybridization" | "/kinetics" | "/equilibrium" | "/everyday";
 
 export type SimKey =
   | "vsepr"
@@ -48,16 +44,3 @@ export type Topic = {
   builtIn?: BuiltInPath;
   lesson?: TopicLesson;
 };
-
-/** Units in curriculum order, derived from the lessons currently in the database. */
-export function unitsOf(topics: Topic[]): string[] {
-  const seen: string[] = [];
-  for (const topic of topics) {
-    if (!seen.includes(topic.unit)) seen.push(topic.unit);
-  }
-  return seen;
-}
-
-export function bySlug(topics: Topic[]): Map<string, Topic> {
-  return new Map(topics.map((t) => [t.slug, t]));
-}

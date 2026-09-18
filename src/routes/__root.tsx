@@ -12,8 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { unitsOf, type Topic } from "../lib/topics";
-import { topicsQueryOptions } from "../lib/topics-query";
+import { topics as allTopics, unitsOf, type Topic } from "../lib/topics";
 import { TopicLink } from "../components/TopicLink";
 
 function BeakerLogo({ className }: { className?: string }) {
@@ -104,14 +103,6 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: async ({ context }): Promise<Topic[]> => {
-    try {
-      return await context.queryClient.ensureQueryData(topicsQueryOptions);
-    } catch {
-      // The header/footer nav degrades gracefully if the lesson library is unreachable.
-      return [];
-    }
-  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -169,20 +160,10 @@ function useActiveUnit(topics: Topic[]): string | undefined {
   return topics.find((t) => t.builtIn === pathname)?.unit;
 }
 
-function UnitNavItem({
-  unit,
-  active,
-  topics,
-}: {
-  unit: string;
-  active: boolean;
-  topics: Topic[];
-}) {
+function UnitNavItem({ unit, active, topics }: { unit: string; active: boolean; topics: Topic[] }) {
   const unitTopics = topics.filter((t) => t.unit === unit);
   const first = unitTopics[0];
   if (!first) return null;
-
-
 
   return (
     <div className="group relative">
@@ -223,10 +204,9 @@ function UnitNavItem({
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const topics = Route.useLoaderData();
+  const topics = allTopics;
   const units = unitsOf(topics);
   const activeUnit = useActiveUnit(topics);
-
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -241,12 +221,7 @@ function RootComponent() {
             </Link>
             <div className="hidden items-center gap-6 text-[11px] font-bold uppercase text-muted-foreground lg:flex">
               {units.map((unit) => (
-                <UnitNavItem
-                  key={unit}
-                  unit={unit}
-                  active={unit === activeUnit}
-                  topics={topics}
-                />
+                <UnitNavItem key={unit} unit={unit} active={unit === activeUnit} topics={topics} />
               ))}
             </div>
           </div>

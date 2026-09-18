@@ -21,10 +21,18 @@ const EASY: EasyContent = {
   ],
   theory: [
     {
+      heading: "Equilibrium means equal rates, not equal amounts",
+      body: [
+        "A reaction at equilibrium has not stopped. Both the forward reaction and the reverse reaction are still running — they are just running at the same rate, so every molecule consumed is replaced as fast as it disappears and the measured concentrations hold steady. That is what the word dynamic means here.",
+        "Equilibrium also does not mean there are equal amounts of reactants and products. A large K means the mixture at equilibrium is mostly products; a small K means it barely gets going and stays mostly reactants. What is equal at equilibrium is the pair of rates, not the pair of concentrations.",
+      ],
+    },
+    {
       heading: "Qc vs. Kc: predicting which way a reaction shifts",
       body: [
         "Kc is the value of the reaction quotient once a reaction has settled into equilibrium — it's fixed for a given reaction at a given temperature. Qc is calculated the exact same way (products over reactants, each raised to its coefficient) but can be computed at any moment, not just at equilibrium.",
         "Comparing the two tells you which direction the reaction still needs to move: if Qc < Kc, there aren't enough products yet, so the reaction shifts forward to make more. If Qc > Kc, there are too many products, so it shifts in reverse to make more reactants. If Qc = Kc, the system is already at equilibrium and there's no net shift in either direction.",
+        "Work one through. For CO + H₂O ⇌ CO₂ + H₂, Kc is about 9 at 700 K. Suppose at some moment the vessel holds [CO] = 0.10 M, [H₂O] = 0.10 M, [CO₂] = 0.20 M and [H₂] = 0.20 M. Then Qc = (0.20)(0.20) / [(0.10)(0.10)] = 0.04 / 0.01 = 4. Since 4 is smaller than 9, there is not enough product yet, so the reaction runs forward — making CO₂ and H₂ and consuming CO and H₂O — until Qc has climbed to 9 and stops changing.",
       ],
     },
     {
@@ -39,7 +47,8 @@ const EASY: EasyContent = {
       heading: "Why temperature is the exception",
       body: [
         "Changing concentration or pressure moves Qc away from Kc and lets the reaction shift back to the same Kc it started with — the constant itself never changes. Temperature is the one variable that actually changes the value of K.",
-        "Which way K moves depends on whether the reaction is exothermic or endothermic. You can treat heat as if it were a reactant or product: in an exothermic reaction, heat is released, so it behaves like a product, and raising the temperature is like adding more of a product — the equilibrium shifts backward (toward reactants), decreasing K. In an endothermic reaction, heat is absorbed, so it behaves like a reactant, and raising the temperature shifts the equilibrium forward (toward products), increasing K. Cooling does the opposite in each case.",
+        "Which way K moves depends on whether the reaction is exothermic (it releases heat) or endothermic (it absorbs heat). You can treat heat as if it were a reactant or product: in an exothermic reaction heat is released, so it behaves like a product, and raising the temperature is like adding more of a product — the equilibrium shifts backward toward reactants, decreasing K. In an endothermic reaction heat is absorbed, so it behaves like a reactant, and raising the temperature shifts the equilibrium forward toward products, increasing K. Cooling does the opposite in each case.",
+        "This is exactly why industrial shift reactors are built in two stages. The water-gas shift is exothermic, so a hot reactor reaches equilibrium quickly but that equilibrium sits in a bad place, while a cool reactor has a much more favorable K but takes longer to get there. Running one of each in series gets both.",
       ],
     },
   ],
@@ -67,11 +76,10 @@ const EASY: EasyContent = {
     },
     {
       question:
-        "What is the key difference between Qc and Kc that lets you use them to predict a reaction's direction?",
-      answer:
-        "Kc is the fixed value at equilibrium; Qc is the same expression calculated at any moment, so comparing them shows how far the system is from equilibrium and which way it needs to move.",
+        "At 700 K, Kc = 9 for CO + H₂O ⇌ CO₂ + H₂. A vessel holds 0.10 M CO, 0.10 M H₂O, 0.20 M CO₂ and 0.20 M H₂. Which way does the reaction shift?",
+      answer: "Forward, toward products.",
       explanation:
-        "Both are calculated with the identical expression (products over reactants, raised to their coefficients). Kc only applies once the system has stopped changing; Qc can be evaluated at any snapshot in time, which is exactly what makes the comparison useful for prediction.",
+        "Qc = (0.20)(0.20) / [(0.10)(0.10)] = 4. Since Qc (4) is less than Kc (9), the mixture holds too little product, so the reaction runs forward until Qc rises to 9.",
     },
     {
       question: "Does adding a catalyst change the value of Kc?",
@@ -207,11 +215,54 @@ function EquilibriumPage() {
 
             <section className="mt-16 grid gap-16 border-t border-border pt-16 md:grid-cols-2">
               <div>
+                <h2 className="mb-6 text-3xl font-bold italic">
+                  Equilibrium is two reactions running, not one stopped
+                </h2>
+                <p className="leading-relaxed text-muted-foreground">
+                  Nothing about equilibrium is static, and the algebra shows why. For an elementary
+                  step the forward rate is kf[CO][H₂O] and the reverse rate is kr[CO₂][H₂]. Set them
+                  equal, rearrange, and the concentration terms collect into [CO₂][H₂] divided by
+                  [CO][H₂O] — the equilibrium expression — while the rate constants collect into
+                  kf/kr. Kc is a ratio of two rate constants. Concentrations stop changing because
+                  the rates have matched, not because the molecules have stopped.
+                </p>
+                <p className="mt-4 leading-relaxed text-muted-foreground">
+                  Real reactions run through several elementary steps, and the principle of detailed
+                  balance extends the result: at equilibrium every individual step is separately
+                  balanced against its own reverse, and the overall K is the product of the
+                  step-by-step constants. That principle is also the cleanest argument for why a
+                  catalyst cannot move an equilibrium — it lowers one step's barrier from both
+                  directions at once, multiplying kf and kr by the same factor and leaving the ratio
+                  exactly where it was.
+                </p>
+              </div>
+              <div>
+                <h2 className="mb-6 text-3xl font-bold italic">What Q actually measures</h2>
+                <p className="leading-relaxed text-muted-foreground">
+                  Q has the same algebraic form as K but can be evaluated at any instant, and the
+                  reason comparing them works is not a convention. Substitute ΔG° = −RT ln K into ΔG
+                  = ΔG° + RT ln Q and the two logarithms collapse:{" "}
+                  <span className="text-accent">ΔG = RT ln(Q/K)</span>. The free-energy driving
+                  force on a reaction is literally the logarithmic distance from equilibrium.
+                </p>
+                <p className="mt-4 leading-relaxed text-muted-foreground">
+                  Everything else follows from the sign. A Q below K makes the logarithm negative,
+                  so ΔG is negative and the forward reaction is spontaneous; a Q above K flips every
+                  sign; Q equal to K sets ΔG to zero, which is what equilibrium means
+                  thermodynamically. The comparison rule is a consequence of that expression, and
+                  the expression carries something the rule does not — how hard the system is being
+                  pushed, and therefore how much work the reaction could still do.
+                </p>
+              </div>
+            </section>
+
+            <section className="mt-16 grid gap-16 border-t border-border pt-16 md:grid-cols-2">
+              <div>
                 <h2 className="mb-6 text-3xl font-bold italic">The Reaction Quotient (Qc)</h2>
                 <p className="mb-6 leading-relaxed text-muted-foreground">
-                  Unlike the equilibrium constant Kc, which describes the stable state, the reaction
-                  quotient Qc can be calculated at any moment. Comparing Qc to Kc predicts which way
-                  the reaction will shift to reach equilibrium.
+                  In practice you rarely evaluate ΔG. You compute Qc from the concentrations in
+                  front of you, compare it with Kc, and read the direction off the comparison — the
+                  operational form of the free-energy statement above.
                 </p>
                 <ul className="space-y-4">
                   <li className="flex items-start gap-3">
@@ -388,7 +439,14 @@ function EquilibriumPage() {
                 <p className="text-sm leading-relaxed text-muted-foreground">
                   A system at equilibrium responds to a disturbance by shifting in the direction
                   that partially offsets it. Partially is the key word: the system never fully
-                  undoes your change, it only moves to a new balance point closer to the old one.
+                  undoes your change, it only settles at a new balance point nearer the old one. But
+                  the principle is a summary of outcomes, not a first principle — the law underneath
+                  is that at constant temperature and pressure a system moves to minimize Gibbs free
+                  energy, and the slogan about relieving a disturbance is what that minimization
+                  usually looks like. Usually, not always: for N₂ + 3H₂ ⇌ 2NH₃ held at constant
+                  pressure, adding N₂ to a mixture already more than half N₂ shifts the reaction
+                  backward, producing still more N₂, because the added gas dilutes the others faster
+                  than it enriches itself.
                 </p>
               </div>
               <div>
@@ -401,7 +459,12 @@ function EquilibriumPage() {
                   simulation and pressure climbs, collisions get more frequent, and the reaction
                   runs faster in both directions at once, but the equilibrium ratio never moves.
                   Compressing a reaction only shifts it when the two sides disagree on how many
-                  molecules they occupy.
+                  molecules they occupy. Inert gas is the same story told twice: add argon at fixed
+                  volume and nothing happens, because every partial pressure is unchanged and Q
+                  never moves; add it at fixed pressure and the vessel expands, every partial
+                  pressure falls, and a reaction with unequal mole counts genuinely does shift. No
+                  amount of reasoning about relieving stress distinguishes those two cases. The
+                  free-energy criterion does it immediately.
                 </p>
               </div>
               <div>
@@ -430,6 +493,16 @@ function EquilibriumPage() {
                   equilibrium constant explored in this simulation is thermodynamics wearing a
                   different name.
                 </p>
+                <p className="mt-4 leading-relaxed text-muted-foreground">
+                  That identity also disposes of two rules that otherwise look arbitrary. K carries
+                  no units because it is properly built from activities rather than concentrations,
+                  and an activity is a ratio of a species' state to a chosen standard state, so
+                  every unit cancels before the logarithm is taken — which is fortunate, since the
+                  logarithm of a quantity with units is meaningless. And pure solids and pure
+                  liquids drop out of the expression because their activity is 1: adding more solid
+                  changes no intensive property of it, so it cannot move a quantity that measures
+                  how far the system sits from balance.
+                </p>
               </div>
               <div>
                 <h2 className="mb-6 text-3xl font-bold italic">Why temperature is different</h2>
@@ -442,6 +515,15 @@ function EquilibriumPage() {
                   so raising T makes ln K decrease: exactly why heating the vessel favors CO and H₂O
                   over CO₂ and H₂, even though it speeds up both directions at once.
                 </p>
+                <p className="mt-4 leading-relaxed text-muted-foreground">
+                  The size of the effect is startling. Feed ΔH° = −41.2 kJ/mol for the shift
+                  reaction into that expression and K falls by more than four orders of magnitude
+                  between 298 K and 700 K, from roughly 10⁵ down to single digits. That single
+                  number is why industrial shift reactors are built in two stages: a hot stage
+                  around 400 °C for rate, then a cooler stage near 200 °C to finish the conversion
+                  at a K worth having. No single temperature gives you both, and no catalyst can
+                  rescue you, because a catalyst moves rate without moving K.
+                </p>
               </div>
             </section>
 
@@ -453,7 +535,10 @@ function EquilibriumPage() {
                 Equilibrium does not mean equal amounts. A very large Kc means products dominate; a
                 very small one means the reaction barely proceeds. What is equal at equilibrium is
                 the pair of rates, not the pair of concentrations. Adding a catalyst reaches that
-                state faster without changing where it lands.
+                state faster without changing where it lands. The second half of the misconception
+                is that the reaction has stopped: the concentrations are constant, but both
+                directions are still firing, continuously and at matched rates, which is precisely
+                what the orange and blue flashes in the simulation are showing you.
               </p>
             </section>
           </>

@@ -13,15 +13,14 @@ import { OrbitalSim } from "@/components/OrbitalSim";
 import { LessonBody } from "@/components/LessonBody";
 import { ReviewLevelToggle } from "@/components/ReviewLevelToggle";
 import { ReviewQuestions } from "@/components/ReviewQuestions";
-import { topicsQueryOptions } from "@/lib/topics-query";
+import { topicsBySlug } from "@/lib/topics";
 import { TOPIC_OVERRIDES } from "@/lib/topicOverrides";
 import type { SimKey } from "@/lib/topics";
 import type { Level } from "@/lib/reviewContent";
 
 export const Route = createFileRoute("/topic/$slug")({
-  loader: async ({ params, context }) => {
-    const topics = await context.queryClient.ensureQueryData(topicsQueryOptions);
-    const topic = topics.find((t) => t.slug === params.slug);
+  loader: ({ params }) => {
+    const topic = topicsBySlug.get(params.slug);
     if (!topic || !topic.lesson) throw notFound();
     return { topic };
   },
@@ -92,10 +91,8 @@ function TopicNotFound() {
 function TopicPage() {
   const { topic } = Route.useLoaderData();
   const lesson = topic.lesson!;
-  // Additive, code-only extensions keyed by slug -- see topicOverrides.tsx
-  // for why (the lesson content and its simulation slot now live in a
-  // database this codebase can only read, so a topic can't be edited from
-  // here directly, but it can be extended without touching that data).
+  // Additive, code-only extensions keyed by slug -- derivations, typeset
+  // math, richer simulations and the AP Review tier. See topicOverrides.tsx.
   const override = TOPIC_OVERRIDES[topic.slug];
   const [level, setLevel] = useState<Level>("hard");
   const easy = level === "easy" ? override?.easy : undefined;
