@@ -11,10 +11,12 @@ export type ReviewQuestion = {
   explanation?: string;
 };
 
+import type { TheoryBlock } from "@/lib/topics/types";
+
 export type EasyContent = {
   // Optional: a page whose hard tier has no significance section (e.g.
   // geometry.tsx) shouldn't invent one for the easy tier either.
   significance?: string[];
-  theory: { heading: string; body: string[] }[];
+  theory: TheoryBlock[];
   reviewQuestions: ReviewQuestion[];
 };

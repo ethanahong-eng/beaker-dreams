@@ -1,3 +1,5 @@
+import type { FigureKey } from "@/components/figures/registry";
+
 /**
  * Types for the chemistry lesson library.
  *
@@ -18,10 +20,21 @@ export type SimKey =
   | "blindTitration"
   | "orbital";
 
+/** One section of written lesson content, optionally illustrated. */
+export type TheoryBlock = {
+  heading: string;
+  body: string[];
+  /**
+   * A diagram from the figure registry, rendered after this block's prose.
+   * Type-only import, so lesson data stays plain data with no JSX in it.
+   */
+  figure?: FigureKey;
+};
+
 export type TopicLesson = {
   /** Sections of written lesson content. */
   significance: string[];
-  theory: { heading: string; body: string[] }[];
+  theory: TheoryBlock[];
   simulation?: {
     key: SimKey;
     heading: string;

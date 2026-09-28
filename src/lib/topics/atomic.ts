@@ -142,6 +142,7 @@ export const atomicTopics: Topic[] = [
         },
         {
           heading: "Where is the electron, actually? The r² factor changes the answer",
+          figure: "radial-vs-density",
           body: [
             'There are two different questions hiding in "where is the electron," and they have different answers. The probability density at a point is |ψ(r)|², which for a 1s orbital is largest at r = 0 — the electron is more likely to be found in a given cubic picometre at the nucleus than anywhere else. But nobody measures a cubic picometre at a point; the chemically meaningful question is the probability of finding the electron somewhere in a thin shell at distance r, and a shell at radius r has surface area 4πr².',
             "That gives the radial distribution function, P(r) = 4πr²|R(r)|², and the r² factor is doing real work. Near the nucleus |R|² is large but the shell volume goes to zero; far out the shell is enormous but |R|² has decayed exponentially. The product peaks in between. For hydrogen's 1s orbital the peak sits at exactly r = a₀ = 52.9 pm, recovering the Bohr radius — not as an orbit, but as the most probable distance. The two answers are both correct and both useful: |ψ|² governs anything evaluated at the nucleus (hyperfine coupling, Mössbauer isomer shifts), while P(r) governs size, overlap and shielding.",
