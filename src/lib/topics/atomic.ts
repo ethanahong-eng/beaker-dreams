@@ -197,7 +197,7 @@ export const atomicTopics: Topic[] = [
       theory: [
         {
           heading: "Three rules, and what each one is actually doing",
-          figure: "hunds-rule-boxes",
+          figure: ["hunds-rule-boxes", "aufbau-diagonal-rule"],
           body: [
             "The Aufbau principle fills the lowest-energy available orbital first, in an order approximated by increasing n + l and, for ties, by increasing n. This ordering is empirical rather than derived; it summarizes the penetration and shielding effects of the previous topic, and it is the least fundamental of the three rules.",
             "The Pauli exclusion principle is the fundamental one. It is not a cap of two electrons per orbital but a statement that the total wavefunction of a system of fermions must be antisymmetric under exchange of any two of them. The two-per-orbital limit is a corollary: an antisymmetric wavefunction vanishes identically if two electrons share all four quantum numbers. Pauli's principle is also why matter occupies volume at all, and it enters chemistry again as the short-range repulsion between closed shells.",

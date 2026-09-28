@@ -1918,10 +1918,255 @@ function BloodBicarbonate() {
   );
 }
 
+/* ------------------------------------------------------------------ */
+
+/**
+ * The Deep Dive tier argues that dG < 0 is not a second criterion sitting
+ * beside the second law -- it IS the second law, rewritten so an
+ * experimentalist who never measures anything outside the flask can still
+ * apply it. The AP tier's microstate count cannot carry that; it is an
+ * identity, so it is drawn as one.
+ */
+function GibbsIsSecondLaw() {
+  const rows: { tex: string; note?: string }[] = [
+    { tex: "ΔS_universe = ΔS_system + ΔS_surroundings", note: "the second law, as stated" },
+    { tex: "ΔS_surroundings = −ΔH / T", note: "heat −ΔH into a reservoir too large to warm" },
+    { tex: "ΔS_universe = ΔS_system − ΔH / T", note: "substitute" },
+    { tex: "−T ΔS_universe = ΔH − T ΔS_system", note: "multiply by −T — the inequality flips" },
+    { tex: "ΔG = −T ΔS_universe", note: "and the right-hand side is ΔG" },
+  ];
+  const H = 40 + rows.length * 34 + 66;
+  return (
+    <Figure
+      viewBox={`0 0 460 ${H}`}
+      alt="A five-step identity showing that the Gibbs free energy change equals minus temperature times the entropy change of the universe. Starting from the second law, substituting the surroundings' entropy change as minus enthalpy over temperature, and multiplying by minus temperature turns a statement about the universe into one about the system alone."
+      caption="ΔG is not a second criterion beside the second law — it is the second law, rewritten in system-only terms. The substitution holds only at constant T and P."
+    >
+      <ArrowDefs id="gsl-arrow" color="var(--fig-axis)" />
+      <text x={16} y={20} fontSize={9} letterSpacing="0.08em" className="fill-muted-foreground">
+        ABOUT THE UNIVERSE
+      </text>
+      <text
+        x={444}
+        y={20}
+        textAnchor="end"
+        fontSize={9}
+        letterSpacing="0.08em"
+        className="fill-muted-foreground"
+      >
+        ABOUT THE SYSTEM ONLY
+      </text>
+      {rows.map((r, i) => {
+        const y = 44 + i * 34;
+        const last = i === rows.length - 1;
+        return (
+          <g key={r.tex}>
+            {i > 0 && (
+              <line
+                x1={30}
+                y1={y - 24}
+                x2={30}
+                y2={y - 10}
+                stroke="var(--fig-axis)"
+                strokeWidth={1}
+                markerEnd="url(#gsl-arrow)"
+              />
+            )}
+            <text
+              x={44}
+              y={y}
+              fontSize={12}
+              fontWeight={last ? 700 : 500}
+              fill={last ? "var(--fig-1)" : "var(--foreground)"}
+            >
+              {r.tex}
+            </text>
+            {r.note && (
+              <text x={44} y={y + 13} fontSize={8.5} className="fill-muted-foreground">
+                {r.note}
+              </text>
+            )}
+          </g>
+        );
+      })}
+      <rect
+        x={16}
+        y={H - 48}
+        width={428}
+        height={34}
+        rx={5}
+        fill="none"
+        stroke="var(--border)"
+        strokeWidth={1}
+      />
+      <text x={30} y={H - 33} fontSize={9} className="fill-muted-foreground">
+        Valid at constant T and P only. At constant T and V the matching function is the
+      </text>
+      <text x={30} y={H - 21} fontSize={9} className="fill-muted-foreground">
+        Helmholtz energy A = U − TS, and ΔG stops being a spontaneity test.
+      </text>
+    </Figure>
+  );
+}
+
+/**
+ * Why a buffer's pH survives dilution and a strong acid's does not. Both
+ * columns are computed: the buffer from Henderson-Hasselbalch with the ratio
+ * held at 1:1 (so pH = pKa at every dilution), the strong acid from
+ * pH = -log[H3O+] directly. The capacity bar is what dilution actually costs.
+ */
+function BufferRatioInvariance() {
+  const pKa = 4.74;
+  const steps = [
+    { label: "as made", factor: 1 },
+    { label: "diluted 10×", factor: 10 },
+    { label: "diluted 100×", factor: 100 },
+  ];
+  const C0 = 0.1; // M, of each buffer component
+  const A0 = 0.1; // M strong acid
+  const bufferPH = () => pKa; // ratio [A-]/[HA] is unchanged by dilution
+  const acidPH = (f: number) => -Math.log10(A0 / f);
+
+  const PX = 92,
+    PY = 26,
+    PW = 300,
+    PH = 132;
+  const yOf = (pH: number) => PY + PH - (pH / 14) * PH;
+  const xOf = (i: number) => PX + (i + 0.5) * (PW / steps.length);
+
+  return (
+    <Figure
+      viewBox="0 0 460 236"
+      alt="A buffer and a strong acid, each diluted ten-fold and then a hundred-fold. The buffer's pH stays at 4.74 throughout because dilution does not change the ratio of conjugate base to acid. The strong acid's pH climbs from 1 to 2 to 3, one unit per ten-fold dilution. Bars beneath show the buffer's capacity falling even though its pH does not."
+      caption="Dilution does not change [A⁻]/[HA], so it does not change a buffer's pH — but it does drain its capacity. A strong acid has no ratio to preserve and moves a full unit per ten-fold."
+    >
+      <Axes
+        x={PX}
+        y={PY}
+        w={PW}
+        h={PH}
+        yLabel="pH"
+        yTicks={[0, 7, 14].map((v) => ({ at: v / 14, label: String(v) }))}
+      />
+      <line
+        x1={PX}
+        y1={yOf(7)}
+        x2={PX + PW}
+        y2={yOf(7)}
+        stroke="var(--fig-grid)"
+        strokeWidth={1}
+        strokeDasharray="3 3"
+      />
+
+      {/* buffer: flat */}
+      <path
+        d={steps.map((_, i) => `${i === 0 ? "M" : "L"}${xOf(i)},${yOf(bufferPH())}`).join(" ")}
+        fill="none"
+        stroke="var(--fig-2)"
+        strokeWidth={2}
+      />
+      {steps.map((_, i) => (
+        <circle key={`b${i}`} cx={xOf(i)} cy={yOf(bufferPH())} r={4} fill="var(--fig-2)" />
+      ))}
+
+      {/* strong acid: one unit per decade */}
+      <path
+        d={steps
+          .map((s, i) => `${i === 0 ? "M" : "L"}${xOf(i)},${yOf(acidPH(s.factor))}`)
+          .join(" ")}
+        fill="none"
+        stroke="var(--fig-1)"
+        strokeWidth={2}
+      />
+      {steps.map((s, i) => (
+        <g key={`a${i}`}>
+          <circle cx={xOf(i)} cy={yOf(acidPH(s.factor))} r={4} fill="var(--fig-1)" />
+          <text
+            x={xOf(i)}
+            y={yOf(acidPH(s.factor)) - 9}
+            textAnchor="middle"
+            fontSize={9}
+            className="fill-foreground"
+          >
+            {acidPH(s.factor).toFixed(2)}
+          </text>
+        </g>
+      ))}
+      <text
+        x={xOf(1) + 18}
+        y={yOf(bufferPH()) - 10}
+        textAnchor="middle"
+        fontSize={9}
+        className="fill-foreground"
+      >
+        {bufferPH().toFixed(2)} at every dilution
+      </text>
+
+      {/* Labels sit clear of both lines: the buffer's above its own flat
+          trace, the acid's below its first point, neither near the value
+          callouts. */}
+      <SeriesLabel x={PX + 8} y={yOf(bufferPH()) - 16} color="var(--fig-2)">
+        buffer (1:1 acetate)
+      </SeriesLabel>
+      <SeriesLabel x={PX + 8} y={yOf(3.3)} color="var(--fig-1)">
+        strong acid
+      </SeriesLabel>
+
+      {steps.map((s, i) => (
+        <text
+          key={`x${i}`}
+          x={xOf(i)}
+          y={PY + PH + 15}
+          textAnchor="middle"
+          fontSize={9}
+          className="fill-muted-foreground"
+        >
+          {s.label}
+        </text>
+      ))}
+
+      {/* capacity, which dilution does destroy */}
+      <Note x={PX - 8} y={PY + PH + 42} anchor="end">
+        capacity
+      </Note>
+      {steps.map((s, i) => {
+        const w = (PW / steps.length) * 0.44;
+        const full = 26;
+        const h = Math.max(2, full * (C0 / s.factor / C0));
+        return (
+          <g key={`c${i}`}>
+            <rect
+              x={xOf(i) - w / 2}
+              y={PY + PH + 30}
+              width={w}
+              height={full}
+              fill="none"
+              stroke="var(--border)"
+              strokeWidth={1}
+            />
+            <rect
+              x={xOf(i) - w / 2}
+              y={PY + PH + 30 + (full - h)}
+              width={w}
+              height={h}
+              fill="var(--fig-2)"
+              opacity={0.45}
+            />
+          </g>
+        );
+      })}
+      <Note x={PX + PW / 2} y={PY + PH + 74}>
+        same pH, less ability to hold it
+      </Note>
+    </Figure>
+  );
+}
+
 export const equilibriumFigures = {
   "thermo-microstate-count": MicrostateCount,
   "thermo-spontaneity-quadrant": SpontaneityQuadrant,
   "thermo-free-energy-well": FreeEnergyWell,
+  "thermo-dg-is-second-law": GibbsIsSecondLaw,
   "acid-conjugate-seesaw": ConjugateSeesaw,
   "acid-levelling-window": LevellingWindow,
   "acid-titration-strong-vs-weak": TitrationStrongVsWeak,
@@ -1930,4 +2175,5 @@ export const equilibriumFigures = {
   "buffer-absorbs-base": BufferAbsorbsBase,
   "buffer-capacity-curve": BufferCapacityCurve,
   "buffer-blood-bicarbonate": BloodBicarbonate,
+  "buffer-ratio-invariance": BufferRatioInvariance,
 } satisfies Record<string, FigureDef>;

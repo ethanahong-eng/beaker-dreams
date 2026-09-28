@@ -143,7 +143,7 @@ export const kineticsTopics: Topic[] = [
             "The pre-exponential factor A is not merely a collision frequency. Simple collision theory predicts A from the collision rate alone and routinely overestimates observed rates by orders of magnitude, so a steric factor p is introduced to account for the fraction of collisions that arrive in a reactive geometry. Transition-state theory makes that correction quantitative rather than empirical: k = (k_B T/h)e^(−ΔG‡/RT), and splitting ΔG‡ = ΔH‡ − TΔS‡ shows that the geometric requirement lives in the entropy of activation. A transition state that demands two molecules be tightly and specifically oriented has a large negative ΔS‡ and hence a small A; a unimolecular fragmentation whose transition state is looser than the reactant can have ΔS‡ positive.",
             "A catalyst does not lower the barrier on the existing path. It opens a different path — a different sequence of elementary steps, with its own intermediates and its own transition states, whose highest point lies below the uncatalysed one. The catalyst is consumed in an early step and regenerated in a later one, which is why a trace can turn over millions of molecules. Because ΔG° depends only on initial and final states, a catalyst cannot shift an equilibrium: it accelerates the forward and reverse reactions by exactly the same factor, changing how quickly equilibrium is reached and never where it lies. This is also why enzymes are described as stabilising the transition state rather than the substrate — binding the reactant too tightly deepens a well and slows the reaction down.",
           ],
-          figure: "mech-arrhenius-plot",
+          figure: ["mech-arrhenius-plot", "mech-catalysed-path"],
         },
       ],
       simulation: {
@@ -199,7 +199,7 @@ export const kineticsTopics: Topic[] = [
             "Primary and methyl carbocations are so unstable that SN1 and E1 are simply unavailable to those substrates. That single fact does most of the work in predicting products: a primary halide reacts by SN2 or E2 or not at all, while a tertiary halide cannot react by SN2 because the crowded carbon blocks backside approach.",
             "A free carbocation also rearranges. A 1,2-hydride or 1,2-alkyl shift converts a less stable cation into a more stable one, and the migration is fast enough to compete with capture by the nucleophile. The consequence is diagnostic: if the product has a carbon skeleton different from the substrate's, a free carbocation existed, and the mechanism was SN1 or E1. Conversely, a substitution that returns a completely unrearranged skeleton where rearrangement would have been favourable is evidence against a free carbocation, and therefore evidence for a concerted path.",
           ],
-          figure: "org-carbocation-stability",
+          figure: ["org-carbocation-stability", "org-sn1-sn2-profiles"],
         },
         {
           heading: "Stereochemistry is the sharpest evidence of all",
