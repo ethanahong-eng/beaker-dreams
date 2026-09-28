@@ -56,7 +56,7 @@ export const bondingTopics: Topic[] = [
             "The distinction between energy and enthalpy is separate and smaller. Bond dissociation energy D₀ is an internal-energy change at 0 K, while tabulated bond enthalpies are ΔH at 298 K; for a diatomic splitting into two atoms the gas expands by one mole of particles, so ΔH = ΔU + RT ≈ ΔU + 2.5 kJ/mol. Spectroscopists quote a third quantity, D_e, the depth of the potential well, which exceeds D₀ by the zero-point vibrational energy — 26 kJ/mol for H₂, where D_e = 458 kJ/mol but D₀ = 432 kJ/mol.",
             "This matters whenever bond enthalpies are used to estimate a reaction enthalpy as bonds broken minus bonds formed. That method is an approximation with typical errors of 10 to 40 kJ/mol, it fails outright for anything with significant resonance stabilization (benzene's tabulated bonds under-predict its stability by about 150 kJ/mol), and it applies only to gas-phase species. Standard enthalpies of formation, where they exist, are always the better route.",
           ],
-          figure: "bond-methane-bde",
+          figure: ["bond-methane-bde", "bond-enthalpy-bookkeeping"],
         },
       ],
     },
@@ -121,6 +121,7 @@ export const bondingTopics: Topic[] = [
         },
         {
           heading: "Where MO theory keeps paying: HOMO, LUMO and heteronuclear diagrams",
+          figure: "mo-homo-lumo-co",
           body: [
             "For a heteronuclear diatomic the two atoms' orbitals sit at different energies, so the coefficients in ψ = c_Aφ_A + c_Bφ_B are unequal. The bonding orbital is weighted toward the more electronegative atom and the antibonding orbital toward the less electronegative one — which is the MO statement of bond polarity, and it recovers the ionic limit smoothly as the energy gap widens until one coefficient approaches zero.",
             "Carbon monoxide is the standard demonstration and a genuinely counterintuitive one. Oxygen is more electronegative, yet CO's highest occupied molecular orbital is a weakly antibonding σ orbital concentrated on carbon, and its lowest unoccupied orbitals are π* orbitals also weighted toward carbon. That is why metal carbonyls bond through carbon rather than oxygen, and why CO's net dipole moment is a tiny 0.11 D pointing the \"wrong\" way, with the negative end on carbon.",
@@ -177,7 +178,7 @@ export const bondingTopics: Topic[] = [
             "NF₃ has far more polar bonds than NH₃: ΔEN for N–F is 0.94 while for N–H it is 0.84, and the polarity runs in opposite directions, since nitrogen is the more electronegative atom in N–H but the less electronegative in N–F. Both molecules are trigonal pyramidal with a lone pair on nitrogen. Yet NH₃ has μ = 1.47 D and NF₃ has μ = 0.23 D. In ammonia the three bond dipoles point up toward nitrogen, the same way as the lone-pair moment, and reinforce it; in NF₃ the bond dipoles point down toward the fluorines, opposing the lone pair and nearly cancelling it.",
             "Isomers make the geometric dependence unarguable, because they remove every variable except shape. cis-1,2-dichloroethene has μ = 1.90 D; trans-1,2-dichloroethene, with the identical atoms and identical bonds, has μ = 0, since its centre of inversion forces the two C–Cl dipoles to oppose. The two isomers have measurably different boiling points as a result.",
           ],
-          figure: "polarity-nh3-vs-nf3",
+          figure: ["polarity-nh3-vs-nf3", "polarity-shape-decides"],
         },
         {
           heading: "Percent ionic character, computed from a measured moment",
@@ -219,7 +220,7 @@ export const bondingTopics: Topic[] = [
             "The noble gases show the correlation directly: α rises from 0.20 Å³ for helium to 0.40 for neon, 1.64 for argon, 2.48 for krypton and 4.04 for xenon, and the boiling points rise with it from 4.2 K to 27, 87, 120 and 165 K. The isomers of pentane show that mass is not the variable: n-pentane and neopentane are both C₅H₁₂ with identical mass and nearly identical polarizability, yet n-pentane boils at 36 °C and the compact, near-spherical neopentane at 9.5 °C. An extended chain can lie alongside its neighbours over its whole length; a sphere touches at a point.",
             "One consequence worth keeping: dispersion is universal. Every molecule has it, it is often the largest contribution even in polar substances, and for large molecules it dominates. HCl's dipole–dipole interaction accounts for a minority of its total attraction; the rest is dispersion.",
           ],
-          figure: "imf-dispersion-polarizability",
+          figure: ["imf-dispersion-polarizability", "imf-strength-ladder"],
         },
         {
           heading: "The other two van der Waals terms, and why all three go as r⁻⁶",
@@ -287,7 +288,7 @@ export const bondingTopics: Topic[] = [
             "Carbon monoxide shows how far the two conventions can diverge. In :C≡O:, carbon has one lone pair and six bonding electrons, so FC = 4 − 2 − 3 = −1; oxygen likewise gets 6 − 2 − 3 = +1. The oxidation states are the opposite sign and larger: C is +2 and O is −2, because oxidation state gives all six bonding electrons to oxygen. The truth sits between them and closer to formal charge in this instance — CO's measured dipole moment is 0.11 D with the negative end on carbon, which is the direction formal charge predicts and oxidation state does not.",
             "Where formal charge earns its place is choosing between candidate structures for one skeleton. The preferred structure is the one with formal charges closest to zero, with any negative charge on the most electronegative atom and any positive charge on the least, and with like charges kept apart. Applied to the thiocyanate ion SCN⁻, that reasoning correctly puts the negative charge on sulfur in the major contributor and correctly predicts that the ion bonds to soft metals through S and to hard metals through N.",
           ],
-          figure: "lewis-fc-vs-oxidation",
+          figure: ["lewis-fc-vs-oxidation", "lewis-formal-charge-co2"],
         },
         {
           heading: "Expanded octets and the d-orbital myth",
@@ -305,6 +306,9 @@ export const bondingTopics: Topic[] = [
             "It fails for transition metal complexes, where d-orbital splitting, variable oxidation states and π backbonding are the whole story and a dot structure captures none of it. It has nothing to say about excited states, so no photochemistry or spectroscopy can be done in it. And it cannot express a fractional bond order, which rules out benzene, the carboxylate group, every aromatic system and every metal.",
             "What Lewis structures remain excellent at is exactly what Lewis designed them for: electron counting, predicting σ-bond connectivity and geometry, and identifying where lone pairs and formal charges sit so that reactivity can be anticipated. Treat the structure as a hypothesis about connectivity and electron count rather than a picture of the molecule, and it will rarely mislead.",
           ],
+          // The O2 comparison this block leads with is exactly what the MO
+          // tier's paramagnetism figure draws, so it earns its place here too.
+          figure: "mo-o2-paramagnetism",
         },
       ],
       simulation: {
@@ -343,7 +347,7 @@ export const bondingTopics: Topic[] = [
             "That framing explains the rules for weighting contributors, which otherwise have to be memorized. A contributor counts more when it is lower in energy as a structure: complete octets first, then minimal formal charge, then negative formal charge on the more electronegative atom, then minimal charge separation. Equivalent structures, as in nitrate or carboxylate, contribute equally, and that equality is what forces the observed bond lengths to be equal.",
             "The structural evidence is unambiguous. Benzene's six C–C bonds are all 139 pm, between ethane's 154 and ethene's 134, and its ring is a perfect hexagon. Carbonate's three C–O bonds are all 129 pm, against roughly 143 for a C–O single bond and 123 for C=O. The acetate ion has two equal C–O bonds where acetic acid has one at 121 pm and one at 136 pm — the molecule changes its geometry on deprotonation because the charge really is shared.",
           ],
-          figure: "resonance-bond-lengths",
+          figure: ["resonance-bond-lengths", "resonance-ozone-hybrid"],
         },
         {
           heading: "Delocalization energy: what the number is and what it depends on",

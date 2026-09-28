@@ -3,7 +3,7 @@
 // with the exact same visual structure, instead of each page hand-rolling
 // its own markup for what is the same category of content everywhere.
 import { getFigure } from "@/components/figures/registry";
-import type { TheoryBlock } from "@/lib/topics/types";
+import { figureKeysOf, type TheoryBlock } from "@/lib/topics/types";
 
 export function LessonBody({
   significance,
@@ -33,7 +33,9 @@ export function LessonBody({
                   {p}
                 </p>
               ))}
-              {block.figure && <FigureSlot figureKey={block.figure} />}
+              {figureKeysOf(block).map((key) => (
+                <FigureSlot key={key} figureKey={key} />
+              ))}
             </div>
           </div>
         ))}

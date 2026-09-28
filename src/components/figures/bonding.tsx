@@ -3528,6 +3528,139 @@ function OzoneHybrid() {
   );
 }
 
+/* ------------------------------------------------------------------ */
+
+/**
+ * CO's frontier orbitals -- the Deep Dive block's own example, and the one
+ * the AP tier has no counterpart for.
+ *
+ * Deliberately schematic, with no numeric energy axis: placing CO's 2pi*
+ * against atomic valence-state energies needs a number this model cannot
+ * state honestly. What IS defensible, and what the block turns on, is which
+ * atom each frontier orbital is weighted toward -- so that is what the lobe
+ * sizes encode, and the axis carries no ticks.
+ */
+function HomoLumoCO() {
+  const CX = 96,
+    OX = 364,
+    MX = 230;
+  // Carbon sits higher (less electronegative); oxygen lower.
+  const levels = [
+    { y: 60, name: "2π*", occ: 0, onC: 0.78, role: "LUMO" },
+    { y: 104, name: "3σ", occ: 2, onC: 0.72, role: "HOMO" },
+    { y: 148, name: "1π", occ: 4, onC: 0.3 },
+    { y: 186, name: "2σ", occ: 2, onC: 0.25 },
+  ];
+  const lobe = (x: number, y: number, frac: number, color: string, key: string) => (
+    <ellipse
+      key={key}
+      cx={x}
+      cy={y}
+      rx={4 + 11 * frac}
+      ry={3 + 6 * frac}
+      fill={color}
+      opacity={0.5}
+    />
+  );
+  return (
+    <Figure
+      viewBox="0 0 460 250"
+      alt="A schematic molecular orbital diagram for carbon monoxide. Although oxygen is the more electronegative atom, the highest occupied orbital, a weakly antibonding sigma, is weighted toward carbon, and the lowest unoccupied pi-star orbitals are also weighted toward carbon. That is why metal carbonyls bond through carbon and why carbon monoxide's small dipole points with its negative end on carbon."
+      caption="CO's frontier orbitals both sit on carbon, despite oxygen being more electronegative — which is why metal carbonyls bond through C, and why μ = 0.11 D points the 'wrong' way. Energies schematic; no scale."
+    >
+      <text
+        x={CX}
+        y={24}
+        textAnchor="middle"
+        fontSize={10}
+        fontWeight={700}
+        className="fill-foreground"
+      >
+        C
+      </text>
+      <text
+        x={MX}
+        y={24}
+        textAnchor="middle"
+        fontSize={10}
+        fontWeight={700}
+        className="fill-foreground"
+      >
+        CO
+      </text>
+      <text
+        x={OX}
+        y={24}
+        textAnchor="middle"
+        fontSize={10}
+        fontWeight={700}
+        className="fill-foreground"
+      >
+        O
+      </text>
+
+      {/* atomic levels: carbon's valence sits above oxygen's */}
+      <line x1={CX - 26} y1={92} x2={CX + 26} y2={92} stroke="var(--border)" strokeWidth={2} />
+      <text x={CX - 32} y={95} textAnchor="end" fontSize={8} className="fill-muted-foreground">
+        2p
+      </text>
+      <line x1={CX - 26} y1={168} x2={CX + 26} y2={168} stroke="var(--border)" strokeWidth={2} />
+      <text x={CX - 32} y={171} textAnchor="end" fontSize={8} className="fill-muted-foreground">
+        2s
+      </text>
+      <line x1={OX - 26} y1={126} x2={OX + 26} y2={126} stroke="var(--border)" strokeWidth={2} />
+      <text x={OX + 32} y={129} fontSize={8} className="fill-muted-foreground">
+        2p
+      </text>
+      <line x1={OX - 26} y1={206} x2={OX + 26} y2={206} stroke="var(--border)" strokeWidth={2} />
+      <text x={OX + 32} y={209} fontSize={8} className="fill-muted-foreground">
+        2s
+      </text>
+
+      {levels.map((l) => {
+        const color =
+          l.role === "LUMO"
+            ? "var(--fig-1)"
+            : l.role === "HOMO"
+              ? "var(--fig-2)"
+              : "var(--muted-foreground)";
+        return (
+          <g key={l.name}>
+            <line x1={MX - 34} y1={l.y} x2={MX + 34} y2={l.y} stroke={color} strokeWidth={2.25} />
+            {/* lobe sizes encode which atom the orbital is weighted toward */}
+            {lobe(MX - 50, l.y, l.onC, color, `${l.name}-c`)}
+            {lobe(MX + 50, l.y, 1 - l.onC, color, `${l.name}-o`)}
+            <text x={MX} y={l.y - 7} textAnchor="middle" fontSize={9} fill={color} fontWeight={600}>
+              {l.name}
+            </text>
+            <text x={MX} y={l.y + 4} textAnchor="middle" fontSize={8} className="fill-foreground">
+              {l.occ === 4 ? "↑↓ ↑↓" : l.occ === 2 ? "↑↓" : ""}
+            </text>
+            {l.role && (
+              <text x={MX + 78} y={l.y + 3} fontSize={8.5} fontWeight={700} fill={color}>
+                {l.role}
+              </text>
+            )}
+          </g>
+        );
+      })}
+
+      {/* the gap */}
+      <line x1={MX - 52} y1={60} x2={MX - 52} y2={104} stroke="var(--fig-axis)" strokeWidth={1} />
+      <text x={MX - 58} y={85} textAnchor="end" fontSize={8} className="fill-muted-foreground">
+        gap
+      </text>
+
+      <Note x={230} y={228}>
+        lobe size = how much of the orbital sits on that atom
+      </Note>
+      <Note x={230} y={241}>
+        this gap sets a dye&apos;s colour, and becomes a solid&apos;s band gap
+      </Note>
+    </Figure>
+  );
+}
+
 export const bondingFigures = {
   "bond-ionic-covalent-continuum": IonicCovalentContinuum,
   "bond-lattice-coulomb": LatticeCoulomb,
@@ -3535,6 +3668,7 @@ export const bondingFigures = {
   "bond-methane-bde": MethaneBondEnergies,
   "bond-enthalpy-bookkeeping": BondEnthalpyBookkeeping,
   "mo-phase-overlap": PhaseOverlap,
+  "mo-homo-lumo-co": HomoLumoCO,
   "mo-sp-mixing": SpMixing,
   "mo-bond-order-series": BondOrderSeries,
   "mo-o2-paramagnetism": O2Paramagnetism,

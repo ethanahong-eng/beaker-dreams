@@ -33,6 +33,7 @@ export const equilibriumTopics: Topic[] = [
         },
         {
           heading: "ΔS_universe is the criterion; ΔG is that criterion rewritten",
+          figure: "thermo-dg-is-second-law",
           body: [
             "The second law applies to the universe, not to the reaction flask. A process is spontaneous when ΔS_universe = ΔS_system + ΔS_surroundings > 0, and the system's own entropy is free to fall as long as the surroundings gain more. Crystallisation, protein folding and the assembly of a snowflake all lower the system's entropy and happen anyway.",
             "The surroundings' contribution is calculable. At constant temperature and pressure the heat the system releases is −ΔH, delivered to a reservoir so large that its temperature does not change, so ΔS_surroundings = −ΔH/T. Substituting gives ΔS_universe = ΔS_system − ΔH/T. Multiply through by −T, which reverses the inequality, and the right-hand side is ΔH − TΔS_system — that is, ΔG = −TΔS_universe.",
@@ -163,6 +164,7 @@ export const equilibriumTopics: Topic[] = [
       theory: [
         {
           heading: "What a buffer does, and why the ratio is what matters",
+          figure: "buffer-ratio-invariance",
           body: [
             "A buffer is a solution containing appreciable amounts of both members of a conjugate pair — a weak acid and its conjugate base. Added strong acid is intercepted by A⁻ and converted to HA; added strong base is intercepted by HA and converted to A⁻. Neither addition produces free H₃O⁺ or OH⁻ in any quantity, because a reservoir of the appropriate partner is standing by to absorb it.",
             "The pH of such a solution depends on the ratio [A⁻]/[HA], not on either concentration alone. Diluting a buffer therefore leaves its pH nearly unchanged, while diluting a strong acid changes pH directly — a genuinely different behaviour that follows from the ratio's invariance under dilution. What dilution does destroy is capacity: the same pH, less ability to hold it.",

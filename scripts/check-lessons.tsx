@@ -14,7 +14,7 @@ import { renderToString } from "react-dom/server";
 import { topics, units, unitsOf, topicsBySlug } from "@/lib/topics";
 import { TOPIC_OVERRIDES } from "@/lib/topicOverrides";
 import { FIGURES, FIGURE_KEYS } from "@/components/figures/registry";
-import type { TheoryBlock } from "@/lib/topics/types";
+import { figureKeysOf, type TheoryBlock } from "@/lib/topics/types";
 
 let failures = 0;
 const fail = (m: string) => {
@@ -80,10 +80,11 @@ for (const t of lessons) {
 }
 const referenced = new Set<string>();
 for (const { slug, tier, block } of allBlocks) {
-  if (!block.figure) continue;
-  referenced.add(block.figure);
-  if (!FIGURE_KEYS.includes(block.figure)) {
-    fail(`${slug} (${tier}) references figure "${block.figure}", which is not in the registry`);
+  for (const key of figureKeysOf(block)) {
+    referenced.add(key);
+    if (!FIGURE_KEYS.includes(key)) {
+      fail(`${slug} (${tier}) references figure "${key}", which is not in the registry`);
+    }
   }
 }
 const orphans = FIGURE_KEYS.filter((k) => !referenced.has(k));
@@ -95,14 +96,14 @@ if (orphans.length === 0) {
   );
 }
 
-const illustrated = allBlocks.filter((b) => b.block.figure).length;
+const illustrated = allBlocks.filter((b) => figureKeysOf(b.block).length > 0).length;
 note(
   `${illustrated} of ${allBlocks.length} theory blocks illustrated (${Math.round((illustrated / allBlocks.length) * 100)}%)`,
 );
 const barePages = lessons.filter(
   (t) =>
-    !(t.lesson?.theory ?? []).some((b) => b.figure) &&
-    !(TOPIC_OVERRIDES[t.slug]?.easy?.theory ?? []).some((b) => b.figure) &&
+    !(t.lesson?.theory ?? []).some((b) => figureKeysOf(b).length > 0) &&
+    !(TOPIC_OVERRIDES[t.slug]?.easy?.theory ?? []).some((b) => figureKeysOf(b).length > 0) &&
     !t.lesson?.simulation &&
     !TOPIC_OVERRIDES[t.slug]?.simulation,
 );

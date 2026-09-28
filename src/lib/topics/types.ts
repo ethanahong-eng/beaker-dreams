@@ -25,11 +25,21 @@ export type TheoryBlock = {
   heading: string;
   body: string[];
   /**
-   * A diagram from the figure registry, rendered after this block's prose.
+   * Diagrams from the figure registry, rendered after this block's prose. A
+   * bare key is the common case; an array is for a block that earns two --
+   * typically a Deep Dive block that wants both its own figure and the
+   * simpler one the AP Review tier uses for the same idea.
+   *
    * Type-only import, so lesson data stays plain data with no JSX in it.
    */
-  figure?: FigureKey;
+  figure?: FigureKey | FigureKey[];
 };
+
+/** Normalises the one-or-many `figure` field to a list. */
+export function figureKeysOf(block: TheoryBlock): FigureKey[] {
+  if (!block.figure) return [];
+  return Array.isArray(block.figure) ? block.figure : [block.figure];
+}
 
 export type TopicLesson = {
   /** Sections of written lesson content. */
