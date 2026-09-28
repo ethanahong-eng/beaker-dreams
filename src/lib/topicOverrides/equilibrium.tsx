@@ -22,6 +22,7 @@ export const equilibriumOverrides: Record<string, TopicOverride> = {
             "pH = −log[H₃O⁺], and pOH = −log[OH⁻]. In water the two concentrations are locked together by [H₃O⁺][OH⁻] = 1.0×10⁻¹⁴ at 25 °C, which is the same as saying pH + pOH = 14.00. Neutral is pH 7, acidic is below 7, basic is above 7.",
             "Strong acids dissociate completely, which makes their pH a one-line calculation. For 0.010 M HNO₃, [H₃O⁺] = 0.010 M, so pH = −log(0.010) = 2.00. For a strong base, do it through pOH first: 0.0010 M NaOH gives [OH⁻] = 0.0010 M, pOH = 3.00, so pH = 14.00 − 3.00 = 11.00.",
           ],
+          figure: "acid-ph-scale-populated",
         },
         {
           heading: "Weak acids only partly dissociate, so you need Ka",
@@ -30,6 +31,7 @@ export const equilibriumOverrides: Record<string, TopicOverride> = {
             "Worked example: find the pH of 0.100 M acetic acid, Ka = 1.8×10⁻⁵. Let x be the amount that ionises. Then x²/(0.100 − x) = 1.8×10⁻⁵. Because Ka is small, x is small compared with 0.100, so approximate the denominator as 0.100: x² = 1.8×10⁻⁵ × 0.100 = 1.8×10⁻⁶, giving x = 1.3×10⁻³ M. So pH = −log(1.3×10⁻³) = 2.87. Check the approximation: 1.3×10⁻³ out of 0.100 is 1.3%, safely under 5%, so it was valid.",
             "Compare that to 0.100 M HCl, which gives pH 1.00. Same concentration on the label, but almost a hundred times more hydrogen ion in the strong acid — that difference is entirely about where the equilibrium sits.",
           ],
+          figure: "acid-conjugate-seesaw",
         },
         {
           heading: "Titration curves: what the shape tells you",
@@ -37,6 +39,7 @@ export const equilibriumOverrides: Record<string, TopicOverride> = {
             "In a titration you add measured amounts of base to an acid and track pH. For a strong acid with a strong base, the pH climbs slowly, then rockets almost vertically through the equivalence point — the point where you have added exactly enough base to react with all the acid — and levels off. That equivalence point is at pH 7.00.",
             "For a weak acid with a strong base the curve looks different in three ways: it starts higher, it has a flat stretch early on called the buffer region, and its equivalence point is above pH 7. It is above 7 because what is left in the flask at that point is A⁻, the conjugate base, which is itself basic. Halfway to the equivalence point there is exactly as much HA as A⁻, and there the pH equals the pKa — the easiest way to measure a pKa in the lab.",
           ],
+          figure: "acid-titration-strong-vs-weak",
         },
       ],
       reviewQuestions: [
@@ -101,6 +104,7 @@ export const equilibriumOverrides: Record<string, TopicOverride> = {
             "Worked example: 1.00 L of solution contains 0.100 mol acetic acid and 0.100 mol sodium acetate. Acetic acid has Ka = 1.8×10⁻⁵, so pKa = 4.74, and since the amounts are equal the pH is 4.74. Now add 0.010 mol of NaOH. The base converts that much acid into its conjugate base, so acid falls to 0.090 mol and base rises to 0.110 mol. The new pH = 4.74 + log(0.110/0.090) = 4.74 + 0.09 = 4.83.",
             "For comparison, dropping that same 0.010 mol of NaOH into a litre of pure water gives pOH = 2.00 and pH = 12.00. The buffer moved by 0.09 of a unit; plain water moved by 5.",
           ],
+          figure: "buffer-absorbs-base",
         },
         {
           heading: "Buffer capacity: how much abuse a buffer can take",
@@ -108,6 +112,7 @@ export const equilibriumOverrides: Record<string, TopicOverride> = {
             "Buffer capacity is how much acid or base you can add before the pH really starts to move. Two things set it. First, total concentration — a 1.0 M buffer holds out roughly ten times longer than a 0.1 M one at the same pH. Second, the ratio — capacity is highest when the two components are equal, which means when pH = pKa.",
             "That gives the rule for choosing a buffer: pick a weak acid whose pKa is as close as possible to the pH you want, and never more than about one unit away. Beyond pKa ± 1 the ratio has passed 10:1, one component is running out, and the buffer stops working well.",
           ],
+          figure: "buffer-capacity-curve",
         },
         {
           heading: "The buffer that keeps you alive",
@@ -115,6 +120,7 @@ export const equilibriumOverrides: Record<string, TopicOverride> = {
             "Blood is buffered mainly by carbon dioxide and bicarbonate: CO₂ + H₂O ⇌ H⁺ + HCO₃⁻. Your metabolism produces acid constantly, and yet blood pH stays between 7.35 and 7.45. Outside that narrow band, proteins change shape and enzymes stop working.",
             "What makes this system unusually powerful is that your body controls both members separately. The lungs adjust CO₂ within seconds by changing how fast you breathe — breathe faster and you blow off CO₂, which raises pH. The kidneys adjust bicarbonate over hours. Most laboratory buffers are sealed in a flask and have only what you put in them; this one can be topped up and drained on demand.",
           ],
+          figure: "buffer-blood-bicarbonate",
         },
       ],
       reviewQuestions: [
@@ -186,6 +192,7 @@ export const equilibriumOverrides: Record<string, TopicOverride> = {
             "Entropy (S) measures how spread out or disordered a system's energy is. Melting ice, dissolving salt, and a gas expanding into a bigger container all increase entropy because each one creates more ways for the system's particles and energy to be arranged.",
             "The second law of thermodynamics says the entropy of the universe as a whole only increases, or stays the same — it never decreases on its own.",
           ],
+          figure: "thermo-microstate-count",
         },
         {
           heading: "ΔG = ΔH − TΔS: the spontaneity equation",
@@ -193,6 +200,7 @@ export const equilibriumOverrides: Record<string, TopicOverride> = {
             "Gibbs free energy change (ΔG) combines a reaction's heat change (ΔH) and its entropy change (ΔS) into one number that predicts spontaneity. ΔG < 0 means the reaction is spontaneous as written; ΔG > 0 means it isn't (the reverse reaction is, instead); ΔG = 0 means the system is already at equilibrium.",
             "Because temperature (T) multiplies ΔS, some reactions flip from spontaneous to nonspontaneous (or the reverse) depending on temperature — this happens whenever ΔH and ΔS share the same sign. An endothermic reaction (ΔH > 0) that increases entropy (ΔS > 0), for example, is nonspontaneous at low T but becomes spontaneous once T is large enough.",
           ],
+          figure: "thermo-spontaneity-quadrant",
         },
         {
           heading: "Connecting ΔG° to the equilibrium constant K",
@@ -200,6 +208,7 @@ export const equilibriumOverrides: Record<string, TopicOverride> = {
             "ΔG° and K describe the same fact about a reaction in different units. A large negative ΔG° corresponds to a large K (the reaction favors products at equilibrium); a large positive ΔG° corresponds to a small K (the reaction barely proceeds at all).",
             'That\'s why a reaction with a very negative ΔG° is often described as going "to completion" — at equilibrium, essentially all the reactants have converted to products.',
           ],
+          figure: "thermo-free-energy-well",
         },
       ],
       reviewQuestions: [

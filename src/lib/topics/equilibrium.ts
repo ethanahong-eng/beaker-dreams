@@ -44,6 +44,7 @@ export const equilibriumTopics: Topic[] = [
             "A worked case: for 0.100 M acetic acid, Ka = 1.8×10⁻⁵, the equilibrium gives x²/(0.100 − x) = 1.8×10⁻⁵. Since x is small compared with 0.100, x ≈ √(1.8×10⁻⁶) = 1.34×10⁻³ M, so pH = 2.87 and the acid is 1.3% ionised — the approximation is self-consistent because 1.3% is well under the 5% threshold at which the neglected term starts to matter. Compare 0.100 M HCl at pH 1.00: same formal concentration, two orders of magnitude difference in [H₃O⁺], entirely because of where the equilibrium sits.",
             "Kw itself is an equilibrium constant and therefore temperature dependent. Autoionisation is endothermic, so Kw rises with temperature: at 37 °C it is about 2.4×10⁻¹⁴, making neutral pH 6.81 rather than 7.00. Blood at 7.4 is thus more basic relative to neutrality than the room-temperature scale suggests, which matters when interpreting clinical acid–base data.",
           ],
+          figure: "acid-conjugate-seesaw",
         },
         {
           heading: "The levelling effect: why water cannot tell strong acids apart",
@@ -52,6 +53,7 @@ export const equilibriumTopics: Topic[] = [
             "This is a property of the solvent, not of the acids, and changing solvent resolves the degeneracy. In a differentiating solvent that is a far weaker base than water — glacial acetic acid is the classical choice — the mineral acids ionise only partially and separate into a measurable order, with perchloric acid emerging as the strongest of the common ones. That is why perchloric acid in glacial acetic acid is the standard titrant for very weak bases.",
             "The same logic explains the solvents organic chemistry uses for strong bases. To deprotonate something with a pKa of 25 you need a base whose conjugate acid has a higher pKa still, and you must run it in a solvent that will not level it — THF or liquid ammonia rather than water or ethanol. Solvent choice is not a detail of technique; it sets the acidity window the experiment can access at all.",
           ],
+          figure: "acid-levelling-window",
         },
         {
           heading: "Why strong-acid and weak-acid titration curves have different shapes",
@@ -60,6 +62,7 @@ export const equilibriumTopics: Topic[] = [
             "Titrating a weak acid changes three things at once. The starting pH is higher, because only a small fraction has ionised. A buffer plateau appears in the first half of the titration, where HA and A⁻ coexist and pH moves slowly; at the half-equivalence point [HA] = [A⁻] exactly and pH = pKa, which is the most convenient experimental measurement of pKa there is. And the equivalence point lies above 7, because what is in the flask at that moment is a solution of A⁻, a genuine weak base that hydrolyses. The vertical jump is correspondingly shorter, compressed from below.",
             "Indicator choice follows directly from this. Phenolphthalein, which turns over between pH 8.2 and 10, is right for a weak acid titrated with strong base and wrong for a weak base titrated with strong acid, where the equivalence point lies below 7 and methyl red is appropriate. The weaker the acid, the smaller the jump, until at around Ka = 10⁻⁹ or below the break becomes too gradual to locate an endpoint at all.",
           ],
+          figure: "acid-titration-strong-vs-weak",
         },
         {
           heading: "Polyprotic acids are nested equilibria that can usually be unstacked",
@@ -68,6 +71,7 @@ export const equilibriumTopics: Topic[] = [
             "Because the stages are so well separated, they can be treated as independent rather than solved simultaneously. Essentially all the H₃O⁺ in a solution of the free acid comes from the first ionisation, and the second stage's contribution is negligible against it. At the first equivalence point the solution contains the amphiprotic species H₂PO₄⁻, which can both donate and accept a proton; the two tendencies combine to give pH ≈ (pKa1 + pKa2)/2 = (2.12 + 7.21)/2 = 4.67, independent of concentration over a wide range. A triprotic titration curve accordingly shows two usable equivalence points and two buffer plateaus, the third being lost in the levelling region near the top of the scale.",
             "Where the constants are not well separated the treatment fails and the full system of mass-balance, charge-balance and equilibrium equations must be solved together. Sulfuric acid is the common exception in the other direction: its first ionisation is complete, but the second has Ka2 ≈ 1.0×10⁻², so a 0.10 M solution is not simply 0.20 M in H₃O⁺ and the bisulfate equilibrium has to be carried explicitly.",
           ],
+          figure: "acid-polyprotic-titration",
         },
       ],
       simulation: {
@@ -114,6 +118,7 @@ export const equilibriumTopics: Topic[] = [
             "It also assumes concentrations stand in for activities. At the ionic strengths of biological media and most real buffers they do not: the relevant constant shifts, and an apparent pKa′ must be used instead of the thermodynamic value. The phosphate buffer used in cell culture illustrates this, with a thermodynamic pKa2 of 7.20 but an effective value closer to 6.8 at physiological ionic strength — a third of a pH unit, which is more than enough to matter.",
             "A worked case: 1.00 L containing 0.100 mol acetic acid and 0.100 mol sodium acetate has pH = pKa = 4.74, since the ratio is 1 and its logarithm is zero. Add 0.010 mol NaOH and the base converts that much acid: HA falls to 0.090 mol, A⁻ rises to 0.110 mol, and pH = 4.74 + log(0.110/0.090) = 4.74 + 0.09 = 4.83. The same 0.010 mol of NaOH added to a litre of pure water gives pOH 2.00 and pH 12.00. Nine hundredths of a unit against five units, for the identical chemical insult.",
           ],
+          figure: "buffer-absorbs-base",
         },
         {
           heading: "Buffer capacity is a derivative, and it peaks at pH = pKa",
@@ -122,6 +127,7 @@ export const equilibriumTopics: Topic[] = [
             "The conjugate-pair term is maximised when [H₃O⁺] = Ka, that is when pH = pKa, where the fraction becomes Ka²/(2Ka)² = 1/4 and β_max = 2.303C/4 ≈ 0.58C. The result is not a coincidence of algebra: at a 1:1 ratio, converting a given amount of one component into the other changes the logarithm of the ratio by the smallest possible amount, and pH moves least. The capacity falls off symmetrically on either side, reaching about a third of its maximum one pH unit away in each direction, where the ratio has reached 10:1. That is the origin of the pKa ± 1 rule of thumb for a buffer's useful range.",
             "Capacity scales linearly with total concentration, so the two design decisions are separable: pKa sets where the buffer works, concentration sets how hard it can work there. The two leading terms in the expression also explain why very acidic and very basic solutions are themselves well buffered — below about pH 2 and above about pH 12, [H₃O⁺] or [OH⁻] alone provides substantial capacity without any conjugate pair at all.",
           ],
+          figure: "buffer-capacity-curve",
         },
         {
           heading: "How a buffer is actually chosen",
@@ -138,6 +144,7 @@ export const equilibriumTopics: Topic[] = [
             "By the criteria of the previous section this should be a poor buffer. Its pKa′ is 1.3 units away from the pH it defends, which puts it near the edge of its useful range, and the ratio of 20:1 means the bicarbonate reservoir is enormous while the acid member is scarce. As a closed system it would be a bad choice.",
             "It works because it is open at both ends, and the two members are regulated independently. The lungs control pCO₂ within seconds to minutes by changing ventilation rate — hyperventilate and the denominator falls and pH rises, which is exactly the mechanism behind the tingling fingers of a panic attack. The kidneys control [HCO₃⁻] over hours to days by reabsorbing or excreting it. A buffer whose acid can be exhaled and whose base can be manufactured is not bounded by the capacity equation at all, and the clinical vocabulary of respiratory versus metabolic acidosis and alkalosis is simply a statement of which of the two terms has moved. Haemoglobin, plasma proteins and intracellular phosphate supply the remaining fast capacity.",
           ],
+          figure: "buffer-blood-bicarbonate",
         },
       ],
       simulation: {

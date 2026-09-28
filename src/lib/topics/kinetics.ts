@@ -244,6 +244,7 @@ export const kineticsTopics: Topic[] = [
       theory: [
         {
           heading: "Entropy is a count of microstates, not a measure of untidiness",
+          figure: "thermo-microstate-count",
           body: [
             "Boltzmann's definition, S = k_B ln W, says entropy is the logarithm of W, the number of distinct microscopic arrangements — positions, momenta, and quantised energy distributions — consistent with the system's macroscopic state. Disorder is a loose analogy for this; counting is the actual content. The logarithm is not cosmetic either: microstate counts multiply when two systems are combined, and entropies must add, and only a logarithm converts one into the other.",
             "The definition delivers real numbers. For an ideal gas expanding into a vacuum, each molecule gains a factor V₂/V₁ in accessible positions, so W scales as (V₂/V₁)^N and ΔS = Nk_B ln(V₂/V₁) = nR ln(V₂/V₁). Nothing about heat or temperature enters — the gas expands because the expanded arrangement is overwhelmingly more numerous, and for a mole of gas 'overwhelmingly' means a ratio with Avogadro's number in the exponent.",
@@ -261,6 +262,7 @@ export const kineticsTopics: Topic[] = [
         {
           heading:
             "Why the enthalpy term is entropy in disguise, and why temperature can flip the sign",
+          figure: "thermo-spontaneity-quadrant",
           body: [
             "Read ΔG = ΔH − TΔS in the light of the identity above and the two terms stop looking like different kinds of quantity. −TΔS is the system's entropy change scaled by temperature; ΔH is the surroundings' entropy change scaled by the same temperature, with the sign flipped. Exothermic reactions are favoured not because energy is intrinsically good to lose, but because dumping heat into the surroundings increases the number of microstates available out there.",
             "Because temperature multiplies only one of the terms, it controls the balance. Both terms favourable (ΔH < 0, ΔS > 0) gives spontaneity at every temperature; both unfavourable gives spontaneity at none. When the signs match, there is a crossover temperature T = ΔH/ΔS at which ΔG = 0 and the direction reverses. Melting is the everyday case: for water, ΔH_fus = 6.01 kJ/mol and ΔS_fus = 22.0 J mol⁻¹ K⁻¹, so T = 6010/22.0 = 273 K, which is the melting point recovered from thermodynamic data alone. Above it the TΔS term wins and ice melts; below it the enthalpy term wins and water freezes.",
@@ -269,6 +271,7 @@ export const kineticsTopics: Topic[] = [
         },
         {
           heading: "ΔG° and ΔG are different quantities, and neither predicts a rate",
+          figure: "thermo-free-energy-well",
           body: [
             "ΔG° is a fixed number for a reaction at a given temperature: the free energy change when reactants in their standard states convert entirely to products in their standard states, 1 bar for gases and 1 M for solutes. ΔG is the instantaneous slope of free energy against extent of reaction at the composition the flask actually holds, and it changes continuously as the reaction proceeds. The two are related by ΔG = ΔG° + RT ln Q, and a reaction runs in whichever direction makes ΔG negative until ΔG reaches zero. That point is equilibrium, where Q = K and the relation collapses to ΔG° = −RT ln K. The derivation below builds that result from the combined first and second law rather than asserting it.",
             "A positive ΔG° therefore does not mean 'no reaction'. It means K < 1, so the equilibrium mixture is mostly reactants — but if Q is small enough, ΔG is still negative and the reaction proceeds. This is exactly how biochemical pathways run individually unfavourable steps: keep the product concentration low by consuming it immediately in the next step, and the step stays downhill.",
