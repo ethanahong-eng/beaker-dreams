@@ -1,95 +1,111 @@
 /**
- * Two-centre LCAO model for main-group diatomic molecules.
+ * Diatomic Bond Explorer — data and maths.
  *
- * This is the data and maths behind the Diatomic Bond Explorer. It is
- * deliberately free of any rendering concern so it can be evaluated on the
- * server, checked numerically, and reused.
+ * A faithful port of the two-centre LCAO model from the original three.js
+ * artifact. Everything here is pure and free of `three`, `window`,
+ * `performance.now()` and `Math.random()`, so it can run during a
+ * server render and be unit-checked directly. The WebGL side lives in
+ * `src/components/DiatomicStage.ts` and `src/components/DiatomicBondExplorer.tsx`.
  *
- * The model is explicitly schematic and says so on the page: the molecular
- * orbital is built from two Slater-like 1s-shaped atomic functions,
- *
- *   psi(r) = cA e^(-kA rA)  +/-  cB e^(-kB rB)
- *
- * with the decay constant k fixed from each element's covalent radius. That
- * is not a solution of the real many-electron problem, and it does not try to
- * be -- what it reproduces honestly is the *shape* of a bonding orbital, how
- * that shape distorts when the two atoms differ in electronegativity, and
- * where the node sits in the antibonding combination. Bond lengths, bond
- * energies and bond orders are measured gas-phase values, not model output.
+ * The model: psi = cA·e^(−kA·rA) ± cB·e^(−kB·rB), with an isosurface drawn at
+ * |psi| = ISO. Because the isosurface is a surface of revolution about the
+ * internuclear axis, it is described by a single profile rho(x), computed here
+ * and turned into a LatheGeometry by the component.
  */
 
 export type DiatomicElement = {
+  /** Element symbol. */
   sym: string;
   name: string;
   /** Atomic number. */
   Z: number;
-  /** Pauling electronegativity. Null for the noble gases, which form no bond here. */
+  /** Pauling electronegativity; null for the noble gases, which form no bond. */
   en: number | null;
-  /** Covalent radius in angstroms. */
+  /** Covalent radius, Angstrom. */
   rc: number;
-  /** Valence configuration, for display. */
+  /** Valence configuration string, e.g. "2s²2p⁴". */
   val: string;
-  /** Period (1-3) and main-group column (1-2, then 3-8 for groups 13-18). */
+  /** Period (1–3). */
   row: number;
+  /** Main-group column in the 8-wide layout: groups 1, 2, 13–18 → 1…8. */
   col: number;
-  /** Nucleus tint. */
-  color: string;
-  /** Valence electron count contributed to the diagram. */
+  /** Nucleus tint, as a three.js hex. */
+  color: number;
+  /** Valence electron count. */
   ve: number;
-  /** Slater-like decay constant for the atomic function, from the covalent radius. */
+  /** Slater-like exponent of the atomic function, 0.73 / rc. */
   k: number;
 };
 
-type ElementRow = [string, string, number, number | null, number, string, number, number, string];
-
-// Periods 1-3, main-group layout: groups 1, 2 and 13-18.
-const ELEMENT_ROWS: ElementRow[] = [
-  ["H", "Hydrogen", 1, 2.2, 0.31, "1s¹", 1, 1, "#d8d2c4"],
-  ["He", "Helium", 2, null, 0.28, "1s²", 1, 8, "#9a9a9a"],
-  ["Li", "Lithium", 3, 0.98, 1.28, "2s¹", 2, 1, "#9a74c8"],
-  ["Be", "Beryllium", 4, 1.57, 0.96, "2s²", 2, 2, "#5aa877"],
-  ["B", "Boron", 5, 2.04, 0.84, "2s²2p¹", 2, 3, "#c98159"],
-  ["C", "Carbon", 6, 2.55, 0.76, "2s²2p²", 2, 4, "#6b6862"],
-  ["N", "Nitrogen", 7, 3.04, 0.71, "2s²2p³", 2, 5, "#4a6fc4"],
-  ["O", "Oxygen", 8, 3.44, 0.66, "2s²2p⁴", 2, 6, "#c4443c"],
-  ["F", "Fluorine", 9, 3.98, 0.57, "2s²2p⁵", 2, 7, "#4f9d55"],
-  ["Ne", "Neon", 10, null, 0.58, "2s²2p⁶", 2, 8, "#9a9a9a"],
-  ["Na", "Sodium", 11, 0.93, 1.66, "3s¹", 3, 1, "#9a74c8"],
-  ["Mg", "Magnesium", 12, 1.31, 1.41, "3s²", 3, 2, "#5aa877"],
-  ["Al", "Aluminium", 13, 1.61, 1.21, "3s²3p¹", 3, 3, "#8b86a8"],
-  ["Si", "Silicon", 14, 1.9, 1.11, "3s²3p²", 3, 4, "#b08d4f"],
-  ["P", "Phosphorus", 15, 2.19, 1.07, "3s²3p³", 3, 5, "#c47a28"],
-  ["S", "Sulfur", 16, 2.58, 1.05, "3s²3p⁴", 3, 6, "#b09a1e"],
-  ["Cl", "Chlorine", 17, 3.16, 1.02, "3s²3p⁵", 3, 7, "#4f9d55"],
-  ["Ar", "Argon", 18, null, 1.06, "3s²3p⁶", 3, 8, "#9a9a9a"],
+type ElementRow = [
+  sym: string,
+  name: string,
+  Z: number,
+  en: number | null,
+  rc: number,
+  val: string,
+  row: number,
+  col: number,
+  color: number,
 ];
 
+// Elements, periods 1–3 (main-group layout: groups 1, 2, 13–18).
+const ELEMENT_ROWS: ElementRow[] = [
+  ["H", "Hydrogen", 1, 2.2, 0.31, "1s¹", 1, 1, 0xf4efe6],
+  ["He", "Helium", 2, null, 0.28, "1s²", 1, 8, 0x9a9a9a],
+  ["Li", "Lithium", 3, 0.98, 1.28, "2s¹", 2, 1, 0xc9a8f2],
+  ["Be", "Beryllium", 4, 1.57, 0.96, "2s²", 2, 2, 0xa8e0b8],
+  ["B", "Boron", 5, 2.04, 0.84, "2s²2p¹", 2, 3, 0xf0b89a],
+  ["C", "Carbon", 6, 2.55, 0.76, "2s²2p²", 2, 4, 0xb8b6b0],
+  ["N", "Nitrogen", 7, 3.04, 0.71, "2s²2p³", 2, 5, 0x8fb0f5],
+  ["O", "Oxygen", 8, 3.44, 0.66, "2s²2p⁴", 2, 6, 0xf28b82],
+  ["F", "Fluorine", 9, 3.98, 0.57, "2s²2p⁵", 2, 7, 0x9fe3a0],
+  ["Ne", "Neon", 10, null, 0.58, "2s²2p⁶", 2, 8, 0x9a9a9a],
+  ["Na", "Sodium", 11, 0.93, 1.66, "3s¹", 3, 1, 0xc9a8f2],
+  ["Mg", "Magnesium", 12, 1.31, 1.41, "3s²", 3, 2, 0xa8e0b8],
+  ["Al", "Aluminium", 13, 1.61, 1.21, "3s²3p¹", 3, 3, 0xc8c4d8],
+  ["Si", "Silicon", 14, 1.9, 1.11, "3s²3p²", 3, 4, 0xe6c89a],
+  ["P", "Phosphorus", 15, 2.19, 1.07, "3s²3p³", 3, 5, 0xf5a860],
+  ["S", "Sulfur", 16, 2.58, 1.05, "3s²3p⁴", 3, 6, 0xf2dc6b],
+  ["Cl", "Chlorine", 17, 3.16, 1.02, "3s²3p⁵", 3, 7, 0x9fe3a0],
+  ["Ar", "Argon", 18, null, 1.06, "3s²3p⁶", 3, 8, 0x9a9a9a],
+];
+
+/** Every element the picker can show, keyed by symbol, in periodic-table order. */
 export const ELEMENTS: Record<string, DiatomicElement> = {};
-for (const [sym, name, Z, en, rc, val, row, col, color] of ELEMENT_ROWS) {
-  ELEMENTS[sym] = {
-    sym,
-    name,
-    Z,
-    en,
-    rc,
-    val,
-    row,
-    col,
-    color,
-    // Column is the group count for 1-2 and for 13-18 alike in this layout;
-    // helium is the one element whose column (the noble-gas one) does not
-    // match its two valence electrons.
-    ve: sym === "He" ? 2 : col,
-    k: 0.73 / rc,
-  };
+export const ELEMENT_LIST: DiatomicElement[] = ELEMENT_ROWS.map(
+  ([sym, name, Z, en, rc, val, row, col, color]) => {
+    // Valence electrons: groups 1, 2 → 1, 2; groups 13–18 → 3–8. Helium is the
+    // one element whose group position overstates its valence shell.
+    const e: DiatomicElement = {
+      sym,
+      name,
+      Z,
+      en,
+      rc,
+      val,
+      row,
+      col,
+      color,
+      ve: sym === "He" ? 2 : col,
+      k: 0.73 / rc,
+    };
+    ELEMENTS[sym] = e;
+    return e;
+  },
+);
+
+/** Look an element up by symbol, or throw — the tables are closed sets. */
+export function el(sym: string): DiatomicElement {
+  const e = ELEMENTS[sym];
+  if (!e) throw new Error(`diatomic: unknown element ${sym}`);
+  return e;
 }
 
-/** [A, B, equilibrium bond length in A, dissociation energy in kJ/mol, bond order] */
-export type DiatomicData = readonly [string, string, number, number, number];
+/** Gas-phase diatomics: [A, B, r_e (Angstrom), D0 (kJ/mol), tabulated bond order]. */
+export type DiatomicRow = [a: string, b: string, r: number, D: number, bo: number];
 
-// Measured gas-phase values. These are data, not model output: the LCAO
-// picture above is not accurate enough to predict a bond length.
-export const DIATOMICS: DiatomicData[] = [
+export const DATA: DiatomicRow[] = [
   ["H", "H", 0.741, 436, 1],
   ["Li", "Li", 2.673, 105, 1],
   ["B", "B", 1.59, 290, 1],
@@ -147,49 +163,27 @@ export const DIATOMICS: DiatomicData[] = [
   ["Cl", "O", 1.57, 269, 1.5],
 ];
 
-export function pairKey(a: string, b: string): string {
-  return [a, b].sort().join("-");
-}
+/** Order-independent key for a pair of symbols. */
+export const pairKey = (a: string, b: string): string => [a, b].sort().join("-");
 
-export const DIATOMIC_PAIRS: Map<string, DiatomicData> = new Map(
-  DIATOMICS.map((d) => [pairKey(d[0], d[1]), d]),
-);
+export const PAIRS: Map<string, DiatomicRow> = new Map(DATA.map((d) => [pairKey(d[0], d[1]), d]));
 
-/** Which elements form a tabulated diatomic with `sym`. */
-export function partnersOf(sym: string): Set<string> {
-  const out = new Set<string>();
-  for (const d of DIATOMICS) {
-    if (d[0] === sym) out.add(d[1]);
-    else if (d[1] === sym) out.add(d[0]);
-  }
-  return out;
-}
+/** Every element that forms a tabulated diatomic with `s` (including itself). */
+export const partners = (s: string): Set<string> =>
+  new Set(DATA.flatMap((d) => (d[0] === s ? [d[1]] : d[1] === s ? [d[0]] : [])));
 
-export function subscript(n: number): string {
-  return String(n).replace(/\d/g, (d) => "₀₁₂₃₄₅₆₇₈₉"[Number(d)]!);
-}
+const SUBSCRIPTS = "₀₁₂₃₄₅₆₇₈₉";
+/** Render the digits of `n` as Unicode subscripts. */
+export const sub = (n: number | string): string =>
+  String(n).replace(/\d/g, (d) => SUBSCRIPTS[Number(d)] ?? d);
 
-/* ------------------------------------------------------------------ */
-/* The wavefunction                                                    */
-/* ------------------------------------------------------------------ */
+// ---------------------------------------------------------------------------
+// Wavefunction model: psi = cA·e^(−kA·rA) ± cB·e^(−kB·rB)
+// ---------------------------------------------------------------------------
 
-/**
- * The |psi| contour the drawn orbital boundary is taken at.
- *
- * Chosen by sweeping: 0.5 is the tightest contour at which all 55 tabulated
- * molecules still enclose both nuclei in one connected surface. Going to 0.6
- * breaks four of them into separate blobs, which would draw a bonded molecule
- * as unbonded. Going lower is safe but inflates the surface -- at 0.3 it spans
- * 2.9x the bond length and the nuclei read as specks inside it; at 0.5 it spans
- * 2.1x and the shape is legible.
- */
-export const ISO = 0.5;
+/** The isosurface level the orbital shells are drawn at. */
+export const ISO = 0.3;
 
-/**
- * psi along a meridian: `x` runs along the internuclear axis with the nuclei
- * at -R/2 and +R/2, `rho` is the perpendicular distance from that axis.
- * `sign` is +1 for the bonding combination and -1 for the antibonding one.
- */
 export function psi(
   x: number,
   rho: number,
@@ -198,288 +192,332 @@ export function psi(
   cB: number,
   kA: number,
   kB: number,
-  sign: 1 | -1,
+  s: number,
 ): number {
   return (
     cA * Math.exp(-kA * Math.hypot(x + R / 2, rho)) +
-    sign * cB * Math.exp(-kB * Math.hypot(x - R / 2, rho))
+    s * cB * Math.exp(-kB * Math.hypot(x - R / 2, rho))
   );
 }
 
-/** Bisection on a monotone-in-the-bracket function. */
-export function bisect(f: (x: number) => number, lo: number, hi: number, steps = 28): number {
-  let a = lo;
-  let b = hi;
-  for (let i = 0; i < steps; i++) {
-    const m = (a + b) / 2;
-    if (f(m) > 0) a = m;
-    else b = m;
+/** Bisection on a function that is positive at `lo` and negative at `hi`. */
+export function bisect(f: (x: number) => number, lo: number, hi: number, n = 28): number {
+  for (let i = 0; i < n; i++) {
+    const m = (lo + hi) / 2;
+    if (f(m) > 0) lo = m;
+    else hi = m;
   }
-  return (a + b) / 2;
+  return (lo + hi) / 2;
 }
 
-/**
- * Orbital coefficients for a polarity parameter p in (-1, 1). p = 0 shares the
- * pair equally; p -> 1 moves it onto B. Normalised so cA^2 + cB^2 = 2, which
- * keeps the isosurface a comparable size across molecules.
- */
-export function coeffs(p: number): [number, number] {
-  return [Math.sqrt(1 - p), Math.sqrt(1 + p)];
-}
+/** `n` samples from a to b, clustered at both ends (cosine spacing). */
+export const cosSpace = (a: number, b: number, n: number): number[] =>
+  Array.from({ length: n }, (_, i) => a + ((b - a) * (1 - Math.cos((Math.PI * i) / (n - 1)))) / 2);
 
-/** How far out the drawn surface could possibly reach. */
-function far(kA: number, kB: number): number {
-  return 10 / Math.min(kA, kB);
-}
+/** Far enough out that the slower-decaying exponential is negligible. */
+const far = (kA: number, kB: number): number => 10 / Math.min(kA, kB);
 
-/** Where the isosurface crosses the axis, on each side. */
-export function axialExtents(
+/** Where the isosurface cuts the internuclear axis, on each side. */
+export function extents(
   R: number,
   cA: number,
   cB: number,
   kA: number,
   kB: number,
-  sign: 1 | -1,
+  s: number,
 ): [number, number] {
-  const f = (x: number) => Math.abs(psi(x, 0, R, cA, cB, kA, kB, sign));
-  const reach = far(kA, kB);
-  const xR = f(R / 2) > ISO ? bisect((x) => f(x) - ISO, R / 2, R / 2 + reach) : R / 2;
-  const xL = f(-R / 2) > ISO ? bisect((x) => ISO - f(x), -R / 2 - reach, -R / 2) : -R / 2;
+  const f = (x: number) => Math.abs(psi(x, 0, R, cA, cB, kA, kB, s));
+  const F = far(kA, kB);
+  const xR = f(R / 2) > ISO ? bisect((x) => f(x) - ISO, R / 2, R / 2 + F) : R / 2;
+  const xL = f(-R / 2) > ISO ? bisect((x) => ISO - f(x), -R / 2 - F, -R / 2) : -R / 2;
   return [xL, xR];
 }
 
+/** One point of a surface-of-revolution profile: radius `rho` at axial `x`. */
+export type ProfilePoint = { rho: number; x: number };
+export type Profile = { pts: ProfilePoint[]; rhoMax: number };
+
 /**
- * The isosurface is a surface of revolution about the internuclear axis, so
- * its whole shape is one profile rho(x) -- and, because it is rotationally
- * symmetric, that profile is also its silhouette from every viewing
- * direction. That is what makes this drawable as a plain filled path.
+ * The isosurface radius at each x in `xs`, found by bisecting outward from the
+ * axis. The two end points are pinned to the axis so the lathe closes; a
+ * radius of exactly zero would collapse the ring, so it is floored at 1e-4.
  */
-export function profile(
+export function latheProfile(
   xs: number[],
   R: number,
   cA: number,
   cB: number,
   kA: number,
   kB: number,
-  sign: 1 | -1,
-): { x: number; rho: number }[] {
-  const reach = far(kA, kB);
-  return xs.map((x, i) => {
-    if (i === 0 || i === xs.length - 1) return { x, rho: 0 };
-    if (Math.abs(psi(x, 0, R, cA, cB, kA, kB, sign)) < ISO) return { x, rho: 0 };
-    const rho = bisect((q) => Math.abs(psi(x, q, R, cA, cB, kA, kB, sign)) - ISO, 0, reach);
-    return { x, rho };
+  s: number,
+): Profile {
+  let rhoMax = 0;
+  const F = far(kA, kB);
+  const pts = xs.map((x, i) => {
+    let r = 0;
+    if (i > 0 && i < xs.length - 1 && Math.abs(psi(x, 0, R, cA, cB, kA, kB, s)) >= ISO)
+      r = bisect((q) => Math.abs(psi(x, q, R, cA, cB, kA, kB, s)) - ISO, 0, F);
+    rhoMax = Math.max(rhoMax, r);
+    return { rho: Math.max(r, 1e-4), x };
   });
+  return { pts, rhoMax };
 }
 
-/** Cosine-spaced samples: denser at the ends, where the profile turns hardest. */
-export function cosSpace(a: number, b: number, n: number): number[] {
-  return Array.from(
-    { length: n },
-    (_, i) => a + ((b - a) * (1 - Math.cos((Math.PI * i) / (n - 1)))) / 2,
-  );
+/** Profile of the bonding (in-phase) sigma isosurface. */
+export function bondingProfile(R: number, cA: number, cB: number, kA: number, kB: number): Profile {
+  const [a, b] = extents(R, cA, cB, kA, kB, 1);
+  return latheProfile(cosSpace(a, b, 160), R, cA, cB, kA, kB, 1);
 }
 
-/** Where the antibonding combination changes sign between the nuclei. */
-export function nodeX(R: number, cA: number, cB: number, kA: number, kB: number): number {
-  return bisect((x) => psi(x, 0, R, cA, cB, kA, kB, -1), -R / 2, R / 2);
+/**
+ * The antibonding (out-of-phase) isosurface, split at the nodal point into two
+ * opposite-phase lobes.
+ */
+export function antiProfiles(
+  R: number,
+  cA: number,
+  cB: number,
+  kA: number,
+  kB: number,
+): { lower: Profile; upper: Profile; nodeX: number } {
+  const [a, b] = extents(R, cA, cB, kA, kB, -1);
+  const xn = bisect((x) => psi(x, 0, R, cA, cB, kA, kB, -1), -R / 2, R / 2);
+  return {
+    lower: latheProfile(cosSpace(a, xn, 90), R, cA, cB, kA, kB, -1),
+    upper: latheProfile(cosSpace(xn, b, 90), R, cA, cB, kA, kB, -1),
+    nodeX: xn,
+  };
 }
 
-/* ------------------------------------------------------------------ */
-/* Valence MO diagram                                                  */
-/* ------------------------------------------------------------------ */
+/**
+ * LCAO coefficients for a polarity p in (−1, 1): cA² = 1 − p, cB² = 1 + p, so
+ * p > 0 shifts density toward B.
+ */
+export function coeffs(p: number): [number, number] {
+  return [Math.sqrt(1 - p), Math.sqrt(1 + p)];
+}
 
-export type MOKind = "sigma" | "pi" | "nonbonding";
+// ---------------------------------------------------------------------------
+// Valence MO diagram
+// ---------------------------------------------------------------------------
 
-export type MOLevelSpec = {
-  name: string;
-  /** Degeneracy: 1 for sigma, 2 for a pi pair. */
-  g: number;
-  /** +1 bonding, 0 nonbonding, -1 antibonding. */
-  sign: 1 | 0 | -1;
-  kind: MOKind;
-  /** Electrons assigned by filling from the bottom. */
-  e: number;
-};
-
-export type MODiagram = {
-  /** Which structural family the level ordering came from. */
-  family: "alkali" | "hydride" | "ionic" | "p-block";
-  levels: MOLevelSpec[];
-  bondOrder: number;
-  unpaired: number;
-  /** How many pi bonds the filling implies, for the 3D scene. */
-  nPi: number;
-  /** The more and less electronegative partner. */
-  neg: DiatomicElement;
-  pos: DiatomicElement;
-};
-
-/** Hund's rule: spread electrons across degenerate orbitals before pairing. */
+/** Fill `g` degenerate orbitals with `e` electrons, one each before pairing. */
 export function hund(e: number, g: number): number[] {
-  const a = new Array<number>(g).fill(0);
+  const a: number[] = Array(g).fill(0);
   for (let i = 0; i < e; i++) a[i % g] = (a[i % g] ?? 0) + 1;
   return a;
 }
 
-type LevelTemplate = [string, number, 1 | 0 | -1, MOKind];
+/** 's' sigma-type, 'p' pi-type, 'n' essentially nonbonding. */
+export type MOKind = "s" | "p" | "n";
+/** Which family of diagram a pair falls into. */
+export type MOType = "s" | "h" | "i" | "g";
 
-export function moDiagram(A: DiatomicElement, B: DiatomicElement): MODiagram {
-  const valenceElectrons = A.ve + B.ve;
-  const n = A.row === B.row ? String(A.row) : "";
-  const neg = (A.en ?? 0) >= (B.en ?? 0) ? A : B;
+export type MOLevel = {
+  name: string;
+  /** Degeneracy (1 for sigma, 2 for a pi pair, 2 for a lumped p set). */
+  g: number;
+  /** +1 bonding, 0 nonbonding, −1 antibonding. */
+  sign: number;
+  kind: MOKind;
+  /** Electrons that land in this level. */
+  e: number;
+};
+
+export type MODiagramResult = {
+  type: MOType;
+  levels: MOLevel[];
+  /** Bond order derived from the diagram — this is the number the UI shows. */
+  bo: number;
+  unpaired: number;
+  /** How many pi bonds the scene should draw. */
+  nPi: number;
+  neg: DiatomicElement;
+  pos: DiatomicElement;
+};
+
+type LevelSpec = [name: string, g: number, sign: number, kind: MOKind];
+
+const enOf = (X: DiatomicElement): number => X.en ?? 0;
+
+/**
+ * Valence MO scheme for a pair, filled with their valence electrons from the
+ * bottom up. Four families: both s-block (s), anything with hydrogen (h),
+ * strongly ionic metal–halide/oxide pairs (i), and the general second/third-row
+ * covalent scheme (g), whose sigma_p/pi_p ordering flips for the
+ * later p-block pairs.
+ */
+export function moDiagram(A: DiatomicElement, B: DiatomicElement): MODiagramResult {
+  const ve = A.ve + B.ve;
+  const n: number | "" = A.row === B.row ? A.row : "";
+  const neg = enOf(A) >= enOf(B) ? A : B;
   const pos = neg === A ? B : A;
-
-  let family: MODiagram["family"];
-  let template: LevelTemplate[];
-
+  let type: MOType;
+  let L: LevelSpec[];
   if (A.col === 1 && B.col === 1) {
-    // Two alkali metals: a single s-s interaction.
-    family = "alkali";
+    type = "s";
     const nn = A.sym === B.sym ? `${A.row}s` : "";
-    template = [
-      [`σ${nn}`, 1, 1, "sigma"],
-      [`σ*${nn}`, 1, -1, "sigma"],
+    L = [
+      [`σ${nn}`, 1, 1, "s"],
+      [`σ*${nn}`, 1, -1, "s"],
     ];
   } else if (A.sym === "H" || B.sym === "H") {
-    // A hydride: hydrogen's 1s interacts with one orbital on the heavy atom
-    // and leaves the rest of its valence shell nonbonding.
-    family = "hydride";
+    type = "h";
     const X = A.sym === "H" ? B : A;
-    template = [
-      ["σ", 1, 1, "sigma"],
-      [`${X.sym} ${X.row}s`, 1, 0, "nonbonding"],
-      ...(X.col >= 3 ? ([[`${X.sym} ${X.row}p`, 2, 0, "nonbonding"]] as LevelTemplate[]) : []),
-      ["σ*", 1, -1, "sigma"],
-    ];
+    const pSet: LevelSpec[] = X.col >= 3 ? [[`${X.sym} ${X.row}p`, 2, 0, "n"]] : [];
+    L = [["σ", 1, 1, "s"], [`${X.sym} ${X.row}s`, 1, 0, "n"], ...pSet, ["σ*", 1, -1, "s"]];
   } else if (
     (["Li", "Na", "Be", "Mg", "Al"].includes(pos.sym) && ["F", "Cl", "O"].includes(neg.sym)) ||
     (["B", "Si"].includes(pos.sym) && ["F", "Cl"].includes(neg.sym))
   ) {
-    // Strongly polar: the levels sit close to one atom or the other, so most
-    // of them are essentially untouched atomic orbitals.
-    family = "ionic";
-    template = [
-      [`${neg.sym} ${neg.row}s`, 1, 0, "nonbonding"],
-      ["σ", 1, 1, "sigma"],
-      [`${neg.sym} ${neg.row}p`, 2, 0, "nonbonding"],
-      [`${pos.sym} ${pos.row}s`, 1, 0, "nonbonding"],
-      ...(pos.col >= 3
-        ? ([[`${pos.sym} ${pos.row}p`, 2, 0, "nonbonding"]] as LevelTemplate[])
-        : []),
-      ["σ*", 1, -1, "sigma"],
+    type = "i";
+    const pSet: LevelSpec[] = pos.col >= 3 ? [[`${pos.sym} ${pos.row}p`, 2, 0, "n"]] : [];
+    L = [
+      [`${neg.sym} ${neg.row}s`, 1, 0, "n"],
+      ["σ", 1, 1, "s"],
+      [`${neg.sym} ${neg.row}p`, 2, 0, "n"],
+      [`${pos.sym} ${pos.row}s`, 1, 0, "n"],
+      ...pSet,
+      ["σ*", 1, -1, "s"],
     ];
   } else {
-    // General p-block. The sigma2p / pi2p ordering flips across the row:
-    // s-p mixing pushes sigma2p above pi2p early on, and stops mattering by
-    // oxygen -- which is why O2 and F2 take the other order.
-    family = "p-block";
-    const heavy = ["O", "F", "S", "Cl"];
-    const lateRow = heavy.includes(A.sym) && heavy.includes(B.sym);
-    const pi: LevelTemplate = [`π${n}p`, 2, 1, "pi"];
-    const sigmaP: LevelTemplate = [`σ${n}p`, 1, 1, "sigma"];
-    template = [
-      [`σ${n}s`, 1, 1, "sigma"],
-      [`σ*${n}s`, 1, -1, "sigma"],
-      ...(lateRow ? [sigmaP, pi] : [pi, sigmaP]),
-      [`π*${n}p`, 2, -1, "pi"],
-      [`σ*${n}p`, 1, -1, "sigma"],
+    type = "g";
+    const hv = ["O", "F", "S", "Cl"];
+    const o2 = hv.includes(A.sym) && hv.includes(B.sym);
+    const pi: LevelSpec = [`π${n}p`, 2, 1, "p"];
+    const sp: LevelSpec = [`σ${n}p`, 1, 1, "s"];
+    L = [
+      [`σ${n}s`, 1, 1, "s"],
+      [`σ*${n}s`, 1, -1, "s"],
+      ...(o2 ? [sp, pi] : [pi, sp]),
+      [`π*${n}p`, 2, -1, "p"],
+      [`σ*${n}p`, 1, -1, "s"],
     ];
   }
-
-  let left = valenceElectrons;
-  const levels: MOLevelSpec[] = template.map(([name, g, sign, kind]) => {
+  let left = ve;
+  const levels: MOLevel[] = L.map(([name, g, sign, kind]) => {
     const e = Math.min(left, 2 * g);
     left -= e;
     return { name, g, sign, kind, e };
   });
-
-  const bondOrder = levels.reduce((s, l) => s + l.sign * l.e, 0) / 2;
+  const bo = levels.reduce((s, l) => s + l.sign * l.e, 0) / 2;
   const unpaired = levels.reduce((s, l) => s + hund(l.e, l.g).filter((x) => x === 1).length, 0);
-  const ePi = levels.filter((l) => l.kind === "pi").reduce((s, l) => s + l.sign * l.e, 0);
-
+  const ePi = levels.filter((l) => l.kind === "p").reduce((s, l) => s + l.sign * l.e, 0);
   return {
-    family,
+    type,
     levels,
-    bondOrder,
+    bo,
     unpaired,
-    nPi: family === "p-block" ? Math.max(0, Math.floor(ePi / 2)) : 0,
+    nPi: type === "g" ? Math.max(0, Math.floor(ePi / 2)) : 0,
     neg,
     pos,
   };
 }
 
-/* ------------------------------------------------------------------ */
-/* Assembled molecule                                                  */
-/* ------------------------------------------------------------------ */
+// ---------------------------------------------------------------------------
+// A loaded molecule
+// ---------------------------------------------------------------------------
 
 export type BondType = "nonpolar covalent" | "polar covalent" | "ionic";
 
-export type Molecule = {
+export type MoleculeInfo = {
   A: DiatomicElement;
   B: DiatomicElement;
-  formula: string;
-  homonuclear: boolean;
-  /** Equilibrium bond length, angstroms. */
+  /** Equilibrium bond length, Angstrom. */
   r: number;
-  /** Dissociation energy, kJ/mol. */
+  /** Bond dissociation energy, kJ/mol. */
   D: number;
-  /** Measured bond order from the data table. */
-  bondOrder: number;
-  /** Bond order the filled MO diagram implies. */
-  moBondOrder: number;
-  unpaired: number;
-  nPi: number;
+  /** Bond order as the MO diagram gives it — what the panel and caption show. */
+  bo: number;
   type: BondType;
-  /** Electronegativity difference, B - A. */
+  /** B.en − A.en, signed: positive means density moves toward B. */
   dEN: number;
-  /** Polarity parameter fed to the orbital coefficients. */
-  polarity: number;
-  pointGroup: "D∞h" | "C∞v";
-  diagram: MODiagram;
-  kA: number;
-  kB: number;
+  /** Equilibrium polarity fed to `coeffs`. */
+  pFinal: number;
+  homo: boolean;
+  nPi: number;
+  /** Mean covalent radius, the scene's length unit for lobes and the node disc. */
+  rcAvg: number;
+  unpaired: number;
+  ve: number;
+  formula: string;
+  /** The more electronegative partner. */
+  neg: DiatomicElement;
+  diagram: MODiagramResult;
 };
 
-export function bondTypeFor(absDEN: number): BondType {
-  if (absDEN < 0.4) return "nonpolar covalent";
-  if (absDEN < 1.8) return "polar covalent";
-  return "ionic";
-}
-
-export function buildMolecule(a: string, b: string): Molecule | null {
-  const data = DIATOMIC_PAIRS.get(pairKey(a, b));
-  if (!data) return null;
-  const [symA, symB, r, D, bondOrder] = data;
-  const A = ELEMENTS[symA]!;
-  const B = ELEMENTS[symB]!;
+/** Everything about a pair that does not depend on the rendered scene. */
+export function moleculeInfo(a: string, b: string): MoleculeInfo {
+  const d = PAIRS.get(pairKey(a, b));
+  if (!d) throw new Error(`diatomic: no tabulated molecule for ${a}–${b}`);
+  const [, , r, D] = d;
+  const A = el(d[0]);
+  const B = el(d[1]);
   const diagram = moDiagram(A, B);
-  const dEN = (B.en ?? 0) - (A.en ?? 0);
-  const homonuclear = A.sym === B.sym;
+  const dEN = enOf(B) - enOf(A);
+  const ad = Math.abs(dEN);
+  const type: BondType = ad < 0.4 ? "nonpolar covalent" : ad < 1.8 ? "polar covalent" : "ionic";
+  const pFinal = Math.tanh(dEN / 1.4) * 0.95;
+  const homo = A.sym === B.sym;
   return {
     A,
     B,
-    formula: homonuclear ? A.sym + subscript(2) : A.sym + B.sym,
-    homonuclear,
     r,
     D,
-    bondOrder,
-    moBondOrder: diagram.bondOrder,
-    unpaired: diagram.unpaired,
-    nPi: diagram.nPi,
-    type: bondTypeFor(Math.abs(dEN)),
+    bo: diagram.bo,
+    type,
     dEN,
-    // tanh keeps the shift bounded as dEN grows, and the 0.95 cap stops a
-    // coefficient reaching zero, which would collapse the surface entirely.
-    polarity: Math.tanh(dEN / 1.4) * 0.95,
-    pointGroup: homonuclear ? "D∞h" : "C∞v",
+    pFinal,
+    homo,
+    nPi: diagram.nPi,
+    rcAvg: (A.rc + B.rc) / 2,
+    unpaired: diagram.unpaired,
+    ve: A.ve + B.ve,
+    formula: homo ? A.sym + sub(2) : A.sym + B.sym,
+    neg: dEN > 0 ? B : A,
     diagram,
-    kA: A.k,
-    kB: B.k,
   };
 }
 
-/** Every element that forms at least one tabulated diatomic, in layout order. */
-export const SELECTABLE: DiatomicElement[] = Object.values(ELEMENTS).filter(
-  (e) => e.en != null && partnersOf(e.sym).size > 0,
-);
+export type SceneMetrics = {
+  /** Axial extents of the equilibrium bonding isosurface. */
+  xL: number;
+  xR: number;
+  /** Widest radius the scene has to hold, including the pi lobes. */
+  rhoMax: number;
+  /** Model scale that puts the isosurface in a 2.6-unit box. */
+  s: number;
+  /** One scene "unit" for guide furniture: 0.02 on screen. */
+  u: number;
+  /** Height of the bond-length dimension line, below the orbital. */
+  dimY: number;
+  /** Separation the atoms start from when the bond forms. */
+  R0: number;
+};
+
+/** Size the scene from the equilibrium bonding isosurface. */
+export function sceneMetrics(mol: MoleculeInfo): SceneMetrics {
+  const [cA, cB] = coeffs(mol.pFinal);
+  const kA = mol.A.k;
+  const kB = mol.B.k;
+  const [xL, xR] = extents(mol.r, cA, cB, kA, kB, 1);
+  const { rhoMax: lastRhoMax } = bondingProfile(mol.r, cA, cB, kA, kB);
+  const rhoMax = Math.max(lastRhoMax, mol.nPi ? mol.rcAvg * 1.25 : 0);
+  const s = 2.6 / (xR - xL);
+  return {
+    xL,
+    xR,
+    rhoMax,
+    s,
+    u: 0.02 / s,
+    dimY: -(rhoMax + 0.18 / s),
+    R0: mol.r + 0.6 * (xR - xL),
+  };
+}
+
+/** The 5-second formation animation's easing curve (cubic in-out). */
+export const ease = (u: number): number =>
+  u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+
+/** Length of the formation animation, seconds. */
+export const FORM = 5.0;

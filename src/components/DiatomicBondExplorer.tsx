@@ -1,645 +1,995 @@
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import * as THREE from "three";
+import { DiatomicStage } from "@/components/DiatomicStage";
 import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-} from "react";
-import {
-  ELEMENTS,
-  axialExtents,
-  buildMolecule,
+  ELEMENT_LIST,
+  FORM,
+  antiProfiles,
+  bondingProfile,
   coeffs,
-  cosSpace,
+  ease,
+  el,
   hund,
-  nodeX,
-  partnersOf,
-  profile,
-  psi,
+  moleculeInfo,
+  partners,
+  sceneMetrics,
   type DiatomicElement,
-  type MOLevelSpec,
-  type Molecule,
+  type MOLevel,
+  type MoleculeInfo,
+  type Profile,
+  type SceneMetrics,
 } from "@/lib/diatomic";
-import { rotate3d, type Vec3 } from "@/lib/project3d";
-import { AxisGizmo } from "@/components/AxisGizmo";
 
 /**
- * Diatomic Bond Explorer.
+ * Diatomic Bond Explorer — a WebGL port of the original three.js artifact.
  *
- * Pick any two main-group elements that form a tabulated diatomic and watch
- * the bond assemble: the two atoms approach, their valence functions overlap
- * into a sigma molecular orbital, and the electron density settles -- shifted
- * toward the more electronegative partner when they differ.
+ * Pick any two main-group elements that form a tabulated diatomic and watch the
+ * bond assemble over five seconds: the atoms approach from a wide separation,
+ * their valence functions overlap into a sigma molecular orbital drawn as a
+ * |psi| = 0.3 isosurface, the Monte-Carlo electron density settles, and the
+ * bond then breathes at its vibrational frequency. Labels are HTML pinned to
+ * projected scene points with leader lines and a small collision-avoidance
+ * relaxation; the sidebar carries the periodic-table picker, the measured
+ * gas-phase data and the valence MO energy diagram with its Hund's-rule boxes.
  *
- * Rendered as projected SVG rather than WebGL, matching every other 3D view on
- * this site (the orbital cloud, the mechanism explorer, the equilibrium scene)
- * so it needs no new dependency and inherits the page's own theme.
+ * Everything from the artifact is here except the pieces that only made sense
+ * in a standalone 3D-export page: the OBJ/GLB toolbar, the export telemetry and
+ * the branding badge. The fixed full-viewport layout became an in-flow panel
+ * with a wrapping sidebar, and the palette was retuned from the artifact's
+ * cool cyan/green/salmon toward this site's warm academic set. The stage stays
+ * dark: the orbital shells are additive, emissive and semi-transparent, and
+ * wash out completely on a light background.
  *
- * The sigma isosurface is the one piece that looks like it should need a mesh
- * and does not. It is a surface of revolution about the internuclear axis, so
- * it has a single profile rho(x), and a surface of revolution presents that
- * same profile as its silhouette from every direction -- only the on-screen
- * width of the offset changes with the viewing angle, by one factor computed
- * once per frame. So the whole orbital draws as two mirrored polylines.
+ * Nothing WebGL-shaped runs during render. `three` is imported for types and
+ * for the effect body only; the renderer, the geometry, the Monte-Carlo
+ * sampling and every `performance.now()` live inside `useEffect`, so the server
+ * emits a sized, labelled placeholder and hydration sees identical markup.
  */
 
-const CLOUD_POINTS = 1100;
-const FORM_SECONDS = 5;
-const VIEW = 300; // viewBox is VIEW x VIEW
+// --- Palette -------------------------------------------------------------
+// The one thing deliberately changed from the original. Left column is the
+// artifact's value; everything else is a faithful port.
 
-type CloudPoint = { pos: Vec3; w: number };
+/** On the dark stage: warm near-black ground, warm paper text. */
+const SCENE = {
+  bg: "#14120e", //            was #0d0f14  cool blue-black -> warm near-black
+  fg: "#f2ece0", //            was #e9e7e2
+  muted: "#b8ae9c", //         was #a9a7a1
+  dim: "#8c8477", //           was #7d7b76
+  panel: "rgba(24, 20, 14, 0.9)", // was rgba(18,20,27,0.9)
+  hairline: "rgba(242, 236, 224, 0.14)", // was rgba(233,231,226,0.16)
+  leader: "rgba(242, 236, 224, 0.45)", // was rgba(233,231,226,0.45)
+};
 
-/** Sample |psi_sigma|^2 by rejection, with an exponential radial proposal. */
-function sampleCloud(
-  count: number,
-  R: number,
-  cA: number,
-  cB: number,
-  kA: number,
-  kB: number,
-  rand: () => number,
-): CloudPoint[] {
-  const out: CloudPoint[] = [];
-  // Weight each centre by how much density it carries, so the proposal is not
-  // wasted on the wrong atom for a strongly polar bond.
-  const wA = (cA * cA) / kA ** 3;
-  const wB = (cB * cB) / kB ** 3;
-  let peak = 0;
-  for (let i = 0; i <= 40; i++) {
-    const x = -R / 2 + (R * i) / 40;
-    peak = Math.max(peak, Math.abs(psi(x, 0, R, cA, cB, kA, kB, 1)));
-  }
-  peak = Math.max(peak, 1e-6);
-  let guard = 0;
-  while (out.length < count && guard < count * 300) {
-    guard++;
-    const onA = rand() < wA / (wA + wB);
-    const k = onA ? kA : kB;
-    // Gamma(3)-ish radius: three exponentials, which matches how a 1s-like
-    // density actually falls off far better than a single exponential.
-    const r =
-      -(Math.log(rand() || 1e-12) + Math.log(rand() || 1e-12) + Math.log(rand() || 1e-12)) /
-      (2 * k);
-    const u = 2 * rand() - 1;
-    const phi = 2 * Math.PI * rand();
-    const s = Math.sqrt(Math.max(0, 1 - u * u));
-    const px = r * s * Math.cos(phi) + (onA ? -1 : 1) * (R / 2);
-    const py = r * s * Math.sin(phi);
-    const pz = r * u;
-    const rho = Math.hypot(py, pz);
-    const v = Math.abs(psi(px, rho, R, cA, cB, kA, kB, 1));
-    if (rand() * peak > v) continue;
-    out.push({ pos: [px, py, pz], w: v });
-  }
-  return out;
-}
+/** Three.js material hues. Same roles, warmer hues, same relative luminance. */
+const MAT = {
+  sigma: 0x74b6d6, //          was 0x62c3e8
+  sigmaEmissive: 0x1f4454, //  was 0x1d4d66
+  pi: 0x9ec87e, //             was 0x7fd49a
+  piEmissive: 0x2b4423, //     was 0x1f4a2c
+  antiPos: 0xe59470, //        was 0xf0937a
+  antiPosEmissive: 0x53291a, //was 0x5a2a1c
+  antiNeg: 0xb79ad6, //        was 0xb9a3f0
+  antiNegEmissive: 0x332950, //was 0x33285a
+  node: 0xe59470, //           was 0xf0937a
+  cloud: 0xa9d3e2, //          was 0x9fdcf3
+  guide: 0xf2ece0, //          was 0xe9e7e2
+  nucleus: 0xf5efe2, //        was 0xf4efe6
+};
 
-function easeInOut(u: number): number {
-  return u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
-}
-
-const MO_COLOR = {
-  bonding_sigma: "var(--fig-2)",
-  bonding_pi: "var(--fig-3)",
-  antibonding: "var(--fig-1)",
+/**
+ * The same four MO roles again, stepped darker so they read on this site's
+ * cream card instead of on the artifact's dark panel. The 3D scene and the
+ * sidebar are on opposite backgrounds, so one palette cannot serve both.
+ */
+const PANEL = {
+  sigma: "#2d6b8a",
+  pi: "#4a7a2e",
+  anti: "#a8512c",
   nonbonding: "var(--muted-foreground)",
-} as const;
+  cloud: "#4e8ca8",
+  neutral: "var(--foreground)",
+  recessive: "var(--muted-foreground)",
+};
 
-function levelColor(l: MOLevelSpec): string {
-  if (l.sign < 0) return MO_COLOR.antibonding;
-  if (l.sign === 0) return MO_COLOR.nonbonding;
-  return l.kind === "pi" ? MO_COLOR.bonding_pi : MO_COLOR.bonding_sigma;
+const NPTS = 9000;
+const ARC_N = 49;
+
+// --- Scene ---------------------------------------------------------------
+
+type ToggleKey = "cloud" | "sigma" | "pi" | "anti";
+
+type Box = { x: number; y: number; w: number; h: number; fixed: boolean };
+
+type Label = Box & {
+  at: () => [number, number, number];
+  dx: number;
+  dy: number;
+  bare: boolean;
+  noDot: boolean;
+  show: (() => boolean) | null;
+  el: HTMLDivElement;
+  dot: HTMLDivElement | null;
+  line: SVGLineElement;
+  /** Anchor: the projected scene point the leader line starts from. */
+  ax: number;
+  ay: number;
+};
+
+type Mounts = {
+  stage: HTMLDivElement;
+  overlay: HTMLDivElement;
+  svg: SVGSVGElement;
+  caption: HTMLDivElement;
+  note: HTMLDivElement;
+};
+
+/**
+ * The molecule itself: the three.js scene graph, the label overlay and the
+ * animation loop, all driven imperatively so a 60 Hz frame never re-renders
+ * React. React owns the selection and the toggles and pushes them in.
+ */
+function createExplorer(m: Mounts) {
+  const stage = new DiatomicStage(m.stage);
+
+  // Materials
+  const glass = (name: string, color: number, emissive: number, op: number) =>
+    new THREE.MeshStandardMaterial({
+      name,
+      color,
+      emissive,
+      roughness: 0.28,
+      transparent: true,
+      opacity: op,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+  const M = {
+    nucA: new THREE.MeshStandardMaterial({
+      name: "nucleus_A",
+      color: MAT.nucleus,
+      emissiveIntensity: 0.35,
+      roughness: 0.35,
+    }),
+    nucB: new THREE.MeshStandardMaterial({
+      name: "nucleus_B",
+      color: MAT.nucleus,
+      emissiveIntensity: 0.35,
+      roughness: 0.35,
+    }),
+    sigma: glass("sigma_bonding", MAT.sigma, MAT.sigmaEmissive, 0.26),
+    pi: glass("pi_bonding", MAT.pi, MAT.piEmissive, 0.22),
+    antiPos: glass("sigma_star_phase_pos", MAT.antiPos, MAT.antiPosEmissive, 0.3),
+    antiNeg: glass("sigma_star_phase_neg", MAT.antiNeg, MAT.antiNegEmissive, 0.3),
+    node: new THREE.MeshBasicMaterial({
+      name: "nodal_plane",
+      color: MAT.node,
+      transparent: true,
+      opacity: 0.1,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+    cloud: new THREE.PointsMaterial({
+      name: "electron_density",
+      color: MAT.cloud,
+      size: 0.013,
+      transparent: true,
+      opacity: 0.75,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }),
+    guide: new THREE.LineBasicMaterial({
+      name: "guide_lines",
+      color: MAT.guide,
+      transparent: true,
+      opacity: 0.85,
+      depthTest: false,
+    }),
+    axis: new THREE.LineDashedMaterial({
+      name: "axis_line",
+      color: MAT.guide,
+      dashSize: 0.06,
+      gapSize: 0.05,
+      transparent: true,
+      opacity: 0.4,
+      depthTest: false,
+    }),
+  };
+
+  const model = new THREE.Group();
+  model.name = "diatomic_molecule";
+  const unitSphere = new THREE.SphereGeometry(1, 32, 16);
+  const nucA = new THREE.Mesh(unitSphere, M.nucA);
+  const nucB = new THREE.Mesh(unitSphere, M.nucB);
+  const sigma = new THREE.Mesh(new THREE.BufferGeometry(), M.sigma);
+  sigma.name = "sigma_bonding_MO";
+  sigma.renderOrder = 2;
+  const piGroup = new THREE.Group();
+  piGroup.name = "pi_bonds";
+  const piDirs: [number, number][] = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
+  const piLobes = piDirs.map(([y, z], i) => {
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24), M.pi);
+    mesh.name = `pi_lobe_${i}`;
+    piGroup.add(mesh);
+    return { mesh, dy: y, dz: z };
+  });
+  const antiA = new THREE.Mesh(new THREE.BufferGeometry(), M.antiPos);
+  antiA.name = "sigma_star_lobe_A";
+  const antiB = new THREE.Mesh(new THREE.BufferGeometry(), M.antiNeg);
+  antiB.name = "sigma_star_lobe_B";
+  const node = new THREE.Mesh(new THREE.CircleGeometry(1, 64), M.node);
+  node.name = "sigma_star_nodal_plane";
+  node.rotation.y = Math.PI / 2;
+  const anti = new THREE.Group();
+  anti.name = "sigma_star_antibonding_MO";
+  anti.add(antiA, antiB, node);
+  anti.visible = false;
+
+  const cloudPos = new Float32Array(NPTS * 3);
+  const cloudGeo = new THREE.BufferGeometry();
+  cloudGeo.setAttribute("position", new THREE.BufferAttribute(cloudPos, 3));
+  const cloud = new THREE.Points(cloudGeo, M.cloud);
+  cloud.name = "electron_density_cloud";
+  cloud.renderOrder = 3;
+
+  const dimGeo = new THREE.BufferGeometry();
+  dimGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(30), 3));
+  const dim = new THREE.LineSegments(dimGeo, M.guide);
+  dim.name = "bond_length_dimension";
+  dim.renderOrder = 10;
+  const arcGeo = new THREE.BufferGeometry();
+  arcGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(ARC_N * 3), 3));
+  const arc = new THREE.Line(arcGeo, M.guide);
+  arc.name = "bond_angle_arc";
+  arc.renderOrder = 10;
+  const axis = new THREE.Line(new THREE.BufferGeometry(), M.axis);
+  axis.name = "internuclear_axis";
+  axis.renderOrder = 10;
+  model.add(nucA, nucB, sigma, piGroup, anti, cloud, dim, arc, axis);
+
+  // Current molecule
+  let mol: MoleculeInfo | null = null;
+  let met: SceneMetrics | null = null;
+  let R = 1;
+  let cA = 1;
+  let cB = 1;
+  let kA = el("H").k;
+  let kB = el("H").k;
+  let nodeX = 0;
+  const v3 = new THREE.Vector3();
+
+  /** A profile of revolution about x, as three wants it: radius in x, height in y. */
+  const lathe = (p: Profile) => {
+    const g = new THREE.LatheGeometry(
+      p.pts.map((q) => new THREE.Vector2(q.rho, q.x)),
+      64,
+    );
+    g.rotateZ(-Math.PI / 2);
+    return g;
+  };
+
+  /** Rejection-sample one point of |psi_sigma|^2 into slot `i` of the cloud. */
+  function sample(i: number) {
+    const wA = (cA * cA) / kA ** 3;
+    const wB = (cB * cB) / kB ** 3;
+    for (let tries = 0; tries < 200; tries++) {
+      const onA = Math.random() < wA / (wA + wB);
+      const k = onA ? kA : kB;
+      const r =
+        -(Math.log(Math.random()) + Math.log(Math.random()) + Math.log(Math.random())) / (2 * k);
+      v3.randomDirection().multiplyScalar(r);
+      v3.x += (onA ? -1 : 1) * (R / 2);
+      const a = cA * Math.exp(-kA * Math.hypot(v3.x + R / 2, v3.y, v3.z));
+      const b = cB * Math.exp(-kB * Math.hypot(v3.x - R / 2, v3.y, v3.z));
+      if (Math.random() < (a + b) ** 2 / (2 * (a * a + b * b))) {
+        cloudPos.set([v3.x, v3.y, v3.z], i * 3);
+        return;
+      }
+    }
+  }
+
+  /** Dimension line, its witness lines and ticks, plus the 180-degree arc. */
+  function setGuides() {
+    if (!met) return;
+    const h = R / 2;
+    const u = met.u;
+    const y = met.dimY;
+    const p = dimGeo.attributes["position"]!.array as Float32Array;
+    (
+      [
+        [-h, y, h, y],
+        [-h, -2 * u, -h, y - u],
+        [h, -2 * u, h, y - u],
+        [-h - u * 0.7, y - u * 0.7, -h + u * 0.7, y + u * 0.7],
+        [h - u * 0.7, y - u * 0.7, h + u * 0.7, y + u * 0.7],
+      ] as [number, number, number, number][]
+    ).forEach((s, i) => p.set([s[0], s[1], 0, s[2], s[3], 0], i * 6));
+    dimGeo.attributes["position"]!.needsUpdate = true;
+    const a = arcGeo.attributes["position"]!.array as Float32Array;
+    const rr = Math.max(h, 5 * u);
+    for (let i = 0; i < ARC_N; i++) {
+      const th = (Math.PI * i) / (ARC_N - 1);
+      a.set([-Math.cos(th) * rr, Math.sin(th) * rr, 0], i * 3);
+    }
+    arcGeo.attributes["position"]!.needsUpdate = true;
+  }
+
+  /** Schematic side-on p-orbital lobes, two per pi bond. */
+  function setPi() {
+    if (!mol) return;
+    const rc = mol.rcAvg;
+    const nPi = mol.nPi;
+    piLobes.forEach(({ mesh, dy, dz }, i) => {
+      mesh.visible = i < nPi * 2;
+      mesh.position.set(0, dy * rc * 0.8, dz * rc * 0.8);
+      mesh.scale.set(R / 2 + rc * 0.45, dy ? rc * 0.42 : rc * 0.55, dz ? rc * 0.42 : rc * 0.55);
+    });
+  }
+
+  /** Re-solve every isosurface for a separation `r` and a polarity `p`. */
+  function setState(r: number, p: number, rebuildAnti: boolean) {
+    if (!mol) return;
+    R = r;
+    [cA, cB] = coeffs(p);
+    nucA.position.set(-R / 2, 0, 0);
+    nucB.position.set(R / 2, 0, 0);
+    sigma.geometry.dispose();
+    sigma.geometry = lathe(bondingProfile(R, cA, cB, kA, kB));
+    if (rebuildAnti) {
+      // Antibonding is weighted toward the less electronegative atom, so the
+      // coefficients — but not the exponents — swap.
+      const { lower, upper, nodeX: xn } = antiProfiles(R, cB, cA, kA, kB);
+      antiA.geometry.dispose();
+      antiB.geometry.dispose();
+      antiA.geometry = lathe(lower);
+      antiB.geometry = lathe(upper);
+      nodeX = xn;
+      node.position.x = xn;
+      node.scale.setScalar(mol.rcAvg * 1.3);
+    }
+    setGuides();
+    setPi();
+  }
+
+  // --- Labels ------------------------------------------------------------
+  const L: Record<string, Label> = {};
+  function mkLabel(
+    id: string,
+    opts: {
+      at: () => [number, number, number];
+      dx: number;
+      dy: number;
+      bare?: boolean;
+      noDot?: boolean;
+      show?: () => boolean;
+    },
+  ) {
+    const div = document.createElement("div");
+    div.className = opts.bare ? "dbe-lbl dbe-bare" : "dbe-lbl";
+    m.overlay.appendChild(div);
+    let dot: HTMLDivElement | null = null;
+    if (!opts.noDot) {
+      dot = document.createElement("div");
+      dot.className = "dbe-dot";
+      m.overlay.appendChild(dot);
+    }
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("stroke", SCENE.leader);
+    line.setAttribute("stroke-width", "1");
+    m.svg.appendChild(line);
+    L[id] = {
+      at: opts.at,
+      dx: opts.dx,
+      dy: opts.dy,
+      bare: opts.bare === true,
+      noDot: opts.noDot === true,
+      show: opts.show ?? null,
+      el: div,
+      dot,
+      line,
+      ax: 0,
+      ay: 0,
+      x: 0,
+      y: 0,
+      w: 0,
+      h: 0,
+      fixed: false,
+    };
+  }
+  mkLabel("nucA", { at: () => [-R / 2, 0, 0], dx: -130, dy: -110 });
+  mkLabel("nucB", { at: () => [R / 2, 0, 0], dx: 130, dy: -110 });
+  mkLabel("len", { at: () => [0, met?.dimY ?? 0, 0], dx: 0, dy: 20, bare: true, noDot: true });
+  mkLabel("ang", {
+    at: () => [0, Math.max(R / 2, 5 * (met?.u ?? 0)), 0],
+    dx: 0,
+    dy: -110,
+  });
+  mkLabel("sigma", {
+    at: () => [-R * 0.2, -(met?.rhoMax ?? 0) * 0.6, (met?.rhoMax ?? 0) * 0.5],
+    dx: -170,
+    dy: 110,
+    show: () => sigma.visible,
+  });
+  mkLabel("pi", {
+    at: () => [R * 0.15, (mol?.rcAvg ?? 0) * 1.15, 0],
+    dx: 150,
+    dy: -90,
+    show: () => piGroup.visible && (mol?.nPi ?? 0) > 0,
+  });
+  mkLabel("dens", {
+    at: () => [R * 0.3, (met?.rhoMax ?? 0) * 0.3, (met?.rhoMax ?? 0) * 0.4],
+    dx: 190,
+    dy: 120,
+    show: () => cloud.visible,
+  });
+  mkLabel("axis", { at: () => [(met?.xR ?? 0) + 6 * (met?.u ?? 0), 0, 0], dx: 60, dy: -45 });
+  mkLabel("anti", {
+    at: () => [-R / 2 - (mol?.rcAvg ?? 0) * 0.7, 0, 0],
+    dx: -120,
+    dy: 20,
+    show: () => anti.visible,
+  });
+  mkLabel("node", {
+    at: () => [nodeX, (mol?.rcAvg ?? 0) * 1.3, 0],
+    dx: 110,
+    dy: -70,
+    show: () => anti.visible,
+  });
+
+  let labelsOn = true;
+  let labelAlpha = 1;
+
+  /** The caption pill and the footnote: labels are pushed clear of both. */
+  function obstacles(): Box[] {
+    const o = m.overlay.getBoundingClientRect();
+    return [m.caption, m.note].map((node_) => {
+      const r = node_.getBoundingClientRect();
+      return {
+        x: r.left - o.left + r.width / 2,
+        y: r.top - o.top + r.height / 2,
+        w: r.width,
+        h: r.height,
+        fixed: true,
+      };
+    });
+  }
+
+  function drawLabels() {
+    const cam = stage.camera;
+    const cw = m.stage.clientWidth;
+    const ch = m.stage.clientHeight;
+    const vis: Label[] = [];
+    for (const l of Object.values(L)) {
+      const a = labelsOn && (!l.show || l.show()) ? labelAlpha : 0;
+      l.el.style.opacity = String(a);
+      if (l.dot) l.dot.style.opacity = String(a);
+      l.line.style.opacity = String(l.noDot ? 0 : a);
+      if (a === 0) continue;
+      model.localToWorld(v3.set(...l.at())).project(cam);
+      l.ax = ((v3.x + 1) / 2) * cw;
+      l.ay = ((1 - v3.y) / 2) * ch;
+      l.w = l.el.offsetWidth;
+      l.h = l.el.offsetHeight;
+      l.x = l.ax + l.dx;
+      l.y = l.ay + l.dy;
+      vis.push(l);
+    }
+    const obs = obstacles();
+    const yTop = obs[0]!.y + obs[0]!.h / 2 + 6;
+    const yBot = obs[1]!.y - obs[1]!.h / 2 - 6;
+    const clamp = (l: Box) => {
+      const hw = l.w / 2 + 8;
+      const hh = l.h / 2 + 4;
+      l.x = Math.min(Math.max(l.x, hw), cw - hw);
+      l.y = Math.min(Math.max(l.y, yTop + hh), yBot - hh);
+    };
+    vis.forEach(clamp);
+    for (let pass = 0; pass < 4; pass++) {
+      const all: Box[] = [...obs, ...vis];
+      for (let i = 0; i < all.length; i++)
+        for (let j = Math.max(i + 1, obs.length); j < all.length; j++) {
+          const p = all[i]!;
+          const q = all[j]!;
+          const ox = (p.w + q.w) / 2 + 6 - Math.abs(p.x - q.x);
+          const oy = (p.h + q.h) / 2 + 6 - Math.abs(p.y - q.y);
+          if (ox <= 0 || oy <= 0) continue;
+          const dir = q.y >= p.y ? 1 : -1;
+          if (p.fixed) q.y += dir * oy;
+          else {
+            p.y -= (dir * oy) / 2;
+            q.y += (dir * oy) / 2;
+            clamp(p);
+          }
+          clamp(q);
+        }
+    }
+    for (const l of vis) {
+      l.el.style.left = `${l.x}px`;
+      l.el.style.top = `${l.y}px`;
+      if (l.dot) {
+        l.dot.style.left = `${l.ax}px`;
+        l.dot.style.top = `${l.ay}px`;
+      }
+      if (!l.noDot) {
+        l.line.setAttribute("x1", String(l.ax));
+        l.line.setAttribute("y1", String(l.ay));
+        l.line.setAttribute("x2", String(l.x));
+        l.line.setAttribute("y2", String(l.y));
+      }
+    }
+  }
+
+  // --- Load --------------------------------------------------------------
+  let t0 = performance.now();
+  let lastCap = "";
+
+  function load(info: MoleculeInfo) {
+    mol = info;
+    met = sceneMetrics(info);
+    const { A, B, r } = info;
+    kA = A.k;
+    kB = B.k;
+    [cA, cB] = coeffs(info.pFinal);
+    R = r;
+    model.scale.setScalar(met.s);
+    M.cloud.size = 0.013;
+    M.nucA.color.setHex(A.color);
+    M.nucA.emissive.setHex(A.color);
+    M.nucB.color.setHex(B.color);
+    M.nucB.emissive.setHex(B.color);
+    nucA.scale.setScalar((0.035 + 0.005 * Math.sqrt(A.Z)) / met.s);
+    nucA.name = `${A.sym}_nucleus_A`;
+    nucB.scale.setScalar((0.035 + 0.005 * Math.sqrt(B.Z)) / met.s);
+    nucB.name = `${B.sym}_nucleus_B`;
+    axis.geometry.dispose();
+    axis.geometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(met.xL - 6 * met.u, 0, 0),
+      new THREE.Vector3(met.xR + 6 * met.u, 0, 0),
+    ]);
+    M.axis.dashSize = 3 * met.u;
+    M.axis.gapSize = 2.5 * met.u;
+    axis.computeLineDistances();
+    setState(r, info.pFinal, true);
+    for (let i = 0; i < NPTS; i++) sample(i);
+    cloudGeo.attributes["position"]!.needsUpdate = true;
+    model.name = `${A.sym}${info.homo ? "2" : B.sym}_molecule`;
+    stage.setObject(model);
+    stage.ground.visible = false;
+
+    // Copy
+    const polar = info.type !== "nonpolar covalent";
+    const neg = info.neg;
+    const charge = (X: DiatomicElement) =>
+      !polar
+        ? ""
+        : info.type === "ionic"
+          ? X === neg
+            ? " · anion (−)"
+            : " · cation (+)"
+          : X === neg
+            ? " · δ−"
+            : " · δ+";
+    L["nucA"]!.el.innerHTML =
+      `${A.sym} nucleus<small>Z = ${A.Z} · valence ${A.val}${charge(A)}</small>`;
+    L["nucB"]!.el.innerHTML =
+      `${B.sym} nucleus<small>Z = ${B.Z} · valence ${B.val}${charge(B)}</small>`;
+    L["len"]!.el.innerHTML =
+      `r<sub>e</sub> = ${r.toFixed(3)} Å <span style="color:${SCENE.muted}">(${Math.round(r * 100)} pm)</span>`;
+    L["ang"]!.el.innerHTML =
+      `∠ ${A.sym}–${B.sym} = 180°<small>linear · ${info.homo ? "D∞h" : "C∞v"}</small>`;
+    L["sigma"]!.el.innerHTML =
+      `σ bonding MO<small>${info.type}${polar ? ` · density shifted toward ${neg.sym}` : " · shared equally"} · 2 e⁻ ↑↓</small>`;
+    L["pi"]!.el.innerHTML =
+      `π bond${info.nPi > 1 ? `s ×${info.nPi}` : ""}<small>side-on p-orbital overlap (schematic)</small>`;
+    L["dens"]!.el.innerHTML =
+      `Electron density |ψ<sub>σ</sub>|²<small>bonding-pair probability cloud</small>`;
+    L["axis"]!.el.innerHTML = `internuclear axis<small>C∞ symmetry axis</small>`;
+    L["anti"]!.el.innerHTML = `σ* antibonding MO<small>opposite phases · empty</small>`;
+    L["node"]!.el.innerHTML = `nodal plane<small>ψ = 0 between nuclei</small>`;
+
+    t0 = performance.now();
+  }
+
+  // --- Animation loop ----------------------------------------------------
+  stage.onFrame = () => {
+    if (!mol) return;
+    const t = (performance.now() - t0) / 1000;
+    const forming = t < FORM;
+    const u = ease(Math.min(t / (FORM - 0.5), 1));
+    const start = met?.R0 ?? mol.r;
+    const r = forming
+      ? start + (mol.r - start) * u
+      : mol.r * (1 + 0.025 * Math.sin((t - FORM) * 2 * Math.PI * 0.6));
+    setState(r, mol.pFinal * (forming ? u : 1), anti.visible);
+    piGroup.scale.set(1, forming ? Math.max(u, 0.001) : 1, forming ? Math.max(u, 0.001) : 1);
+    const n = forming ? 1500 : 160;
+    for (let k = 0; k < n; k++) sample((Math.random() * NPTS) | 0);
+    cloudGeo.attributes["position"]!.needsUpdate = true;
+    labelAlpha = forming ? 0 : Math.min((t - FORM) / 0.6, 1);
+    const { A, B } = mol;
+    const c =
+      t < 2.2
+        ? `${A.sym}· + ·${B.sym}  approach`
+        : forming
+          ? mol.type === "ionic"
+            ? `electron density transfers ${mol.dEN > 0 ? `${A.sym} → ${B.sym}` : `${B.sym} → ${A.sym}`}`
+            : `valence orbitals overlap → σ${mol.nPi ? " + π" : ""} bond`
+          : `${mol.formula} · ${mol.type} · bond order ${mol.bo}`;
+    if (c !== lastCap) {
+      m.caption.textContent = c;
+      lastCap = c;
+    }
+    drawLabels();
+  };
+
+  stage.controls.autoRotateSpeed = 0.8;
+
+  return {
+    load,
+    replay() {
+      t0 = performance.now();
+    },
+    setVisible(which: ToggleKey, on: boolean) {
+      if (which === "cloud") cloud.visible = on;
+      else if (which === "sigma") sigma.visible = on;
+      else if (which === "pi") piGroup.visible = on;
+      else {
+        anti.visible = on;
+        setState(R, (cB * cB - cA * cA) / 2, true);
+      }
+    },
+    setLabelsOn(on: boolean) {
+      labelsOn = on;
+    },
+    setAutoRotate(on: boolean) {
+      stage.controls.autoRotate = on;
+    },
+    dispose() {
+      stage.onFrame = null;
+      stage.dispose();
+      model.traverse((o) => {
+        const mesh = o as THREE.Mesh;
+        if (mesh.geometry) mesh.geometry.dispose();
+      });
+      unitSphere.dispose();
+      cloudGeo.dispose();
+      dimGeo.dispose();
+      arcGeo.dispose();
+      for (const mat of Object.values(M)) mat.dispose();
+      for (const l of Object.values(L)) {
+        l.el.remove();
+        l.dot?.remove();
+        l.line.remove();
+      }
+    },
+  };
 }
+
+// --- Overlay CSS ---------------------------------------------------------
+// Descendant selectors (a label's <small>, <sub>) need a stylesheet, so the
+// label chrome lives here rather than in inline styles. Static text, so it is
+// byte-identical on the server and the client.
+const OVERLAY_CSS = `
+.dbe-lbl { opacity: 0; position: absolute; transform: translate(-50%, -50%); font: 500 12px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace; color: ${SCENE.fg}; white-space: nowrap; background: ${SCENE.panel}; border: 1px solid ${SCENE.hairline}; padding: 5px 8px; border-radius: 4px; }
+.dbe-lbl small { display: block; font-weight: 400; color: ${SCENE.muted}; font-size: 11px; }
+.dbe-lbl.dbe-bare { background: none; border: none; padding: 0; text-shadow: 0 0 6px ${SCENE.bg}, 0 0 3px ${SCENE.bg}; }
+.dbe-dot { opacity: 0; position: absolute; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; background: ${SCENE.fg}; }
+.dbe-leaders line { opacity: 0; }
+.dbe-cap { font: 500 12px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; }
+`;
+
+// --- Component -----------------------------------------------------------
+
+type Selection = { a: string; b: string | null };
 
 export function DiatomicBondExplorer() {
-  const [selA, setSelA] = useState<string>("H");
-  const [pendingA, setPendingA] = useState<string | null>(null);
-  const [selB, setSelB] = useState<string>("H");
-  const [yaw, setYaw] = useState(0.5);
-  const [pitch, setPitch] = useState(0.28);
+  const [sel, setSel] = useState<Selection>({ a: "H", b: "H" });
+  const [loaded, setLoaded] = useState<[string, string]>(["H", "H"]);
   const [showCloud, setShowCloud] = useState(true);
   const [showSigma, setShowSigma] = useState(true);
   const [showPi, setShowPi] = useState(true);
   const [showAnti, setShowAnti] = useState(false);
+  const [showLabels, setShowLabels] = useState(true);
   const [autoRotate, setAutoRotate] = useState(true);
-  const [t, setT] = useState(0);
-  const [replayAt, setReplayAt] = useState(0);
-  const dragRef = useRef<{ x: number; y: number } | null>(null);
 
-  const mol: Molecule = useMemo(
-    () => buildMolecule(selA, selB) ?? buildMolecule("H", "H")!,
-    [selA, selB],
-  );
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const captionRef = useRef<HTMLDivElement | null>(null);
+  const noteRef = useRef<HTMLDivElement | null>(null);
+  const explorerRef = useRef<ReturnType<typeof createExplorer> | null>(null);
 
-  // Animation clock. Runs client-side only, so the server render is the
-  // settled molecule at t = 0 rather than a random frame.
+  const info = useMemo(() => moleculeInfo(loaded[0], loaded[1]), [loaded]);
+
+  // The renderer: built once, on the client only. Every WebGL call, every
+  // performance.now() and every Math.random() is downstream of this effect.
   useEffect(() => {
-    let raf = 0;
-    const start = performance.now();
-    const tick = () => {
-      setT((performance.now() - start) / 1000);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [replayAt, selA, selB]);
-
-  useEffect(() => {
-    if (!autoRotate) return;
-    let raf = 0;
-    let last = performance.now();
-    const tick = () => {
-      const now = performance.now();
-      const dt = (now - last) / 1000;
-      last = now;
-      setYaw((y) => y + dt * 0.22);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [autoRotate]);
-
-  const forming = t < FORM_SECONDS;
-  const u = easeInOut(Math.min(t / (FORM_SECONDS - 0.5), 1));
-  // Start far apart, ease to the equilibrium length, then breathe gently.
-  const rStart = mol.r + 1.9 * mol.r;
-  const R = forming
-    ? rStart + (mol.r - rStart) * u
-    : mol.r * (1 + 0.02 * Math.sin((t - FORM_SECONDS) * 2 * Math.PI * 0.55));
-  const pol = mol.polarity * (forming ? u : 1);
-  const [cA, cB] = coeffs(pol);
-
-  // Scene scale, fixed from the settled molecule so it does not jump as the
-  // bond forms.
-  const scale = useMemo(() => {
-    const [cA0, cB0] = coeffs(mol.polarity);
-    const [xL, xR] = axialExtents(mol.r, cA0, cB0, mol.kA, mol.kB, 1);
-    const span = Math.max(xR - xL, mol.r * 2.6);
-    return (VIEW * 0.78) / span;
-  }, [mol]);
-
-  const cloud = useMemo(() => {
-    const [cA0, cB0] = coeffs(mol.polarity);
-    // Deterministic: a seeded generator, so server and client agree and a
-    // re-render never reshuffles the cloud.
-    let seed = 0x2f6e2b1 ^ (mol.A.Z * 73856093) ^ (mol.B.Z * 19349663);
-    const rand = () => {
-      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-      return seed / 0x7fffffff;
-    };
-    return sampleCloud(CLOUD_POINTS, mol.r, cA0, cB0, mol.kA, mol.kB, rand);
-  }, [mol]);
-
-  const prof = useMemo(() => {
-    const [xL, xR] = axialExtents(R, cA, cB, mol.kA, mol.kB, 1);
-    return profile(cosSpace(xL, xR, 120), R, cA, cB, mol.kA, mol.kB, 1);
-  }, [R, cA, cB, mol.kA, mol.kB]);
-
-  const antiProf = useMemo(() => {
-    if (!showAnti) return null;
-    const [xL, xR] = axialExtents(R, cA, cB, mol.kA, mol.kB, -1);
-    const xn = nodeX(R, cA, cB, mol.kA, mol.kB);
-    return {
-      left: profile(cosSpace(xL, xn, 70), R, cA, cB, mol.kA, mol.kB, -1),
-      right: profile(cosSpace(xn, xR, 70), R, cA, cB, mol.kA, mol.kB, -1),
-      xn,
-    };
-  }, [showAnti, R, cA, cB, mol.kA, mol.kB]);
-
-  /* ---- projection ---- */
-  const C = VIEW / 2;
-  const proj = (p: Vec3) => {
-    const [x, y, z] = rotate3d(p, yaw, pitch);
-    return { x: C + x * scale, y: C - y * scale, z };
-  };
-  // Rotated basis. The internuclear axis is +x; the offset directions that
-  // build the surface of revolution are +y and +z.
-  const ex = rotate3d([1, 0, 0], yaw, pitch);
-  const ey = rotate3d([0, 1, 0], yaw, pitch);
-  const ez = rotate3d([0, 0, 1], yaw, pitch);
-  // Screen-space perpendicular to the projected axis.
-  const axLen = Math.hypot(ex[0], ex[1]) || 1e-6;
-  const nx = -ex[1] / axLen;
-  const ny = ex[0] / axLen;
-  // How wide a unit offset circle appears along that perpendicular: the
-  // envelope of the projected circle, which is the same for every x.
-  const offW = Math.hypot(ey[0] * nx + ey[1] * ny, ez[0] * nx + ez[1] * ny);
-
-  const silhouette = (pts: { x: number; rho: number }[]) => {
-    if (pts.length === 0) return "";
-    const top = pts.map((p) => {
-      const c = proj([p.x, 0, 0]);
-      return `${(c.x + p.rho * scale * offW * nx).toFixed(2)},${(c.y - p.rho * scale * offW * ny * -1).toFixed(2)}`;
-    });
-    const bot = [...pts].reverse().map((p) => {
-      const c = proj([p.x, 0, 0]);
-      return `${(c.x - p.rho * scale * offW * nx).toFixed(2)},${(c.y + p.rho * scale * offW * ny * -1).toFixed(2)}`;
-    });
-    return `M${top.join(" L")} L${bot.join(" L")} Z`;
-  };
-
-  const nucRadius = (el: DiatomicElement) =>
-    Math.max(7, (5.2 + 2.4 * Math.sqrt(el.Z)) * (scale / 90));
-
-  // Element tints run from near-white (hydrogen) to mid-tone, so one fixed
-  // label colour is illegible on half of them. Take the ink from the tint's
-  // own luminance instead.
-  const labelInk = (hex: string) => {
-    const n = parseInt(hex.slice(1), 16);
-    const r = (n >> 16) & 255;
-    const g = (n >> 8) & 255;
-    const b = n & 255;
-    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.55
-      ? "var(--foreground)"
-      : "var(--card)";
-  };
-  const pA = proj([-R / 2, 0, 0]);
-  const pB = proj([R / 2, 0, 0]);
-
-  const piVisible = showPi && mol.nPi > 0 && !forming;
-  const piLobes = useMemo(() => {
-    if (mol.nPi === 0) return [];
-    const dirs: Vec3[] =
-      mol.nPi >= 2
-        ? [
-            [0, 1, 0],
-            [0, -1, 0],
-            [0, 0, 1],
-            [0, 0, -1],
-          ]
-        : [
-            [0, 1, 0],
-            [0, -1, 0],
-          ];
-    return dirs;
-  }, [mol.nPi]);
-
-  const projectedCloud = useMemo(() => {
-    if (!showCloud) return [];
-    return cloud.map((p) => ({ ...p, pr: proj(p.pos) })).sort((a, b) => a.pr.z - b.pr.z);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cloud, showCloud, yaw, pitch, scale]);
-
-  const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>) => {
-    dragRef.current = { x: e.clientX, y: e.clientY };
-    setAutoRotate(false);
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-  const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>) => {
-    if (!dragRef.current) return;
-    const dx = e.clientX - dragRef.current.x;
-    const dy = e.clientY - dragRef.current.y;
-    dragRef.current = { x: e.clientX, y: e.clientY };
-    setYaw((y) => y + dx * 0.01);
-    setPitch((p) => Math.max(-1.4, Math.min(1.4, p - dy * 0.01)));
-  };
-  const onPointerUp = () => {
-    dragRef.current = null;
-  };
-
-  /* ---- element picker ---- */
-  const choosing = pendingA !== null;
-  const allowed = choosing ? partnersOf(pendingA) : null;
-  const pick = (sym: string) => {
-    const el = ELEMENTS[sym];
-    if (!el || el.en == null) return;
-    if (!choosing) {
-      setPendingA(sym);
+    const stage = stageRef.current;
+    const overlay = overlayRef.current;
+    const svg = svgRef.current;
+    const caption = captionRef.current;
+    const note = noteRef.current;
+    if (!stage || !overlay || !svg || !caption || !note) return;
+    let explorer: ReturnType<typeof createExplorer> | null = null;
+    try {
+      explorer = createExplorer({ stage, overlay, svg, caption, note });
+    } catch {
+      // No WebGL context available — the placeholder and the whole sidebar,
+      // which is plain markup, stay usable.
       return;
     }
-    if (allowed?.has(sym)) {
-      setSelA(pendingA);
-      setSelB(sym);
-      setPendingA(null);
-      setReplayAt((n) => n + 1);
+    explorerRef.current = explorer;
+    // No readiness flag: every effect below is declared after this one, so on
+    // mount it runs after the explorer exists, in the same commit. The load
+    // effect is what puts the first molecule on the stage.
+    return () => {
+      explorerRef.current = null;
+      explorer.dispose();
+    };
+  }, []);
+
+  useEffect(() => {
+    explorerRef.current?.load(info);
+  }, [info]);
+
+  useEffect(() => {
+    explorerRef.current?.setVisible("cloud", showCloud);
+  }, [showCloud]);
+  useEffect(() => {
+    explorerRef.current?.setVisible("sigma", showSigma);
+  }, [showSigma]);
+  useEffect(() => {
+    explorerRef.current?.setVisible("pi", showPi);
+  }, [showPi, info]);
+  useEffect(() => {
+    explorerRef.current?.setVisible("anti", showAnti);
+  }, [showAnti]);
+  useEffect(() => {
+    explorerRef.current?.setLabelsOn(showLabels);
+  }, [showLabels]);
+  useEffect(() => {
+    explorerRef.current?.setAutoRotate(autoRotate);
+  }, [autoRotate]);
+
+  const choosing = sel.b === null;
+  const ok = useMemo(() => (choosing ? partners(sel.a) : null), [choosing, sel.a]);
+
+  const pick = (s: string) => {
+    if (el(s).en == null) return;
+    if (sel.b !== null) {
+      setSel({ a: s, b: null });
+    } else if (partners(sel.a).has(s)) {
+      setSel({ a: sel.a, b: s });
+      setLoaded([sel.a, s]);
     }
   };
 
-  const caption = forming
-    ? t < 2.2
-      ? `${mol.A.sym}· + ·${mol.B.sym} — approaching`
-      : mol.type === "ionic"
-        ? `electron density transfers ${mol.dEN > 0 ? `${mol.A.sym} → ${mol.B.sym}` : `${mol.B.sym} → ${mol.A.sym}`}`
-        : `valence orbitals overlap → σ${mol.nPi ? " + π" : ""} bond`
-    : `${mol.formula} · ${mol.type} · bond order ${mol.bondOrder}`;
+  const piDisabled = info.nPi === 0;
+  const absEN = Math.abs(info.dEN);
 
-  const neg = mol.dEN > 0 ? mol.B : mol.A;
-  const moDisagrees = mol.moBondOrder !== mol.bondOrder;
+  const stageLabel =
+    `Three-dimensional view of ${info.formula}: two nuclei ${info.r.toFixed(3)} ångström apart, ` +
+    `joined by a sigma bonding molecular orbital drawn as an isosurface` +
+    (info.nPi > 0 ? ` plus ${info.nPi} pi bond${info.nPi > 1 ? "s" : ""}` : "") +
+    `, with a Monte-Carlo electron density cloud ` +
+    (info.type === "nonpolar covalent"
+      ? "shared equally between the two atoms"
+      : `shifted toward ${info.neg.sym}`) +
+    `. Bond order ${info.bo}. Drag to orbit, scroll to zoom.`;
 
   return (
-    <div className="grid gap-8 lg:grid-cols-12">
-      <div className="space-y-5 lg:col-span-7">
-        <div>
-          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Diatomic molecule
-          </span>
-          <p className="text-2xl font-bold">
-            {mol.formula}{" "}
-            <span className="text-base font-normal text-muted-foreground">
-              {mol.homonuclear ? `${mol.A.name} · homonuclear` : `${mol.A.name} + ${mol.B.name}`}
-            </span>
-          </p>
-        </div>
+    <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+      <style>{OVERLAY_CSS}</style>
 
-        <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-          <svg
-            viewBox={`0 0 ${VIEW} ${VIEW}`}
-            className="h-full w-full cursor-grab touch-none active:cursor-grabbing"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
+      {/* Stage. Order flips so the sidebar sits to the left on wide screens and
+          wraps below the scene on narrow ones. */}
+      <div className="order-1 min-w-0 flex-1 lg:order-2">
+        <div
+          className="relative aspect-[16/10] min-h-[320px] overflow-hidden rounded-xl border border-border shadow-sm"
+          style={{ background: SCENE.bg }}
+        >
+          <div
+            ref={stageRef}
+            className="absolute inset-0 touch-none"
             role="img"
-            aria-label={`Three-dimensional view of ${mol.formula}: two nuclei joined by a sigma molecular orbital, with the electron density ${mol.type === "nonpolar covalent" ? "shared equally" : `shifted toward ${neg.sym}`}. Bond length ${mol.r.toFixed(3)} angstroms, bond order ${mol.bondOrder}.`}
-          >
-            {/* internuclear axis */}
-            <line
-              x1={proj([-R / 2 - mol.r * 0.55, 0, 0]).x}
-              y1={proj([-R / 2 - mol.r * 0.55, 0, 0]).y}
-              x2={proj([R / 2 + mol.r * 0.55, 0, 0]).x}
-              y2={proj([R / 2 + mol.r * 0.55, 0, 0]).y}
-              stroke="var(--fig-axis)"
-              strokeWidth={1}
-              strokeDasharray="4 4"
+            aria-label={stageLabel}
+          />
+          <div ref={overlayRef} className="pointer-events-none absolute inset-0 overflow-hidden">
+            <svg ref={svgRef} className="dbe-leaders absolute inset-0 h-full w-full" />
+            <div
+              ref={captionRef}
+              className="dbe-cap absolute left-3 top-3 whitespace-nowrap rounded-full border px-4 py-1.5"
+              style={{ color: SCENE.fg, background: SCENE.panel, borderColor: SCENE.hairline }}
             />
-
-            {/* sigma* antibonding, drawn under the bonding surface */}
-            {antiProf && (
-              <g>
-                <path
-                  d={silhouette(antiProf.left)}
-                  fill="var(--fig-1)"
-                  opacity={0.2}
-                  stroke="var(--fig-1)"
-                  strokeWidth={1}
-                />
-                <path
-                  d={silhouette(antiProf.right)}
-                  fill="var(--fig-2)"
-                  opacity={0.2}
-                  stroke="var(--fig-2)"
-                  strokeWidth={1}
-                />
-                <ellipse
-                  cx={proj([antiProf.xn, 0, 0]).x}
-                  cy={proj([antiProf.xn, 0, 0]).y}
-                  rx={Math.max(2, 0.9 * scale * offW)}
-                  ry={Math.max(2, 0.9 * scale * Math.abs(ex[2]) + 1)}
-                  transform={`rotate(${(Math.atan2(ny, nx) * 180) / Math.PI} ${proj([antiProf.xn, 0, 0]).x} ${proj([antiProf.xn, 0, 0]).y})`}
-                  fill="none"
-                  stroke="var(--fig-1)"
-                  strokeWidth={1}
-                  strokeDasharray="3 3"
-                  opacity={0.7}
-                />
-              </g>
-            )}
-
-            {/* pi lobes */}
-            {piVisible &&
-              piLobes.map((d, i) => {
-                const off: Vec3 = [0, d[1] * mol.A.rc * 0.95, d[2] * mol.A.rc * 0.95];
-                const c = proj(off);
-                const along = Math.hypot(ex[0], ex[1]) * scale * (R / 2 + 0.28);
-                return (
-                  <ellipse
-                    key={i}
-                    cx={c.x}
-                    cy={c.y}
-                    rx={Math.max(3, along)}
-                    ry={Math.max(3, mol.A.rc * 0.5 * scale * offW)}
-                    transform={`rotate(${(Math.atan2(-ex[1], ex[0]) * 180) / Math.PI} ${c.x} ${c.y})`}
-                    fill="var(--fig-3)"
-                    opacity={0.22}
-                    stroke="var(--fig-3)"
-                    strokeWidth={1}
-                  />
-                );
-              })}
-
-            {/* sigma bonding isosurface */}
-            {showSigma && (
-              <path
-                d={silhouette(prof)}
-                fill="var(--fig-2)"
-                opacity={0.17}
-                stroke="var(--fig-2)"
-                strokeWidth={1.25}
-              />
-            )}
-
-            {/* electron density */}
-            {projectedCloud.map((p, i) => (
-              <circle
-                key={i}
-                cx={p.pr.x}
-                cy={p.pr.y}
-                r={0.9 / (1.5 - p.pr.z * 0.02)}
-                fill="var(--fig-2)"
-                opacity={0.5}
-              />
-            ))}
-
-            {/* nuclei, painted back to front */}
-            {(pA.z <= pB.z
-              ? [
-                  [pA, mol.A],
-                  [pB, mol.B],
-                ]
-              : [
-                  [pB, mol.B],
-                  [pA, mol.A],
-                ]
-            ).map(([p, el], i) => {
-              const pt = p as { x: number; y: number; z: number };
-              const e = el as DiatomicElement;
-              return (
-                <g key={i}>
-                  <circle cx={pt.x} cy={pt.y} r={nucRadius(e)} fill={e.color} />
-                  <circle
-                    cx={pt.x}
-                    cy={pt.y}
-                    r={nucRadius(e)}
-                    fill="none"
-                    stroke="var(--foreground)"
-                    strokeWidth={0.75}
-                    opacity={0.35}
-                  />
-                  <text
-                    x={pt.x}
-                    y={pt.y + 3.5}
-                    textAnchor="middle"
-                    fontSize={10}
-                    fontWeight={700}
-                    fill={labelInk(e.color)}
-                  >
-                    {e.sym}
-                  </text>
-                </g>
-              );
-            })}
-
-            <AxisGizmo yaw={yaw} pitch={pitch} cx={34} cy={34} radius={19} />
-          </svg>
-          <p className="pointer-events-none absolute bottom-3 left-3 right-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            {caption}
-          </p>
+            <div
+              ref={noteRef}
+              className="absolute bottom-3 left-3 max-w-[60%] text-[11px] leading-snug"
+              style={{ color: SCENE.dim }}
+            >
+              Schematic two-center LCAO model · nuclei enlarged · vibration exaggerated · values ≈
+              gas-phase diatomic data
+            </div>
+            <div
+              className="absolute bottom-3 right-3 text-[11px]"
+              style={{ color: SCENE.dim }}
+              aria-hidden="true"
+            >
+              Drag to orbit · scroll to zoom · right-drag to pan
+            </div>
+          </div>
         </div>
-
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-          <Toggle
-            checked={showCloud}
-            onChange={setShowCloud}
-            color="var(--fig-2)"
-            label="Density |ψ|²"
-          />
-          <Toggle
-            checked={showSigma}
-            onChange={setShowSigma}
-            color="var(--fig-2)"
-            label="σ bonding"
-          />
-          <Toggle
-            checked={showPi}
-            onChange={setShowPi}
-            color="var(--fig-3)"
-            label={`π bond${mol.nPi > 1 ? `s ×${mol.nPi}` : ""}`}
-            disabled={mol.nPi === 0}
-          />
-          <Toggle
-            checked={showAnti}
-            onChange={setShowAnti}
-            color="var(--fig-1)"
-            label="σ* antibonding"
-          />
-          <Toggle
-            checked={autoRotate}
-            onChange={setAutoRotate}
-            color="var(--muted-foreground)"
-            label="Auto-rotate"
-          />
-          <button
-            onClick={() => setReplayAt((n) => n + 1)}
-            className="rounded-full border border-border px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors hover:bg-secondary"
-          >
-            Replay bond formation
-          </button>
-        </div>
-        <p className="font-mono text-[10px] leading-relaxed text-muted-foreground">
-          Schematic two-centre LCAO model: the orbital is built from two Slater-like atomic
-          functions whose decay is set by each element&apos;s covalent radius, drawn at a fixed |ψ|
-          contour. Nuclei are enlarged and the vibration is exaggerated. Bond length, bond energy
-          and bond order are measured gas-phase values, not model output.
-        </p>
       </div>
 
-      <aside className="space-y-5 lg:col-span-5">
-        <div className="rounded-xl border border-border bg-card p-5">
-          <h3 className="mb-1 font-mono text-xs font-bold uppercase tracking-widest">
-            {choosing ? "Pick a partner" : "Choose two elements"}
+      {/* Sidebar */}
+      <div className="order-2 w-full space-y-4 lg:order-1 lg:w-[312px] lg:flex-none">
+        <section className="rounded-xl border border-border bg-card p-4">
+          <h3 className="mb-2.5 font-mono text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            Choose two elements
           </h3>
-          <p className="mb-3 font-mono text-[10px] text-muted-foreground">
-            {choosing
-              ? `${ELEMENTS[pendingA]!.name} + … · ${allowed?.size ?? 0} option${allowed?.size === 1 ? "" : "s"}`
-              : `showing ${mol.formula} — click an element to start a new bond`}
-          </p>
-          <div className="grid grid-cols-8 gap-1">
-            {Array.from({ length: 3 }).flatMap((_, r) =>
-              Array.from({ length: 8 }).map((__, c) => {
-                const row = r + 1;
-                const col = c + 1;
-                const el = Object.values(ELEMENTS).find((x) => x.row === row && x.col === col);
-                if (!el) return <div key={`${row}-${col}`} />;
-                const noble = el.en == null;
-                const off = noble || (choosing && !allowed?.has(el.sym));
-                const isA = !choosing && el.sym === selA;
-                const isB = !choosing && el.sym === selB && selB !== selA;
-                const isPending = choosing && el.sym === pendingA;
+          <div className="grid grid-cols-8 gap-1" role="group" aria-label="Element picker">
+            {[1, 2, 3].flatMap((row) =>
+              [1, 2, 3, 4, 5, 6, 7, 8].map((column) => {
+                const e = ELEMENT_LIST.find((x) => x.row === row && x.col === column);
+                if (!e) return <div key={`${row}-${column}`} />;
+                const noble = e.en == null;
+                const off = noble || (choosing && ok !== null && !ok.has(e.sym));
+                const isA = e.sym === sel.a;
+                const isB = e.sym === sel.b && sel.b !== sel.a;
+                const accent = isA ? PANEL.sigma : isB ? PANEL.anti : null;
                 return (
                   <button
-                    key={`${row}-${col}`}
-                    onClick={() => pick(el.sym)}
-                    disabled={off}
+                    key={`${row}-${column}`}
+                    type="button"
+                    onClick={() => pick(e.sym)}
+                    aria-disabled={off}
+                    aria-pressed={isA || isB}
                     title={
-                      noble ? `${el.name} — noble gas, forms no stable diatomic here` : el.name
+                      noble
+                        ? `${e.name} — noble gas, forms no stable diatomic bond`
+                        : choosing && off
+                          ? `${e.name} — no tabulated diatomic with ${el(sel.a).name}`
+                          : e.name
                     }
-                    className={`rounded border px-0.5 py-1 text-[10px] font-bold leading-none transition-colors ${
-                      isPending || isA || isB
-                        ? "border-accent bg-accent/10 text-accent"
-                        : off
-                          ? "border-border/50 text-muted-foreground/40"
-                          : "border-border hover:bg-secondary"
-                    }`}
+                    aria-label={`${e.name}, atomic number ${e.Z}`}
+                    className={`flex aspect-square flex-col items-center justify-center gap-px rounded-md border text-sm font-bold leading-none transition-opacity ${
+                      off ? "cursor-not-allowed opacity-25" : "hover:bg-secondary"
+                    } ${accent ? "" : "border-border bg-secondary/40"}`}
+                    style={
+                      accent
+                        ? { borderColor: accent, background: `${accent}2e`, color: "inherit" }
+                        : undefined
+                    }
                   >
-                    {el.sym}
-                    <span className="mt-0.5 block font-mono text-[7px] font-normal opacity-60">
-                      {el.Z}
+                    {e.sym}
+                    <span className="font-mono text-[9px] font-normal not-italic text-muted-foreground">
+                      {e.Z}
                     </span>
                   </button>
                 );
               }),
             )}
           </div>
-        </div>
+          <p className="mt-2.5 min-h-4 text-xs text-muted-foreground" aria-live="polite">
+            {choosing && ok !== null ? (
+              <>
+                Pick a partner for <b className="font-medium text-foreground">{el(sel.a).name}</b> ·{" "}
+                {ok.size} option{ok.size === 1 ? "" : "s"}
+              </>
+            ) : (
+              <>
+                Showing <b className="font-medium text-foreground">{info.formula}</b> · pick a first
+                element to start a new bond
+              </>
+            )}
+          </p>
+        </section>
 
-        <div className="rounded-xl border border-border bg-card p-5">
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-            <Fact
-              k="Bond length rₑ"
-              v={`${mol.r.toFixed(3)} Å`}
-              sub={`${Math.round(mol.r * 100)} pm`}
-            />
-            <Fact k="Bond energy D₀" v={`${mol.D} kJ/mol`} />
-            <Fact
-              k="Bond order"
-              v={String(mol.bondOrder)}
-              sub={moDisagrees ? `simple MO filling gives ${mol.moBondOrder}` : undefined}
-            />
-            <Fact k="Point group" v={mol.pointGroup} sub="linear" />
-            <Fact k="Bond type" v={mol.type} />
-            <Fact
-              k="ΔEN (Pauling)"
-              v={Math.abs(mol.dEN).toFixed(2)}
-              sub={mol.type === "nonpolar covalent" ? "shared equally" : `δ− on ${neg.sym}`}
-            />
+        <section className="rounded-xl border border-border bg-card p-4">
+          <h1 className="text-[22px] font-semibold leading-tight tracking-tight">{info.formula}</h1>
+          <p className="mb-3 text-[13px] text-muted-foreground">
+            {info.homo ? `${info.A.name} · homonuclear` : `${info.A.name} + ${info.B.name}`}
+          </p>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-1.5 text-[12.5px]">
+            <Fact k={<>Bond length r&#8337;</>} v={`${info.r.toFixed(3)} Å`} />
+            <Fact k="Bond angle" v="180° (linear)" />
+            <Fact k="Point group" v={info.homo ? "D∞h" : "C∞v"} />
+            <Fact k="Bond order" v={String(info.bo)} />
+            <Fact k={<>Bond energy D&#8320;</>} v={`≈ ${info.D} kJ/mol`} />
+            <Fact k="Bond type" v={info.type} />
+            <Fact k="ΔEN (Pauling)" v={absEN.toFixed(2)} />
             <Fact
               k="Valence e⁻"
-              v={String(mol.A.ve + mol.B.ve)}
-              sub={mol.unpaired ? `${mol.unpaired} unpaired — paramagnetic` : "all paired"}
+              v={`${info.ve}${info.unpaired ? ` · ${info.unpaired} unpaired` : ""}`}
             />
           </dl>
-        </div>
+        </section>
 
-        <div className="rounded-xl border border-border bg-card p-5">
-          <h3 className="mb-3 font-mono text-xs font-bold uppercase tracking-widest">
-            Valence MO diagram
+        <section className="rounded-xl border border-border bg-card p-4">
+          <h3 className="mb-2.5 font-mono text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            Valence MO energy diagram
           </h3>
-          <MODiagramView mol={mol} />
-          <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
-            <LegendDot color={MO_COLOR.bonding_sigma} label="σ bonding" />
-            <LegendDot color={MO_COLOR.bonding_pi} label="π bonding" />
-            <LegendDot color={MO_COLOR.antibonding} label="antibonding" />
-            <LegendDot color={MO_COLOR.nonbonding} label="nonbonding" />
+          <MODiagram info={info} />
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5 text-[10.5px] text-muted-foreground">
+            <LegendKey color={PANEL.sigma} label="σ bonding" />
+            <LegendKey color={PANEL.pi} label="π bonding" />
+            <LegendKey color={PANEL.anti} label="antibonding" />
+            <LegendKey color={PANEL.nonbonding} label="nonbonding" />
           </div>
-        </div>
-      </aside>
+        </section>
+
+        <section className="rounded-xl border border-border bg-card p-4">
+          <h3 className="sr-only">Display controls</h3>
+          <div className="grid grid-cols-2 gap-x-2.5 gap-y-2 text-xs">
+            <Toggle
+              checked={showCloud}
+              onChange={setShowCloud}
+              color={PANEL.cloud}
+              label="Density |ψ|²"
+            />
+            <Toggle
+              checked={showSigma}
+              onChange={setShowSigma}
+              color={PANEL.sigma}
+              label="σ bonding"
+            />
+            <Toggle
+              checked={showPi}
+              onChange={setShowPi}
+              color={PANEL.pi}
+              label="π bonds"
+              disabled={piDisabled}
+              disabledHint={`${info.formula} has no π bond`}
+            />
+            <Toggle
+              checked={showAnti}
+              onChange={setShowAnti}
+              color={PANEL.anti}
+              label="σ* antibonding"
+            />
+            <Toggle
+              checked={showLabels}
+              onChange={setShowLabels}
+              color={PANEL.neutral}
+              label="Labels"
+            />
+            <Toggle
+              checked={autoRotate}
+              onChange={setAutoRotate}
+              color={PANEL.recessive}
+              label="Auto-rotate"
+            />
+            <button
+              type="button"
+              onClick={() => explorerRef.current?.replay()}
+              className="col-span-2 mt-1 rounded-md bg-primary px-2.5 py-2 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Replay bond formation
+            </button>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
 
-function Fact({ k, v, sub }: { k: string; v: string; sub?: string | undefined }) {
+function Fact({ k, v }: { k: ReactNode; v: string }) {
   return (
-    <div>
-      <dt className="font-mono text-[9px] uppercase tracking-wide text-muted-foreground">{k}</dt>
-      <dd className="font-bold">{v}</dd>
-      {sub && <dd className="font-mono text-[9px] text-muted-foreground">{sub}</dd>}
-    </div>
+    <>
+      <dt className="text-muted-foreground">{k}</dt>
+      <dd className="m-0 text-right font-mono tabular-nums">{v}</dd>
+    </>
   );
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
+function LegendKey({ color, label }: { color: string; label: string }) {
   return (
     <span className="flex items-center gap-1.5">
-      <span className="h-2 w-2 rounded-sm border" style={{ borderColor: color }} />
+      <span aria-hidden="true" className="h-0 w-3 border-t-2" style={{ borderColor: color }} />
       {label}
     </span>
   );
@@ -650,158 +1000,176 @@ function Toggle({
   onChange,
   color,
   label,
-  disabled,
+  disabled = false,
+  disabledHint,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   color: string;
   label: string;
   disabled?: boolean;
+  disabledHint?: string;
 }) {
   return (
     <label
-      className={`flex items-center gap-2 ${disabled ? "opacity-35" : "cursor-pointer"}`}
-      title={disabled ? "This molecule has no π bond" : undefined}
+      className={`flex items-center gap-2.5 ${disabled ? "opacity-35" : "cursor-pointer"}`}
+      {...(disabled && disabledHint ? { title: disabledHint } : {})}
     >
       <input
         type="checkbox"
-        checked={checked && !disabled}
+        checked={checked}
         disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
-        className="sr-only"
+        className="m-0 accent-[var(--accent)]"
       />
       <span
         aria-hidden="true"
-        className="h-2.5 w-2.5 rounded-sm border"
-        style={{ borderColor: color, background: checked && !disabled ? color : "transparent" }}
+        className="h-2.5 w-2.5 flex-none rounded-sm"
+        style={{ background: color }}
       />
       {label}
     </label>
   );
 }
 
-/** Atomic orbitals on each side, molecular orbitals in the middle. */
-function MODiagramView({ mol }: { mol: Molecule }) {
-  const { diagram: d, A, B } = mol;
+// --- MO diagram ----------------------------------------------------------
+
+/**
+ * Atomic orbitals on each side, molecular orbitals in the middle, each level a
+ * horizontal rule carrying its Hund's-rule arrows. Same absolute pixel geometry
+ * as the artifact; the vertical placement of the atomic-orbital columns is
+ * indicative, not measured.
+ */
+function MODiagram({ info }: { info: MoleculeInfo }) {
+  const d = info.diagram;
+  const { A, B } = info;
   const N = d.levels.length;
-  const W = 260;
-  const gap = 26;
-  const top = 18;
-  const H = top + (N - 1) * gap + 26;
-  const yOf = (i: number) => top + (N - 1 - i) * gap;
+  const gap = 30;
+  const top = 34;
+  const H = top + (N - 1) * gap + 22;
+  const y = (i: number) => top + (N - 1 - i) * gap;
+  const idx = (name: string) => d.levels.findIndex((l) => l.name === name);
+  const col = (l: MOLevel) =>
+    l.sign < 0
+      ? PANEL.anti
+      : l.sign === 0
+        ? PANEL.nonbonding
+        : l.kind === "p"
+          ? PANEL.pi
+          : PANEL.sigma;
 
-  const box = (filled: number, x: number, y: number, color: string, key: string) => (
-    <g key={key}>
-      <rect
-        x={x}
-        y={y - 6}
-        width={15}
-        height={12}
-        rx={2}
-        fill="none"
-        stroke={color}
-        strokeWidth={1.25}
-      />
-      <text x={x + 7.5} y={y + 3.5} textAnchor="middle" fontSize={8} className="fill-foreground">
-        {filled === 2 ? "↑↓" : filled === 1 ? "↑" : ""}
-      </text>
-    </g>
-  );
+  const boxes = (e: number, g: number, c: string, key: string) =>
+    hund(e, g).map((k, i) => (
+      <div
+        key={`${key}-${i}`}
+        className="relative h-0 w-[18px] border-t-2"
+        style={{ borderColor: c }}
+      >
+        <span
+          className="absolute -left-1.5 -right-1.5 bottom-0.5 text-center text-[12px] leading-none"
+          style={{ color: PANEL.neutral }}
+        >
+          {k === 2 ? "↑↓" : k === 1 ? "↑" : ""}
+        </span>
+      </div>
+    ));
 
-  const boxes = (e: number, g: number, x0: number, y: number, color: string, key: string) =>
-    hund(e, g).map((f, i) => box(f, x0 + i * 18, y, color, `${key}-${i}`));
-
-  // Atomic-orbital columns. Their vertical placement is indicative only --
-  // this diagram shows which orbitals combine and how the result fills, not
-  // measured orbital energies.
-  const aoRows = (X: DiatomicElement) => {
+  const ao = (X: DiatomicElement) => {
+    const out: { nm: string; g: number; e: number; i: number }[] = [];
     const sE = X.sym === "H" ? 1 : Math.min(2, X.ve);
     const pE = X.col >= 3 ? X.ve - 2 : 0;
-    const shift = A.sym === B.sym ? 0 : X === d.neg ? -0.35 : 0.35;
-    const rows: { nm: string; g: number; e: number; i: number }[] = [
-      { nm: `${X.row}s`, g: 1, e: sE, i: 0.6 + shift },
-    ];
-    if (X.col >= 3) rows.push({ nm: `${X.row}p`, g: 3, e: pE, i: N - 2.2 + shift });
-    return rows;
+    const shift = A.sym === B.sym ? 0 : X === d.neg ? -0.3 : 0.3;
+    let ys: number;
+    let yp = 0;
+    if (d.type === "s") ys = 0.5 + shift;
+    else if (d.type === "h") {
+      if (X.sym === "H") ys = (idx("σ") + idx("σ*")) / 2;
+      else {
+        ys = idx(`${X.sym} ${X.row}s`);
+        yp = idx(`${X.sym} ${X.row}p`);
+      }
+    } else if (d.type === "i") {
+      ys = idx(`${X.sym} ${X.row}s`);
+      yp = idx(`${X.sym} ${X.row}p`);
+      if (yp < 0) yp = ys + 1.5;
+    } else {
+      ys = 0.5 + shift;
+      yp = 3.5 + shift;
+    }
+    out.push({ nm: `${X.row}s`, g: 1, e: sE, i: ys });
+    if (X.col >= 3) out.push({ nm: `${X.row}p`, g: 3, e: pE, i: yp });
+    return out;
   };
 
+  const aoColumn = (X: DiatomicElement, x0: number, side: string) =>
+    ao(X).flatMap((o) => [
+      <div
+        key={`${side}-l-${o.nm}`}
+        className="absolute flex -translate-y-px gap-1"
+        style={{ left: `${x0}px`, top: `${y(o.i)}px` }}
+      >
+        {boxes(o.e, o.g, PANEL.neutral, `${side}-${o.nm}`)}
+      </div>,
+      <div
+        key={`${side}-n-${o.nm}`}
+        className="absolute -translate-y-1/2 whitespace-nowrap text-[10.5px]"
+        style={{ left: `${x0}px`, top: `${y(o.i) + 10}px`, color: PANEL.recessive }}
+      >
+        {o.nm}
+      </div>,
+    ]);
+
   return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      className="h-auto w-full"
-      role="img"
-      aria-label={`Valence molecular orbital diagram for ${mol.formula}: ${d.levels.map((l) => `${l.name} holding ${l.e} electrons`).join(", ")}. Bond order ${d.bondOrder}.`}
-    >
-      <text x={14} y={10} fontSize={8} fontWeight={700} className="fill-muted-foreground">
-        {A.sym}
-      </text>
-      <text
-        x={W / 2}
-        y={10}
-        textAnchor="middle"
-        fontSize={8}
-        fontWeight={700}
-        className="fill-muted-foreground"
+    <div className="overflow-x-auto">
+      <div
+        className="relative font-mono text-[11px]"
+        style={{ height: `${H}px`, width: "278px" }}
+        role="img"
+        aria-label={`Valence molecular orbital diagram for ${info.formula}: ${d.levels
+          .map((l) => `${l.name} holding ${l.e} electron${l.e === 1 ? "" : "s"}`)
+          .join(", ")}. Bond order ${info.bo}${
+          info.unpaired ? `, ${info.unpaired} unpaired electrons` : ", all electrons paired"
+        }.`}
       >
-        {mol.formula}
-      </text>
-      <text
-        x={W - 14}
-        y={10}
-        textAnchor="end"
-        fontSize={8}
-        fontWeight={700}
-        className="fill-muted-foreground"
-      >
-        {B.sym}
-      </text>
+        {[
+          { left: 0, text: A.sym, k: "hA" },
+          { left: 98, text: info.formula, k: "hM" },
+          { left: 214, text: B.sym, k: "hB" },
+        ].map((h) => (
+          <div
+            key={h.k}
+            className="absolute top-0 w-16 text-center text-[11px]"
+            style={{ left: `${h.left}px`, color: PANEL.recessive }}
+          >
+            {h.text}
+          </div>
+        ))}
 
-      {aoRows(A).flatMap((o) => [
-        ...boxes(o.e, o.g, 6, yOf(o.i), "var(--border)", `ao-a-${o.nm}`),
-        <text
-          key={`ao-a-l-${o.nm}`}
-          x={6}
-          y={yOf(o.i) + 15}
-          fontSize={7}
-          className="fill-muted-foreground"
-        >
-          {o.nm}
-        </text>,
-      ])}
+        {aoColumn(A, 0, "ao-a")}
 
-      {d.levels.map((l, i) => {
-        const w = l.g * 15 + (l.g - 1) * 3;
-        const x0 = W / 2 - w / 2;
-        return (
-          <g key={l.name}>
-            {boxes(l.e, l.g, x0, yOf(i), levelColor(l), `mo-${l.name}`)}
-            <text x={x0 + w + 5} y={yOf(i) + 3} fontSize={7.5} fill={levelColor(l)}>
-              {l.name}
-            </text>
-          </g>
-        );
-      })}
+        {d.levels.map((l, i) => {
+          const w = l.g * 18 + (l.g - 1) * 4;
+          const x0 = 130 - w / 2;
+          return (
+            <div key={l.name}>
+              <div
+                className="absolute flex -translate-y-px gap-1"
+                style={{ left: `${x0}px`, top: `${y(i)}px` }}
+              >
+                {boxes(l.e, l.g, col(l), `mo-${l.name}`)}
+              </div>
+              <div
+                className="absolute -translate-y-1/2 whitespace-nowrap text-[10.5px]"
+                style={{ left: `${x0 + w + 6}px`, top: `${y(i)}px`, color: col(l) }}
+              >
+                {l.name}
+              </div>
+            </div>
+          );
+        })}
 
-      {aoRows(B).flatMap((o) => [
-        ...boxes(
-          o.e,
-          o.g,
-          W - 6 - (o.g * 15 + (o.g - 1) * 3),
-          yOf(o.i),
-          "var(--border)",
-          `ao-b-${o.nm}`,
-        ),
-        <text
-          key={`ao-b-l-${o.nm}`}
-          x={W - 6}
-          y={yOf(o.i) + 15}
-          textAnchor="end"
-          fontSize={7}
-          className="fill-muted-foreground"
-        >
-          {o.nm}
-        </text>,
-      ])}
-    </svg>
+        {aoColumn(B, 214, "ao-b")}
+      </div>
+    </div>
   );
 }
