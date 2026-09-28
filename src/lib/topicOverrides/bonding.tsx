@@ -22,6 +22,7 @@ export const bondingOverrides: Record<string, TopicOverride> = {
             "Subtract the two electronegativities and use the difference, ΔEN, as a guide. Below about 0.4 the bond is nonpolar covalent; from 0.4 to about 1.7 it is polar covalent; above about 1.7 it is usually treated as ionic. These cutoffs are rough, not laws.",
             "Worked example. In NaCl, sodium is 0.93 and chlorine is 3.16, so ΔEN = 2.23 — ionic. In HCl, hydrogen is 2.20 and chlorine is 3.16, so ΔEN = 0.96 — polar covalent, with the chlorine end partly negative. In Cl₂ both atoms are 3.16, so ΔEN = 0 — nonpolar covalent, a perfectly even share.",
           ],
+          figure: "bond-ionic-covalent-continuum",
         },
         {
           heading: "Lattice energy: why ionic solids are so tough",
@@ -36,6 +37,7 @@ export const bondingOverrides: Record<string, TopicOverride> = {
             "Breaking a bond always requires energy; forming one always releases it. A bond energy is the amount involved, tabulated in kJ/mol as an average over many molecules. You can estimate a reaction's enthalpy change by adding up the bonds broken and subtracting the bonds formed.",
             "Worked example: H₂ + Cl₂ → 2 HCl. Bonds broken: one H–H (436 kJ/mol) and one Cl–Cl (243 kJ/mol), total 679. Bonds formed: two H–Cl at 431 kJ/mol each, total 862. ΔH ≈ 679 − 862 = −183 kJ/mol, so the reaction is exothermic. The measured value is −185 kJ/mol, which is close — but remember these are averages, so this method gives an estimate rather than an exact answer.",
           ],
+          figure: "bond-enthalpy-bookkeeping",
         },
       ],
       reviewQuestions: [
@@ -89,6 +91,7 @@ export const bondingOverrides: Record<string, TopicOverride> = {
             'When two atomic orbitals combine, they produce two new molecular orbitals. Combining them "in phase" reinforces the electron density between the two nuclei, creating a lower-energy bonding orbital that holds the atoms together. Combining them "out of phase" cancels the density between the nuclei instead, leaving a node there and producing a higher-energy antibonding orbital (marked with an asterisk, like σ*) that pulls the atoms apart.',
             "Every pair of combining atomic orbitals produces exactly one bonding orbital and one antibonding orbital. Whether a molecule actually forms — and how strongly it's held together — depends entirely on which of these orbitals end up occupied by electrons.",
           ],
+          figure: "mo-phase-overlap",
         },
         {
           heading: "Filling MOs and calculating bond order",
@@ -96,6 +99,7 @@ export const bondingOverrides: Record<string, TopicOverride> = {
             "Just like atomic orbitals, molecular orbitals fill from lowest energy to highest, one electron at a time before pairing up in orbitals of equal energy (Hund's rule). Bond order tells you how stable the resulting bond is: bond order = (bonding electrons − antibonding electrons) / 2.",
             "A higher bond order means a stronger, shorter bond. A bond order of zero means the bonding and antibonding electrons exactly cancel out — there's no net attraction holding the atoms together, which is why He₂ doesn't exist as a stable molecule.",
           ],
+          figure: "mo-bond-order-series",
         },
         {
           heading: "The O₂ paramagnetism test",
@@ -103,6 +107,7 @@ export const bondingOverrides: Record<string, TopicOverride> = {
             "O₂ is the classic case where MO theory succeeds and a simple Lewis structure fails. A Lewis structure for O₂ pairs up every electron, predicting a molecule with no unpaired electrons (diamagnetic). But when O₂'s electrons are filled into molecular orbitals following Hund's rule, two electrons end up alone in a pair of equal-energy antibonding orbitals.",
             "Those two unpaired electrons are exactly why liquid oxygen is pulled toward a magnet (paramagnetic) — a real, easily demonstrated property that MO theory predicts correctly and a plain Lewis structure gets wrong. Counting O₂'s bonding and antibonding electrons this way still gives a bond order of 2, matching its measured double-bond strength.",
           ],
+          figure: "mo-o2-paramagnetism",
         },
       ],
       reviewQuestions: [
@@ -166,6 +171,7 @@ export const bondingOverrides: Record<string, TopicOverride> = {
             "To decide whether the whole molecule is polar, add the bond arrows together the way you would add forces — as vectors, taking direction into account. If they cancel exactly, the molecule is nonpolar even though every bond in it is polar. If anything is left over, the molecule is polar.",
             "The shortcut: a molecule is nonpolar if its outer atoms are all the same and they are arranged symmetrically around the central atom, with no lone pairs on that central atom. Any lone pair, or any mismatched outer atom, breaks the symmetry and usually makes the molecule polar.",
           ],
+          figure: "polarity-shape-decides",
         },
         {
           heading: "Worked comparison: CO₂ against H₂O",
@@ -173,6 +179,7 @@ export const bondingOverrides: Record<string, TopicOverride> = {
             "CO₂ is linear, with its two C=O bonds pointing in exactly opposite directions at 180°. The two bond dipoles are equal in size and opposite in direction, so they cancel completely, and the measured dipole moment of CO₂ is 0 D. It is nonpolar despite having two very polar bonds.",
             "H₂O has the same number of polar bonds but is bent at 104.5°, because oxygen carries two lone pairs. The two O–H dipoles point partly in the same direction and cannot cancel, so they add up to a measured 1.85 D. Same logic elsewhere: CCl₄ is tetrahedral and symmetric, so μ = 0; replace one chlorine with hydrogen to get CHCl₃ and the symmetry is broken, giving μ = 1.04 D. NH₃, pyramidal with a lone pair, comes in at 1.47 D.",
           ],
+          figure: "polarity-dipole-vectors",
         },
         {
           heading: "Why polarity decides what dissolves",
@@ -236,6 +243,7 @@ export const bondingOverrides: Record<string, TopicOverride> = {
             "London dispersion forces act between every molecule without exception. Electrons are constantly moving, so at any instant a molecule's cloud is slightly lopsided; that momentary imbalance pulls on the neighbouring cloud, and the two stay in step. The effect grows with the size and softness of the electron cloud — more electrons, more loosely held, means a stronger force. Mass is only a rough stand-in for this.",
             "Dipole–dipole forces act only between polar molecules, lining up positive ends with negative ends, and are stronger than dispersion between molecules of similar size. Hydrogen bonding is the strongest of the three, but it only happens when a hydrogen is attached directly to N, O or F and there is a lone pair nearby to attract it. It is worth roughly 20 kJ/mol per bond in water, against a few kJ/mol for the others.",
           ],
+          figure: "imf-strength-ladder",
         },
         {
           heading: "Dispersion in action: the halogens",
@@ -250,6 +258,7 @@ export const bondingOverrides: Record<string, TopicOverride> = {
             "Within a group, boiling points normally rise steadily as molecules get bigger. The group 14 hydrides do exactly that: CH₄ (−162 °C), SiH₄ (−112 °C), GeH₄ (−88 °C), SnH₄ (−52 °C). None of them can hydrogen bond, so dispersion alone sets the trend.",
             "Three groups break the pattern at the very first member, and only there. H₂S boils at −60 °C but H₂O at +100 °C; HCl at −85 °C but HF at +20 °C; PH₃ at −88 °C but NH₃ at −33 °C. In each case the first-row hydride has H attached to N, O or F and can hydrogen bond, which lifts it far above the line its heavier relatives follow. Water jumps the furthest because each molecule has two hydrogens to donate and two lone pairs to accept, so it can build a fully connected network — HF has only one hydrogen and NH₃ only one lone pair.",
           ],
+          figure: "imf-boiling-points",
         },
       ],
       reviewQuestions: [
@@ -313,6 +322,7 @@ export const bondingOverrides: Record<string, TopicOverride> = {
             "Formal charge on an atom = (its valence electrons) − (its lone-pair electrons) − ½(its bonding electrons). It assumes every shared pair is split exactly evenly, which is a convention rather than a measurement. The formal charges of all the atoms must add up to the overall charge of the species, which is a handy check on your arithmetic.",
             "Worked example. For O=C=O, each oxygen has 6 valence, 4 lone-pair and 4 bonding electrons, so FC = 6 − 4 − 2 = 0; carbon has 4 valence, 0 lone-pair and 8 bonding, so FC = 4 − 0 − 4 = 0. Every atom is zero. Now try the alternative drawing with one single and one triple bond: the single-bonded oxygen gets 6 − 6 − 1 = −1, the triple-bonded oxygen gets 6 − 2 − 3 = +1, and carbon stays at 0. Both drawings are legal, but the first has no charge separation at all, so it is the better structure.",
           ],
+          figure: "lewis-formal-charge-co2",
         },
         {
           heading: "Choosing between structures",
@@ -327,6 +337,7 @@ export const bondingOverrides: Record<string, TopicOverride> = {
             "Three kinds of exception come up regularly. Some atoms are content with fewer than eight: boron in BF₃ has only six, and beryllium in BeCl₂ only four, which is why both are aggressive electron-pair acceptors. Some molecules have an odd number of valence electrons, such as NO with eleven, so one electron has to be left unpaired no matter how you draw it.",
             "And some central atoms take more than eight — PCl₅ with ten, SF₆ with twelve. This only happens for elements in period 3 and beyond. The usual textbook reason is that those elements have empty d orbitals available, but modern calculations show the d orbitals contribute very little; the real picture involves bonding spread over three atoms at once. For AP purposes the rule to apply is the reliable part: period 2 elements are capped at eight, and period 3 and below are not.",
           ],
+          figure: "lewis-octet-exceptions",
         },
       ],
       reviewQuestions: [
@@ -382,6 +393,7 @@ export const bondingOverrides: Record<string, TopicOverride> = {
             "This is the most commonly missed point on the topic. Ozone does not spend half its time in one structure and half in the other. It is in one single state at all times, and that state — the resonance hybrid — is the average of the drawings. The individual structures are limitations of the drawing system, not things the molecule does.",
             "A useful comparison: a mule is not a horse some of the time and a donkey the rest of the time. It is one animal, all the time, that our two available words fail to describe on their own.",
           ],
+          figure: "resonance-ozone-hybrid",
         },
         {
           heading: "Worked example: the nitrate ion",
@@ -396,6 +408,7 @@ export const bondingOverrides: Record<string, TopicOverride> = {
             "Spreading electrons over more atoms lowers a molecule's energy, and the saving is called resonance or delocalization energy. Benzene, C₆H₆, is the famous case. Its six carbons form a ring, and the two Kekulé structures with alternating single and double bonds give way to a hybrid in which all six C–C bonds are identical at 139 pm — between a single bond (154 pm) and a double bond (134 pm).",
             "The stabilization is measurable. Adding hydrogen to one C=C in cyclohexene releases 120 kJ/mol, so three isolated double bonds should release about 360 kJ/mol. Benzene releases only 208 kJ/mol. The missing 150 kJ/mol is energy benzene never had to start with, because its electrons were already delocalized — and it is why benzene is so much less reactive than its formula suggests.",
           ],
+          figure: "resonance-delocalization-energy",
         },
       ],
       reviewQuestions: [

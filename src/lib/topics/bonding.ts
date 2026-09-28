@@ -29,6 +29,7 @@ export const bondingTopics: Topic[] = [
             "Pauling's definition of electronegativity comes straight out of this. The ionic terms add stabilization the purely covalent picture does not have, so define Δ = E(A–B) − √(E(A–A)·E(B–B)), the bond-energy excess over the geometric mean, and set the electronegativity difference as |χ_A − χ_B| = 0.102√Δ with Δ in kJ/mol. Fixing hydrogen at 2.20 pins the whole scale, which runs from 0.79 at caesium to 3.98 at fluorine.",
             "Because the scale is built from a difference, only differences are meaningful, and the usual cutoffs — under about 0.4 nonpolar covalent, 0.4 to 1.7 polar covalent, over 1.7 ionic — are rough guides, not boundaries. HF has ΔEN = 1.78 and is a gas of discrete molecules with roughly 41% ionic character; AlCl₃ has ΔEN = 1.55 and sublimes as covalent Al₂Cl₆ dimers. Mulliken's alternative definition, χ = (IE + EA)/2, is more physically transparent and correlates well with Pauling's after rescaling, which is reassurance that the quantity is real rather than an artefact of one definition.",
           ],
+          figure: "bond-ionic-covalent-continuum",
         },
         {
           heading: "Lattice energy: Coulomb's law scaled by geometry",
@@ -37,6 +38,7 @@ export const bondingTopics: Topic[] = [
             "Everything useful about ionic solids follows from that one formula. Lattice energy scales with the product of the charges and inversely with the interionic distance, so MgO (2+/2−, r₀ = 212 pm, U ≈ 3795 kJ/mol) is enormously more strongly bound than NaCl (1+/1−, r₀ = 282 pm, U ≈ 787 kJ/mol), and MgO melts at 2852 °C against NaCl's 801 °C. Charge dominates, since it enters as a product rather than a reciprocal.",
             "The catch is that U cannot be measured. There is no experiment that takes a crystal apart into gaseous ions in one step and reports the enthalpy.",
           ],
+          figure: "bond-lattice-coulomb",
         },
         {
           heading: "Born–Haber: getting at an immeasurable number with Hess's law",
@@ -45,6 +47,7 @@ export const bondingTopics: Topic[] = [
             "That is the lattice enthalpy, and it agrees closely with the Born–Landé calculation, which is the cycle's real value: it is an independent check on the electrostatic model. Where cycle and calculation disagree badly, the disagreement is diagnostic. Silver chloride's experimental lattice energy comes out well above the purely ionic prediction, and the excess is covalent character the electrostatic model leaves out — the continuum showing up as a discrepancy.",
             'The cycle also answers questions the formula alone cannot. Why is the stable sodium chloride NaCl and not NaCl₂? Not because sodium "wants a full octet": forming Na²⁺ requires a second ionization energy of 4562 kJ/mol, since that electron comes out of the neon core. No lattice energy, however large, repays it. Conversely, why does MgO exist despite Mg²⁺ costing 2189 kJ/mol to make and O²⁻ being endothermic to form? Because the doubled charges push the lattice energy near 3800 kJ/mol. The cycle turns "which compound forms" into arithmetic.',
           ],
+          figure: "bond-born-haber-nacl",
         },
         {
           heading: "Bond energy and bond enthalpy are not the same number",
@@ -53,6 +56,7 @@ export const bondingTopics: Topic[] = [
             "The distinction between energy and enthalpy is separate and smaller. Bond dissociation energy D₀ is an internal-energy change at 0 K, while tabulated bond enthalpies are ΔH at 298 K; for a diatomic splitting into two atoms the gas expands by one mole of particles, so ΔH = ΔU + RT ≈ ΔU + 2.5 kJ/mol. Spectroscopists quote a third quantity, D_e, the depth of the potential well, which exceeds D₀ by the zero-point vibrational energy — 26 kJ/mol for H₂, where D_e = 458 kJ/mol but D₀ = 432 kJ/mol.",
             "This matters whenever bond enthalpies are used to estimate a reaction enthalpy as bonds broken minus bonds formed. That method is an approximation with typical errors of 10 to 40 kJ/mol, it fails outright for anything with significant resonance stabilization (benzene's tabulated bonds under-predict its stability by about 150 kJ/mol), and it applies only to gas-phase species. Standard enthalpies of formation, where they exist, are always the better route.",
           ],
+          figure: "bond-methane-bde",
         },
       ],
     },
@@ -95,6 +99,7 @@ export const bondingTopics: Topic[] = [
             "Combining N atomic orbitals always gives exactly N molecular orbitals; nothing is created or lost. In-phase combination piles electron density between the nuclei and lowers the energy; out-of-phase combination puts a node there, and an electron in that orbital is actively pushed out of the internuclear region.",
             "Two atomic orbitals interact appreciably only if they satisfy two conditions. They must have compatible symmetry with respect to the internuclear axis — a 2s and a 2p_z can mix, a 2s and a 2p_x cannot, because the net overlap of the latter pair is exactly zero by symmetry. And they must be close in energy, since the stabilization goes roughly as β²/ΔE. This is why core orbitals are spectators in bonding, and why hydrogen's 1s interacts with fluorine's 2p rather than with its much deeper 2s.",
           ],
+          figure: "mo-phase-overlap",
         },
         {
           heading: "s–p mixing, and why B₂ and O₂ have different diagrams",
@@ -103,6 +108,7 @@ export const bondingTopics: Topic[] = [
             "That gap grows steadily across period 2 as Zeff rises and the poorly shielded 2s contracts faster than 2p: it is only a few electronvolts at boron and around twenty at fluorine. So Li₂ through N₂ use the mixed ordering with π below σ, and O₂ and F₂ use the unmixed ordering with σ below π. The crossover between N₂ and O₂ is not an arbitrary textbook footnote — it is the reason there are two diagrams to remember.",
             "The two orderings make different, checkable predictions. B₂ has six valence electrons; with π below σ the last two go singly into the degenerate π orbitals with parallel spins, so B₂ is paramagnetic with bond order 1 — which it is. C₂ has eight; they fill both π orbitals completely and leave σ_g(2p) empty, giving a bond order of 2 made of two π bonds and no σ bond at all, and a diamagnetic molecule. Photoelectron spectroscopy of N₂ confirms the mixed ordering directly by showing the highest-occupied orbital to be σ rather than π.",
           ],
+          figure: "mo-sp-mixing",
         },
         {
           heading: "Bond order as a predictive quantity",
@@ -111,6 +117,7 @@ export const bondingTopics: Topic[] = [
             "The oxygen series makes the correlation unmistakable. Removing an electron from an antibonding π* orbital raises the bond order to 2.5 in O₂⁺ and shortens the bond to 112 pm; adding one gives superoxide O₂⁻ at bond order 1.5 and 133 pm; adding two gives peroxide O₂²⁻ at bond order 1 and 149 pm. Bond order falls monotonically, bond length rises monotonically, and no localized dot structure predicts the sequence.",
             "The failure cases are just as sharp. He₂ has two bonding and two antibonding electrons, bond order 0, and no chemical bond — it exists only as an extraordinarily weak van der Waals dimer at cryogenic temperatures. But He₂⁺ has bond order ½ and is a perfectly respectable, well-characterized cation. A model in which bonds come in units of shared pairs has no way to express that.",
           ],
+          figure: "mo-bond-order-series",
         },
         {
           heading: "Where MO theory keeps paying: HOMO, LUMO and heteronuclear diagrams",
@@ -161,6 +168,7 @@ export const bondingTopics: Topic[] = [
             "A molecule's net moment is the vector sum of its bond dipoles together with the contributions of any lone pairs. Vector addition is the entire content of the subject, and it is why the same set of bonds can give a polar or a nonpolar molecule depending only on how they are arranged. CO₂ has two strongly polar C=O bonds arranged at exactly 180°; the two vectors are equal in magnitude and opposite in direction, the sum is zero, and the measured moment is zero. Water has two O–H bonds of similar individual polarity at 104.5°; they do not cancel, the oxygen lone pairs point the same way as the resultant, and the measured moment is 1.85 D.",
             "Symmetry decides the outcome before any arithmetic is done. A molecule can have a permanent dipole only if it belongs to the point groups C₁, Cₛ, Cₙ or C_nv — that is, only if some direction in the molecule is not related by symmetry to any other. Any centre of inversion, or any two non-coincident rotation axes, forces μ = 0. CO₂ (D∞h), BF₃ (D₃h), CCl₄ (T_d), PF₅ (D₃h) and SF₆ (O_h) are all nonpolar for that reason, regardless of how polar their individual bonds are.",
           ],
+          figure: "polarity-dipole-vectors",
         },
         {
           heading: "Bond polarity and molecular polarity answer different questions",
@@ -169,6 +177,7 @@ export const bondingTopics: Topic[] = [
             "NF₃ has far more polar bonds than NH₃: ΔEN for N–F is 0.94 while for N–H it is 0.84, and the polarity runs in opposite directions, since nitrogen is the more electronegative atom in N–H but the less electronegative in N–F. Both molecules are trigonal pyramidal with a lone pair on nitrogen. Yet NH₃ has μ = 1.47 D and NF₃ has μ = 0.23 D. In ammonia the three bond dipoles point up toward nitrogen, the same way as the lone-pair moment, and reinforce it; in NF₃ the bond dipoles point down toward the fluorines, opposing the lone pair and nearly cancelling it.",
             "Isomers make the geometric dependence unarguable, because they remove every variable except shape. cis-1,2-dichloroethene has μ = 1.90 D; trans-1,2-dichloroethene, with the identical atoms and identical bonds, has μ = 0, since its centre of inversion forces the two C–Cl dipoles to oppose. The two isomers have measurably different boiling points as a result.",
           ],
+          figure: "polarity-nh3-vs-nf3",
         },
         {
           heading: "Percent ionic character, computed from a measured moment",
@@ -177,6 +186,7 @@ export const bondingTopics: Topic[] = [
             "The same calculation for HF, with 91.7 pm and a measured 1.82 D, gives 41%. Running the series HF, HCl, HBr, HI gives ionic characters that fall steadily as ΔEN falls, exactly as the continuum picture requires and with no discontinuity anywhere that would justify a hard category boundary.",
             "Two cautions keep this honest. Percent ionic character defined this way is a model-dependent number, not a measured one — lone-pair and polarization contributions are folded into the same μ, which is why CO, with a genuinely polar bond, has a near-zero moment of 0.11 D pointed toward carbon. And the macroscopic consequences of polarity scale nonlinearly with it: water's dielectric constant is 78 against carbon tetrachloride's 2.24, a factor of thirty-five that comes from a dipole moment ratio of order one and a hydrogen-bonded network that amplifies it.",
           ],
+          figure: "polarity-percent-ionic",
         },
       ],
     },
@@ -209,6 +219,7 @@ export const bondingTopics: Topic[] = [
             "The noble gases show the correlation directly: α rises from 0.20 Å³ for helium to 0.40 for neon, 1.64 for argon, 2.48 for krypton and 4.04 for xenon, and the boiling points rise with it from 4.2 K to 27, 87, 120 and 165 K. The isomers of pentane show that mass is not the variable: n-pentane and neopentane are both C₅H₁₂ with identical mass and nearly identical polarizability, yet n-pentane boils at 36 °C and the compact, near-spherical neopentane at 9.5 °C. An extended chain can lie alongside its neighbours over its whole length; a sphere touches at a point.",
             "One consequence worth keeping: dispersion is universal. Every molecule has it, it is often the largest contribution even in polar substances, and for large molecules it dominates. HCl's dipole–dipole interaction accounts for a minority of its total attraction; the rest is dispersion.",
           ],
+          figure: "imf-dispersion-polarizability",
         },
         {
           heading: "The other two van der Waals terms, and why all three go as r⁻⁶",
@@ -217,6 +228,7 @@ export const bondingTopics: Topic[] = [
             "All three van der Waals contributions — Keesom, Debye and London — fall off as r⁻⁶, which is why they are collected into a single coefficient in models. The Lennard-Jones potential V(r) = 4ε[(σ/r)¹² − (σ/r)⁶] uses that r⁻⁶ attraction with an r⁻¹² repulsion, where ε is the well depth and σ the separation at which V = 0. The repulsive exponent is chosen for computational convenience rather than physics: real Pauli repulsion between overlapping closed shells is closer to exponential, but r⁻¹² is just the square of r⁻⁶ and so is nearly free to evaluate. Every molecular dynamics simulation in biochemistry runs on some version of this function.",
             "The r⁻⁶ dependence is steep, and it is why intermolecular forces are short-ranged compared with the r⁻¹ of ionic attraction. Doubling the separation cuts a van der Waals interaction by a factor of 64 and an ionic one only by half — which is the fundamental reason molecular solids are soft and low-melting while ionic solids are hard and refractory.",
           ],
+          figure: "imf-lennard-jones",
         },
         {
           heading: "Hydrogen bonding: strong, directional, and partly covalent",
@@ -225,6 +237,7 @@ export const bondingTopics: Topic[] = [
             "Simple electrostatics does not fully account for this. Three features give it away: hydrogen bonds are strongly directional, preferring near-linear X–H···Y, whereas a point-dipole interaction is not; the X–H stretching frequency drops and the bond lengthens on formation; and the H···Y distance is well inside the sum of the van der Waals radii. The accepted description adds charge transfer from the acceptor's lone pair into the σ*(X–H) antibonding orbital, which explains all three at once. Only N, O and F work because only they combine high electronegativity, small size and accessible lone pairs — chlorine is as electronegative as nitrogen but too large and too diffuse.",
             "Counting donors and acceptors explains the ranking among the anomalous hydrides better than bond strength does. Water has two O–H donors and two lone-pair acceptors, a perfect match that lets it build a fully connected three-dimensional network. HF has one donor and three acceptors, so it can only form chains; ammonia has three donors but one acceptor, so it is limited in the other direction. Both are capped at roughly one hydrogen bond per molecule while water sustains about two. That is why water boils at 100 °C while HF boils at 20 °C and NH₃ at −33 °C, even though an individual H···F bond is stronger than an individual H···O one.",
           ],
+          figure: "imf-hbond-network",
         },
         {
           heading: "Reading the boiling-point anomalies off the periodic table",
@@ -233,6 +246,7 @@ export const bondingTopics: Topic[] = [
             "The other three groups break the pattern at the first member and only the first member. Group 16: H₂S (−60), H₂Se (−41), H₂Te (−2) trend normally, then H₂O jumps to +100. Group 15: PH₃ (−88), AsH₃ (−62), SbH₃ (−17), then NH₃ at −33. Group 17: HCl (−85), HBr (−67), HI (−35), then HF at +20. In each case the dispersion trend is intact from period 3 onward, and the first-row hydride sits far above the line drawn through the others. The size of the jump ranks water > HF > NH₃, which is the donor–acceptor counting above.",
             "The effects go well beyond boiling points. Water's specific heat capacity of 4.18 J/g·K and enthalpy of vaporization of 40.7 kJ/mol buffer Earth's climate and make sweating effective. Its solid is less dense than its liquid — 0.917 g/cm³ against 1.00 — because the fully hydrogen-bonded tetrahedral lattice of ice is more open than the partly collapsed liquid, which is why ice floats and lakes freeze from the top. The same hydrogen bonds hold the two strands of DNA together with a specificity that comes from donor–acceptor pattern matching rather than from strength, and the same interaction's directionality is what makes a protein's α-helix and β-sheet the shapes they are.",
           ],
+          figure: "imf-boiling-points",
         },
       ],
     },
@@ -264,6 +278,7 @@ export const bondingTopics: Topic[] = [
             "Odd-electron molecules cannot obey the rule at all. Nitric oxide has eleven valence electrons, so at least one is unpaired no matter how the structure is drawn, and its reactivity as a biological signalling molecule and atmospheric radical follows from exactly that. Chlorine dioxide, with nineteen, is the same situation.",
             "The procedure for building the structure is mechanical: count all valence electrons and adjust for overall charge; put the least electronegative atom (never hydrogen) at the centre; connect with single bonds; distribute the remainder as lone pairs, satisfying the outer atoms first; and if the centre is short, convert an outer lone pair into an additional bond. The judgement comes afterward, in choosing between the structures that survive.",
           ],
+          figure: "lewis-octet-exceptions",
         },
         {
           heading: "Formal charge: what the convention assumes and what it is good for",
@@ -272,6 +287,7 @@ export const bondingTopics: Topic[] = [
             "Carbon monoxide shows how far the two conventions can diverge. In :C≡O:, carbon has one lone pair and six bonding electrons, so FC = 4 − 2 − 3 = −1; oxygen likewise gets 6 − 2 − 3 = +1. The oxidation states are the opposite sign and larger: C is +2 and O is −2, because oxidation state gives all six bonding electrons to oxygen. The truth sits between them and closer to formal charge in this instance — CO's measured dipole moment is 0.11 D with the negative end on carbon, which is the direction formal charge predicts and oxidation state does not.",
             "Where formal charge earns its place is choosing between candidate structures for one skeleton. The preferred structure is the one with formal charges closest to zero, with any negative charge on the most electronegative atom and any positive charge on the least, and with like charges kept apart. Applied to the thiocyanate ion SCN⁻, that reasoning correctly puts the negative charge on sulfur in the major contributor and correctly predicts that the ion bonds to soft metals through S and to hard metals through N.",
           ],
+          figure: "lewis-fc-vs-oxidation",
         },
         {
           heading: "Expanded octets and the d-orbital myth",
@@ -280,6 +296,7 @@ export const bondingTopics: Topic[] = [
             "The accepted alternative is the three-centre four-electron bond of Rundle and Pimentel. Three collinear p orbitals combine into one bonding, one non-bonding and one antibonding molecular orbital; four electrons fill the first two, giving a net bond order of about ½ per linkage, spread over two bonds. That model predicts exactly what is observed for XeF₂ and I₃⁻: bonds that are long and weak relative to a normal single bond, a strict requirement that the outer atoms be highly electronegative so they can carry the accumulated negative charge, and a strong preference for linear geometry. It also explains why hypervalency is common for F and O ligands and rare for anything else — a fact the d-orbital story cannot address.",
             "For sulfate the modern description is a highly ionic σ framework, closer to four S–O single bonds with a large positive formal charge on sulfur than to the two-double-bond drawing, with the short observed S–O distance of 149 pm coming from electrostatic contraction rather than π bonding. The practical point is not that the expanded-octet drawing should be abandoned — it is a good bookkeeping device and reproduces the right geometry — but that it is bookkeeping, and the physical justification usually attached to it is not the real one.",
           ],
+          figure: "lewis-3c4e-bond",
         },
         {
           heading: "When Lewis structures stop being adequate",
@@ -326,6 +343,7 @@ export const bondingTopics: Topic[] = [
             "That framing explains the rules for weighting contributors, which otherwise have to be memorized. A contributor counts more when it is lower in energy as a structure: complete octets first, then minimal formal charge, then negative formal charge on the more electronegative atom, then minimal charge separation. Equivalent structures, as in nitrate or carboxylate, contribute equally, and that equality is what forces the observed bond lengths to be equal.",
             "The structural evidence is unambiguous. Benzene's six C–C bonds are all 139 pm, between ethane's 154 and ethene's 134, and its ring is a perfect hexagon. Carbonate's three C–O bonds are all 129 pm, against roughly 143 for a C–O single bond and 123 for C=O. The acetate ion has two equal C–O bonds where acetic acid has one at 121 pm and one at 136 pm — the molecule changes its geometry on deprotonation because the charge really is shared.",
           ],
+          figure: "resonance-bond-lengths",
         },
         {
           heading: "Delocalization energy: what the number is and what it depends on",
@@ -334,6 +352,7 @@ export const bondingTopics: Topic[] = [
             'It is worth noticing that the empirical number depends on the reference you choose. "Three isolated double bonds" is a hypothetical molecule, and different reasonable choices of reference — cyclohexatriene with strain included, or acyclic 1,3,5-hexatriene, or an atomization-based scheme — give benzene resonance energies spread over roughly 90 to 210 kJ/mol. The phenomenon is real and large; the specific figure is model-dependent, and quoting it without the reference is quoting half a statement.',
             "Delocalization also has kinetic consequences that make it visible outside a calorimeter. The C–N bond of an amide has partial double-bond character from nitrogen lone-pair donation into the carbonyl π*, which raises the barrier to rotation about it to roughly 80 kJ/mol — high enough to be measured by variable-temperature NMR, and high enough to keep the peptide bond planar. Protein secondary structure exists because of a resonance contributor.",
           ],
+          figure: "resonance-delocalization-energy",
         },
         {
           heading: "Hückel's rule, and why antiaromatic rings are destabilized",
@@ -342,6 +361,7 @@ export const bondingTopics: Topic[] = [
             "Benzene's six electrons (n = 1) fill exactly through the second shell, which is why it is the archetype rather than a curiosity. Cyclobutadiene with four π electrons is the antiaromatic counterpart, and it escapes the penalty by distorting to a rectangle with distinct single and double bonds and remains so unstable that it can only be isolated in a matrix below 35 K. Cyclooctatetraene with eight avoids the problem differently, by puckering into a non-planar tub shape that breaks the conjugation entirely, and behaves like an ordinary polyene.",
             "The rule extends past neutral hydrocarbons, which is where it earns real predictive credit. The cyclopentadienyl anion has six π electrons and is aromatic, which makes cyclopentadiene remarkably acidic for a hydrocarbon (pKa ≈ 16, comparable to ethanol) and makes the anion the ubiquitous ligand of organometallic chemistry. The cycloheptatrienyl cation, also six, is stable enough to isolate as a salt. Pyridine's nitrogen contributes one electron to the π system and keeps its lone pair in an sp² orbital in the ring plane, so it is basic; pyrrole's nitrogen must contribute its lone pair to reach six π electrons, so pyrrole is not basic at all. Same element, opposite behaviour, decided entirely by electron counting.",
           ],
+          figure: "resonance-huckel-levels",
         },
         {
           heading:
