@@ -11,6 +11,7 @@ export const atomicOverrides: Record<string, TopicOverride> = {
       theory: [
         {
           heading: "Bohr's picture: right answer, wrong reason",
+          figure: "hydrogen-lines-vs-continuum",
           body: [
             "Bohr said electrons can only sit at certain fixed distances from the nucleus, each with its own fixed energy, and that an electron jumping from a higher level to a lower one gives off a photon of light whose energy equals the gap. Because the gaps are fixed, only certain colours come out — which is why heated hydrogen gives sharp coloured lines instead of a smooth rainbow.",
             "The numbers came out right for hydrogen, using the energy formula Eₙ = −13.6 eV/n², where n is the level number (1, 2, 3, …). But Bohr had no reason for why only those levels are allowed. He simply declared it, and his model gave the wrong answer for every atom with more than one electron, starting with helium.",
@@ -18,6 +19,7 @@ export const atomicOverrides: Record<string, TopicOverride> = {
         },
         {
           heading: "Electrons behave like waves",
+          figure: "de-broglie-standing-wave",
           body: [
             "In 1924 Louis de Broglie proposed that any moving object has a wavelength, given by λ = h/(mv), where h is Planck's constant (6.626 × 10⁻³⁴ J·s), m is mass and v is speed. For heavy objects this wavelength is far too small to notice. For electrons, which are extremely light, it is about the size of an atom — big enough to matter.",
             "Worked example. An electron (m = 9.11 × 10⁻³¹ kg) moving at 1.0 × 10⁶ m/s has λ = (6.626 × 10⁻³⁴)/(9.11 × 10⁻³¹ × 1.0 × 10⁶) = 7.3 × 10⁻¹⁰ m, or 0.73 nm — several atoms wide. A 0.145 kg baseball thrown at 40 m/s has λ = (6.626 × 10⁻³⁴)/(0.145 × 40) = 1.1 × 10⁻³⁴ m, which is smaller than anything that could ever be measured. That is why you never see a baseball diffract.",
@@ -32,6 +34,7 @@ export const atomicOverrides: Record<string, TopicOverride> = {
         },
         {
           heading: "So what is an orbital?",
+          figure: "bohr-vs-quantum-atom",
           body: [
             "Since an electron has no trajectory, chemists describe it with a probability map instead. An orbital is a region around the nucleus where an electron is likely to be found — by convention, the region that contains a 90% chance of finding it.",
             "The lobes and spheres in orbital pictures are the boundaries of those 90% regions, not solid shells and not paths. The electron is not orbiting inside them; it does not have a path to orbit on.",
@@ -104,6 +107,7 @@ export const atomicOverrides: Record<string, TopicOverride> = {
       theory: [
         {
           heading: "The four quantum numbers, in plain terms",
+          figure: "quantum-number-tree",
           body: [
             "The principal quantum number n is like which floor of a building the electron is on — n = 1 is the ground floor, closest to the nucleus and lowest in energy; higher n means farther out and higher in energy. The angular momentum quantum number l describes the shape of the electron's region on that floor: l = 0 is an s orbital (spherical), l = 1 is a p orbital (dumbbell-shaped), l = 2 is a d orbital (cloverleaf-shaped). The magnetic quantum number mₗ says which orientation that shape has in space — the three p orbitals (pₓ, p_y, p_z) all share the same shape but point along different axes. The spin quantum number mₛ describes a property of the electron itself, not its location — it's either +½ or −½, and it's what lets two (and only two) electrons share one orbital.",
             "These numbers aren't a filing system chemists invented — only certain combinations correspond to a valid, physically sensible description of an electron bound to an atom. In practice: l can only run from 0 up to n − 1, and mₗ can only run from −l to +l. So n = 1 allows only l = 0 (a single 1s orbital), while n = 2 allows l = 0 and l = 1 (2s and three 2p orbitals).",
@@ -111,6 +115,7 @@ export const atomicOverrides: Record<string, TopicOverride> = {
         },
         {
           heading: "Why orbitals have the shapes and energies they do",
+          figure: "hydrogen-degeneracy-split",
           body: [
             "An orbital isn't a fixed path — it's a 3D region where an electron is highly likely to be found, and its shape is set entirely by l. All s orbitals are spherical because l = 0 has no preferred direction. All p orbitals have two lobes with a node right at the nucleus, because l = 1 splits space into two regions. Bigger n just means a bigger, more spread-out version of the same shape.",
             "For hydrogen, energy depends only on n — all orbitals on the same floor (2s and 2p, for instance) have identical energy. Once an atom has more than one electron, though, electron-electron repulsion makes s orbitals sit slightly lower in energy than p orbitals at the same n, and p lower than d — which is exactly why electron configurations fill 4s before 3d in real atoms.",
@@ -176,6 +181,7 @@ export const atomicOverrides: Record<string, TopicOverride> = {
         },
         {
           heading: "Nodes: places the electron is never found",
+          figure: "orbital-node-map",
           body: [
             "A node is a surface where the chance of finding the electron is exactly zero. There are two kinds. Angular nodes are flat planes (or cones) slicing through the nucleus, and the number of them equals l. Radial nodes are spherical shells at a fixed distance out, like the gap between layers of an onion, and the number of them equals n − l − 1.",
             "Add the two together and you always get n − 1, no matter which orbital. Worked example: a 4d orbital has n = 4 and l = 2, so it has 2 angular nodes and 4 − 2 − 1 = 1 radial node, giving 3 total — and n − 1 = 3, as promised. A 5s orbital has n = 5 and l = 0, so 0 angular nodes and 4 radial nodes, again 4 total.",
@@ -183,6 +189,7 @@ export const atomicOverrides: Record<string, TopicOverride> = {
         },
         {
           heading: "Where the electron is most likely to be",
+          figure: "radial-vs-density",
           body: [
             "There is a trick here that catches people out. If you ask which single point is most likely to hold a 1s electron, the answer is the nucleus itself. But that is not the useful question, because a point has no volume. The useful question is which distance from the nucleus is most likely, and that means adding up all the space at that distance — which grows as you move outward, because a sphere further out has more surface area.",
             "Combining the two effects gives the radial distribution, and it peaks at a distance rather than at zero. For a hydrogen 1s electron that peak sits at 52.9 pm, which is exactly the radius Bohr had predicted for his lowest orbit. The difference is that this is the most likely distance, not a track the electron follows.",
@@ -190,6 +197,7 @@ export const atomicOverrides: Record<string, TopicOverride> = {
         },
         {
           heading: "Penetration: why 3s, 3p and 3d have different energies",
+          figure: "penetration-subshells",
           body: [
             "In a hydrogen atom, 3s, 3p and 3d all have exactly the same energy. In any atom with more than one electron they do not, and the reason is penetration — how much of its time an electron spends close in to the nucleus, inside the cloud of the other electrons.",
             "An s orbital has the extra radial nodes, and part of it sits very close to the nucleus, where the inner electrons are not in the way and the pull is at full strength. A p orbital penetrates less, and a d orbital less again. Since being closer to the nucleus means lower energy, the order within any shell is always s < p < d < f. That ordering is exactly why electrons fill 4s before 3d.",
@@ -244,6 +252,7 @@ export const atomicOverrides: Record<string, TopicOverride> = {
       theory: [
         {
           heading: "Three rules for filling orbitals",
+          figure: "aufbau-diagonal-rule",
           body: [
             "The Aufbau principle says electrons fill the lowest-energy orbital available first. The filling order runs 1s, 2s, 2p, 3s, 3p, 4s, 3d, 4p, 5s, 4d, 5p — note that 4s comes before 3d. The Pauli exclusion principle says each orbital holds at most two electrons, and only if their spins are opposite (drawn as one arrow up and one down). Hund's rule says that when several orbitals have the same energy, electrons spread out one to each orbital, all with the same spin, before any of them double up.",
             "Worked example: iron has 26 electrons. Filling in order gives 1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d⁶, usually abbreviated [Ar] 4s² 3d⁶ since argon accounts for the first 18. Applying Hund's rule to those six 3d electrons puts one in each of the five 3d orbitals and pairs the sixth, leaving four unpaired electrons — which is why iron is magnetic.",
@@ -251,6 +260,7 @@ export const atomicOverrides: Record<string, TopicOverride> = {
         },
         {
           heading: "4s fills first, but 4s leaves first",
+          figure: "four-s-three-d-crossover",
           body: [
             "This looks like a contradiction and is worth getting straight. In a neutral potassium or calcium atom, 4s is lower in energy than 3d, so 4s fills first. But once you start removing electrons to make a cation, the 3d orbitals have dropped below 4s, and the 4s electrons are also the ones furthest out. So they are the ones that leave.",
             "The practical rule is simple: for transition metals, take electrons out of the highest n shell first. Iron is [Ar] 4s² 3d⁶, so Fe²⁺ is [Ar] 3d⁶ (not [Ar] 4s² 3d⁴), and Fe³⁺ is [Ar] 3d⁵.",
@@ -265,6 +275,7 @@ export const atomicOverrides: Record<string, TopicOverride> = {
         },
         {
           heading: "The exceptions worth knowing",
+          figure: "exchange-energy-chromium",
           body: [
             "Chromium is [Ar] 4s¹ 3d⁵ and copper is [Ar] 4s¹ 3d¹⁰, not the 4s² configurations the filling order predicts. The reason is that electrons with the same spin in different orbitals stabilize one another — an effect called exchange energy — and moving one 4s electron into 3d creates several new same-spin pairs. That gain is bigger than the small energy cost of the move, so the atom takes it. It also avoids squeezing two electrons into the same 4s orbital.",
             "Two ionization-energy exceptions follow the same logic. Oxygen's first ionization energy (1314 kJ/mol) is lower than nitrogen's (1402 kJ/mol), even though oxygen has more protons, because oxygen's fourth 2p electron has to share an orbital with another electron and the two repel — removing one relieves that. Boron's (801 kJ/mol) is lower than beryllium's (900 kJ/mol) because boron's outermost electron is in a 2p orbital, which is further out and less tightly held than beryllium's 2s.",

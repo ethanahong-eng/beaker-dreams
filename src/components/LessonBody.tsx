@@ -2,12 +2,15 @@
 // topic.$slug.tsx's TopicPage so every page's "AP Review" tier renders
 // with the exact same visual structure, instead of each page hand-rolling
 // its own markup for what is the same category of content everywhere.
+import { getFigure } from "@/components/figures/registry";
+import type { TheoryBlock } from "@/lib/topics/types";
+
 export function LessonBody({
   significance,
   theory,
 }: {
   significance?: string[];
-  theory: { heading: string; body: string[] }[];
+  theory: TheoryBlock[];
 }) {
   return (
     <>
@@ -30,10 +33,22 @@ export function LessonBody({
                   {p}
                 </p>
               ))}
+              {block.figure && <FigureSlot figureKey={block.figure} />}
             </div>
           </div>
         ))}
       </div>
     </>
   );
+}
+
+/**
+ * Renders a theory block's diagram. An unknown key renders nothing rather
+ * than throwing -- a missing illustration should never take a lesson page
+ * down. The integration check catches dangling keys at build time instead.
+ */
+function FigureSlot({ figureKey }: { figureKey: string }) {
+  const Fig = getFigure(figureKey);
+  if (!Fig) return null;
+  return <Fig />;
 }

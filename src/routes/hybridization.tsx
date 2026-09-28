@@ -6,6 +6,7 @@ import { NextTopicNav } from "@/components/NextTopicNav";
 import { LessonBody } from "@/components/LessonBody";
 import { ReviewLevelToggle } from "@/components/ReviewLevelToggle";
 import { ReviewQuestions } from "@/components/ReviewQuestions";
+import { HybridEnergyMixing, SigmaVsPiOverlap } from "@/components/figures/routes";
 import type { EasyContent, Level } from "@/lib/reviewContent";
 
 const sections = [
@@ -29,6 +30,7 @@ const EASY: EasyContent = {
     },
     {
       heading: "The three hybridizations you need to know",
+      figure: "hybrid-energy",
       body: [
         "sp (linear, 180° apart): one s + one p orbital, for a central atom with two domains and no lone pairs, like the carbon in CO₂.",
         "sp² (trigonal planar, 120° apart): one s + two p orbitals, for three domains, like boron in BF₃ or either carbon in a C=C double bond.",
@@ -44,6 +46,7 @@ const EASY: EasyContent = {
     },
     {
       heading: "Work one through: ethene, and why double bonds are rigid",
+      figure: "sigma-vs-pi",
       body: [
         "Take ethene, C₂H₄. Each carbon is bonded to two hydrogens and to the other carbon: three groups, so three domains, so sp². That predicts 120° angles, and the measured H–C–H angle is 117.4° — close enough that the model is doing real work.",
         "Each of those carbons has one p orbital left over, and the two overlap sideways to make the π bond. Twisting the molecule about the C=C axis would pull that overlap apart, so the two ends of a double bond cannot rotate past each other at ordinary temperatures. That is why 2-butene exists as two separate, bottleable compounds, cis and trans, while single-bonded butane's ends spin freely billions of times a second.",
@@ -196,6 +199,7 @@ function HybridizationPage() {
                   About this demo
                 </span>
                 <h2 className="mt-3 text-xl font-bold">From orbitals to geometry</h2>
+                <HybridEnergyMixing />
               </div>
               <div className="space-y-4 text-sm leading-relaxed text-muted-foreground md:col-span-2">
                 <p>
@@ -291,6 +295,7 @@ function HybridizationPage() {
                   electron into the π* orbital and cancels the bond order holding it rigid. That
                   photoisomerization is the first chemical step of vision.
                 </p>
+                <SigmaVsPiOverlap />
               </div>
               <div>
                 <h2 className="mb-6 text-3xl font-bold italic">Where the picture runs out</h2>

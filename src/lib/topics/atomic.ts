@@ -24,6 +24,7 @@ export const atomicTopics: Topic[] = [
       theory: [
         {
           heading: "Why a classical atom cannot survive a nanosecond",
+          figure: "hydrogen-lines-vs-continuum",
           body: [
             "Larmor's formula gives the power radiated by a non-relativistic accelerating charge, P = e²a²/(6πε₀c³). An electron circling a proton at the Bohr radius a₀ = 52.9 pm has a centripetal acceleration near 9 × 10²² m/s², and integrating the resulting energy loss inward spirals the electron into the nucleus in about 10 picoseconds. Worse than the lifetime is the spectrum: as the orbit shrinks continuously, the orbital frequency rises continuously, so a classical atom should emit a smear of every frequency on its way down. Real hydrogen emits sharp lines at fixed wavelengths and then stops.",
             "Bohr's two postulates were aimed precisely at those two failures. Quantizing angular momentum as L = mvr = nħ selects a discrete set of radii rₙ = n²a₀, and declaring those orbits non-radiating makes them stable by fiat. Combining the quantization condition with the Coulomb force balance gives Eₙ = −13.6 eV/n² for hydrogen, and more generally Eₙ = −13.6 Z²/n² eV for any one-electron ion. A transition between levels then emits a photon of energy 13.6 eV (1/n₁² − 1/n₂²), which is the Rydberg formula with the Rydberg constant expressed in fundamental constants.",
@@ -32,6 +33,7 @@ export const atomicTopics: Topic[] = [
         },
         {
           heading: "de Broglie: quantization as a standing-wave condition",
+          figure: "de-broglie-standing-wave",
           body: [
             "De Broglie's proposal was a symmetry argument. Einstein's photoelectric work had given light, a wave, a particle momentum p = h/λ; de Broglie inverted it and gave every particle of momentum p a wavelength λ = h/p. For an electron accelerated through a potential V, λ = h/√(2meV), which works out to about 123 pm at 100 V — the same order as atomic spacings in a crystal, which is exactly why Davisson and Germer saw diffraction rings. For a 1 kg object moving at 1 m/s the same formula gives 6.6 × 10⁻³⁴ m, which is why nothing macroscopic behaves like a wave.",
             "The payoff for the atom is that Bohr's postulate stops being arbitrary. If the electron is a wave travelling around a circular orbit, the wave must close on itself to avoid destructive self-interference, which requires the circumference to hold a whole number of wavelengths: 2πr = nλ. Substituting λ = h/p gives 2πr = nh/(mv), which rearranges to mvr = nħ — exactly Bohr's condition, now derived from a wave rather than asserted.",
@@ -40,6 +42,7 @@ export const atomicTopics: Topic[] = [
         },
         {
           heading: "Uncertainty is a property of waves, not of clumsy measurement",
+          figure: "uncertainty-size-tradeoff",
           body: [
             "Heisenberg's relation Δx·Δp ≥ ħ/2 is often taught as a statement about disturbance — the photon you bounce off the electron kicks it. That story, Heisenberg's own microscope thought-experiment, is at best a mnemonic and at worst wrong. The relation is a theorem about any pair of conjugate variables, and it follows from Fourier analysis before any measurement is mentioned: position and momentum are Fourier transforms of one another, and no function can be sharply peaked in both a variable and its transform. A pulse localized in time necessarily contains a wide band of frequencies. The same mathematics applied to ψ(x) and its momentum-space transform gives Δx·Δp ≥ ħ/2.",
             "The general statement is ΔA·ΔB ≥ ½|⟨[Â,B̂]⟩| for any two operators: incompatibility of observables is encoded in whether their operators commute, and x̂ and p̂ fail to commute by exactly iħ. Position and momentum are not jointly undetermined because instruments are imperfect; a state that has a definite value of one simply does not possess a definite value of the other. The energy–time relation ΔE·Δt ≥ ħ/2 is why short-lived excited states produce broadened spectral lines, an effect measured routinely in spectroscopy.",
@@ -48,6 +51,7 @@ export const atomicTopics: Topic[] = [
         },
         {
           heading: "What replaces the orbit",
+          figure: "bohr-vs-quantum-atom",
           body: [
             "If a trajectory is not available, the complete description of the electron is a wavefunction ψ(r), a complex-valued function of position. Max Born's 1926 interpretation supplies the physical content: |ψ(r)|² is a probability density, so |ψ|² dV is the probability of finding the electron in a volume element dV, and the total probability over all space is normalized to one. Everything the electron can be asked about — average position, average energy, the chance of being found beyond a given radius — is an integral over ψ.",
             "This is what an orbital is. It is not a region the electron patrols, not a fuzzy orbit, and not a container. It is a one-electron wavefunction, and the familiar lobed pictures are contour surfaces of |ψ|², usually drawn to enclose 90% of the probability. The boundary is a choice of contour, not a physical wall; the wavefunction is nonzero, if vanishingly small, arbitrarily far from the nucleus.",
@@ -87,6 +91,7 @@ export const atomicTopics: Topic[] = [
         },
         {
           heading: "Why the equation separates, and what the separation costs",
+          figure: "schrodinger-separation",
           body: [
             "Separation of variables is not a generic trick; it works here because of a symmetry. The Coulomb potential depends on r alone and not on direction, so the Hamiltonian is invariant under any rotation about the nucleus. Rewriting ∇² in spherical coordinates makes that symmetry structural: the angular derivatives assemble into exactly the operator L̂², which commutes with Ĥ. Two operators that commute share eigenfunctions, so energy and angular momentum can be specified simultaneously, and the wavefunction can be written as a product ψ(r,θ,φ) = R(r)·Y(θ,φ).",
             "Substituting that product and dividing through leaves an equation in which one side depends only on r and the other only on angles. Two functions of independent variables can be equal for all values only if both equal the same constant, and that separation constant — which turns out to be l(l+1) — is the bridge between the two halves. It carries angular momentum into the radial equation as a centrifugal barrier term ħ²l(l+1)/(2μr²), which is why higher-l orbitals are pushed away from the nucleus.",
@@ -95,6 +100,7 @@ export const atomicTopics: Topic[] = [
         },
         {
           heading: "The three quantum numbers are boundary conditions, not labels",
+          figure: "quantum-number-tree",
           body: [
             "Each quantum number appears as the price of admissibility, and each comes from a different requirement. The azimuthal part of Y(θ,φ) goes as e^(imₗφ), and physical space has φ and φ + 2π as the same point, so single-valuedness forces mₗ to be an integer. The polar part is a Legendre equation whose solutions blow up at θ = 0 and π unless a series terminates; that truncation requires l to be a non-negative integer with |mₗ| ≤ l. The radial equation's solutions generically grow exponentially as r → ∞, which is not normalizable; killing the divergent term requires n to be a positive integer with n > l.",
             "None of these are assumptions put in by hand. Write down the differential equation, insist the answer be a function that describes something — single-valued, finite, and square-integrable — and the integers appear. This is the substantive difference between Bohr and Schrödinger: Bohr asserted an integer, Schrödinger derived three of them, and got the ground-state angular momentum right (l = 0 for 1s, where Bohr predicted ħ).",
@@ -103,6 +109,7 @@ export const atomicTopics: Topic[] = [
         },
         {
           heading: "Reading the answer: degeneracy that should not be there",
+          figure: "hydrogen-degeneracy-split",
           body: [
             "Solving the radial equation under those constraints gives Eₙ = −(μe⁴)/(8ε₀²h²n²) = −13.6 eV/n², and the striking feature is what is missing. The energy depends on n alone. The 2s and 2p orbitals of hydrogen are exactly degenerate, as are 3s, 3p and 3d — an n²-fold degeneracy that is far larger than rotational symmetry alone can account for.",
             "Rotational symmetry guarantees only that the 2l+1 states of a given l share an energy; the extra degeneracy in l is specific to the 1/r potential and is called an accidental degeneracy, though it is not accidental at all. It reflects a hidden symmetry of the Coulomb problem, the conserved Laplace–Runge–Lenz vector, which is the same conserved quantity that keeps classical Kepler orbits from precessing.",
@@ -134,6 +141,7 @@ export const atomicTopics: Topic[] = [
       theory: [
         {
           heading: "Angular nodes fix the letter; radial nodes fix the rest",
+          figure: "orbital-node-map",
           body: [
             "A node is a surface on which ψ is exactly zero and changes sign across it, and the two kinds come from the two factors of ψ = R(r)·Y(θ,φ). Angular nodes are planes or cones on which Y vanishes, and their count is exactly l: zero for s (l = 0, no angular dependence at all, hence a sphere), one for p (a single nodal plane through the nucleus, producing the two lobes of opposite sign), two for d, three for f. Each added angular node cuts the angular function again, which is why the lobe count climbs from 2 to 4 to 6 and up.",
             "Radial nodes are spherical shells at fixed radii where R(r) = 0, and their count is n − l − 1. The total is therefore always n − 1, independent of which orbital within a shell: 2s has 1 radial and 0 angular; 2p has 0 radial and 1 angular; 3s has 2 and 0; 3p has 1 and 1; 3d has 0 and 2. This is not a coincidence to memorize. The radial function R_{n,l} is an exponential times r^l times an associated Laguerre polynomial of degree n − l − 1, and a polynomial of degree n − l − 1 has exactly that many positive roots here, while Y_l contributes l sign changes over the angles. The two counts are forced to sum to n − 1.",
@@ -142,6 +150,7 @@ export const atomicTopics: Topic[] = [
         },
         {
           heading: "Where is the electron, actually? The r² factor changes the answer",
+          figure: "radial-vs-density",
           body: [
             'There are two different questions hiding in "where is the electron," and they have different answers. The probability density at a point is |ψ(r)|², which for a 1s orbital is largest at r = 0 — the electron is more likely to be found in a given cubic picometre at the nucleus than anywhere else. But nobody measures a cubic picometre at a point; the chemically meaningful question is the probability of finding the electron somewhere in a thin shell at distance r, and a shell at radius r has surface area 4πr².',
             "That gives the radial distribution function, P(r) = 4πr²|R(r)|², and the r² factor is doing real work. Near the nucleus |R|² is large but the shell volume goes to zero; far out the shell is enormous but |R|² has decayed exponentially. The product peaks in between. For hydrogen's 1s orbital the peak sits at exactly r = a₀ = 52.9 pm, recovering the Bohr radius — not as an orbit, but as the most probable distance. The two answers are both correct and both useful: |ψ|² governs anything evaluated at the nucleus (hyperfine coupling, Mössbauer isomer shifts), while P(r) governs size, overlap and shielding.",
@@ -150,6 +159,7 @@ export const atomicTopics: Topic[] = [
         },
         {
           heading: "Penetration and shielding: why s beats p beats d in real atoms",
+          figure: "penetration-subshells",
           body: [
             "In hydrogen, 2s and 2p are degenerate. In lithium they are not, and the reason is the inner maxima. Near the nucleus a 2p orbital's radial function is suppressed by a factor of r^l = r, and more generally R_{n,l} ∝ r^l as r → 0, so the higher the angular momentum the harder the centrifugal barrier pushes the electron out of the core region. A 2s electron, with l = 0 and no such suppression, spends part of its time inside the 1s shell, where it is not screened and feels close to the full nuclear charge Z rather than the screened Z − 2.",
             "That is penetration, and it lowers the orbital's energy in proportion to how much of it happens. The ordering it produces within a shell is ns < np < nd < nf, and the effect grows with n: by the fourth shell, 4s penetrates enough to sit below 3d in the neutral atoms at the start of the transition series, which is the whole reason potassium and calcium fill 4s before scandium starts on 3d.",
@@ -187,6 +197,7 @@ export const atomicTopics: Topic[] = [
       theory: [
         {
           heading: "Three rules, and what each one is actually doing",
+          figure: "hunds-rule-boxes",
           body: [
             "The Aufbau principle fills the lowest-energy available orbital first, in an order approximated by increasing n + l and, for ties, by increasing n. This ordering is empirical rather than derived; it summarizes the penetration and shielding effects of the previous topic, and it is the least fundamental of the three rules.",
             "The Pauli exclusion principle is the fundamental one. It is not a cap of two electrons per orbital but a statement that the total wavefunction of a system of fermions must be antisymmetric under exchange of any two of them. The two-per-orbital limit is a corollary: an antisymmetric wavefunction vanishes identically if two electrons share all four quantum numbers. Pauli's principle is also why matter occupies volume at all, and it enters chemistry again as the short-range repulsion between closed shells.",
@@ -195,6 +206,7 @@ export const atomicTopics: Topic[] = [
         },
         {
           heading: "Effective nuclear charge, computed rather than asserted",
+          figure: "slater-zeff-period3",
           body: [
             "Zeff = Z − S, where S is the shielding constant. Slater's rules estimate S by sorting the electrons into groups ((1s)(2s,2p)(3s,3p)(3d)(4s,4p)…) and assigning 0.35 per other electron in the same group, 0.85 per electron in the shell one below (for s and p electrons), and 1.00 for everything deeper. Electrons in groups above the one in question contribute nothing.",
             "Run it on sodium's valence electron, 1s²2s²2p⁶3s¹: nothing else in the 3s,3p group, so 0 × 0.35, plus 8 × 0.85 from the n = 2 shell, plus 2 × 1.00 from 1s, giving S = 8.80 and Zeff = 11 − 8.80 = 2.20. Run it on a 3p electron in chlorine, 1s²2s²2p⁶3s²3p⁵: six other electrons in the 3s,3p group give 6 × 0.35 = 2.10, the n = 2 shell gives 8 × 0.85 = 6.80, and 1s gives 2.00, so S = 10.90 and Zeff = 17 − 10.90 = 6.10.",
@@ -203,6 +215,7 @@ export const atomicTopics: Topic[] = [
         },
         {
           heading: "4s before 3d, and 4s out first: not a contradiction",
+          figure: "four-s-three-d-crossover",
           body: [
             "The standard puzzle is that potassium and calcium fill 4s before 3d, yet Fe²⁺ is [Ar]3d⁶ rather than [Ar]3d⁴4s². Both are true, and the reason is that orbital energies are not fixed properties of an element — they depend on the nuclear charge and on which other orbitals are occupied. In neutral K and Ca the 3d orbitals are still compact and high-lying while 4s penetrates well, so 4s fills first. As Z rises across the transition series, 3d contracts and drops rapidly below 4s, so in a scandium atom the 3d level is already the lower one.",
             "Why does scandium then keep two electrons in 4s at all? Because the Aufbau ordering is a statement about total energy, not about one-electron orbital energies. The 3d orbitals are spatially compact, so putting extra electrons there costs a large electron–electron repulsion; the 4s orbital is diffuse and the repulsion penalty there is much smaller. The configuration that minimizes the sum wins, and for neutral atoms it is usually the one with a partly occupied 4s.",
@@ -211,6 +224,7 @@ export const atomicTopics: Topic[] = [
         },
         {
           heading: "Chromium and copper: exchange energy, not half-full mysticism",
+          figure: "exchange-energy-chromium",
           body: [
             'Chromium is [Ar]3d⁵4s¹ rather than 3d⁴4s², and copper is [Ar]3d¹⁰4s¹ rather than 3d⁹4s². The usual explanation, that half-filled and filled subshells are "especially stable," restates the observation instead of explaining it. The mechanism is exchange energy, and it can be counted. In 3d⁴4s², the four parallel d electrons give 4 × 3/2 = 6 same-spin pairs; in 3d⁵4s¹, five parallel d electrons give 5 × 4/2 = 10, plus further same-spin pairing with the lone 4s electron. Each pair is worth an exchange stabilization K, so the promotion buys several K while costing only the small 4s–3d energy gap — and it simultaneously removes a pair of electrons from the same 4s orbital, saving their mutual repulsion.',
             "That accounting also explains why the exceptions are not universal. The balance between exchange gain, orbital-energy cost and pairing repulsion is close, and different elements land on different sides of it: niobium is 4d⁴5s¹, palladium is 4d¹⁰5s⁰ with no s electron at all, and platinum is 5d⁹6s¹ rather than the 5d¹⁰6s¹ the copper analogy would predict. A rule about half-filled shells cannot accommodate palladium; an energy balance can.",

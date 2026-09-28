@@ -37,6 +37,7 @@ export const kineticsTopics: Topic[] = [
             "The second technique tests the whole curve rather than its first instant. Each integrated rate law is linear in a different function of concentration, so plot all three: [A] against t, ln[A] against t, and 1/[A] against t. Exactly one comes out straight, and that plot identifies the order while its slope delivers k. This linearised-plot test is the stronger evidence, because it must hold over the entire run, not just at the start — a mechanism that changes as products build up will bend a plot that the initial-rate method would have certified as clean.",
             "When a reaction has several reactants, the isolation method combines the two: flood the mixture with a large excess of everything except one species, so those concentrations stay effectively constant and get absorbed into a pseudo-order rate constant. What remains is a single-reactant problem that the linearised plots can settle. Repeat for each reactant in turn and the full rate law is assembled piece by piece.",
           ],
+          figure: "rate-linearized-plots",
         },
         {
           heading: "From differential to integrated rate laws",
@@ -45,6 +46,7 @@ export const kineticsTopics: Topic[] = [
             "The units of k are not decorative — they encode the order and are a free consistency check on any answer. Since rate always carries units of M s⁻¹, k for an overall order n must carry M^(1−n) s⁻¹: M s⁻¹ for zero order, s⁻¹ for first, M⁻¹ s⁻¹ for second. A rate constant reported in s⁻¹ cannot belong to a second-order process.",
             "First order is the one case in which the rate constant is independent of concentration units entirely, which is why exponential decay shows up identically in radioactive nuclei, excited-state fluorescence, and drug elimination. Those systems share no chemistry at all; they share a differential equation.",
           ],
+          figure: "rate-integrated-decay",
         },
         {
           heading: "Half-life depends on order, and that dependence is diagnostic",
@@ -52,6 +54,7 @@ export const kineticsTopics: Topic[] = [
             "Set [A] = [A]₀/2 in each integrated law. First order gives t½ = ln2/k, with [A]₀ cancelling entirely — every half-life is the same length, which is exactly why a single number characterises radioactive decay and most drug clearance. Second order gives t½ = 1/(k[A]₀), so each successive half-life is twice as long as the one before, and the reaction develops a long, slow tail. Zero order gives t½ = [A]₀/2k, so each half-life is half the previous one and the reaction ends abruptly.",
             "Watching successive half-lives is therefore an order test that needs no plotting software and no initial-rate measurements. Constant half-life means first order; doubling means second; halving means zero. In pharmacokinetics that distinction is the difference between a safe dosing interval and an overdose: a drug that saturates its metabolic enzyme leaves zero order, and doubling the dose more than doubles the time it lingers.",
           ],
+          figure: "rate-half-life-by-order",
         },
         {
           heading: "What a rate law can and cannot tell you",
@@ -106,6 +109,7 @@ export const kineticsTopics: Topic[] = [
             "A valid mechanism must satisfy two conditions: its elementary steps must sum to the observed overall equation, and the rate law it predicts must match the measured one. Species produced in one step and consumed in a later one are intermediates. They appear in the mechanism, never in the overall equation, and are usually present at vanishing concentrations.",
             "Distinguish an intermediate from a transition state. An intermediate sits in a local minimum on the potential-energy surface — it has a real, if brief, lifetime, and can in principle be trapped or detected. A transition state sits at a saddle point, a maximum along the reaction coordinate, and has no lifetime at all: it is a configuration the system passes through, not a molecule it becomes. Also distinguish an intermediate from a catalyst: a catalyst is consumed early and regenerated late, so it appears in the mechanism and may appear in the rate law, but its concentration is unchanged at the end.",
           ],
+          figure: "mech-intermediate-profile",
         },
         {
           heading: "The rate-determining step and the pre-equilibrium approximation",
@@ -122,6 +126,7 @@ export const kineticsTopics: Topic[] = [
             "The Lindemann–Hinshelwood mechanism for a gas-phase unimolecular decomposition shows why this matters. Collisional activation A + M ⇌ A* + M is followed by A* → P, and steady state on A* gives rate = k₂k₁[A][M]/(k₋₁[M] + k₂). That single expression contains two experimentally observed regimes. At high pressure, k₋₁[M] ≫ k₂, the denominator collapses to k₋₁[M], and the rate becomes k₂k₁[A]/k₋₁ — cleanly first order, with [M] cancelling out. At low pressure, k₂ ≫ k₋₁[M], and the rate becomes k₁[A][M] — second order, because activation itself has become the bottleneck. Pre-equilibrium reproduces only the high-pressure limit, since assuming the first step equilibrates is precisely the assumption that fails as pressure drops.",
             "That is the general pattern. Pre-equilibrium is a special case of the steady state, recovered whenever one return rate dominates the denominator. Whenever the competition between an intermediate's two fates changes with conditions — pressure, concentration, added inhibitor — only the steady-state expression tracks it, and the shape of the resulting denominator is itself a prediction the experiment can test.",
           ],
+          figure: "mech-lindemann-falloff",
         },
         {
           heading: "How an observed rate law falsifies a mechanism",
@@ -138,6 +143,7 @@ export const kineticsTopics: Topic[] = [
             "The pre-exponential factor A is not merely a collision frequency. Simple collision theory predicts A from the collision rate alone and routinely overestimates observed rates by orders of magnitude, so a steric factor p is introduced to account for the fraction of collisions that arrive in a reactive geometry. Transition-state theory makes that correction quantitative rather than empirical: k = (k_B T/h)e^(−ΔG‡/RT), and splitting ΔG‡ = ΔH‡ − TΔS‡ shows that the geometric requirement lives in the entropy of activation. A transition state that demands two molecules be tightly and specifically oriented has a large negative ΔS‡ and hence a small A; a unimolecular fragmentation whose transition state is looser than the reactant can have ΔS‡ positive.",
             "A catalyst does not lower the barrier on the existing path. It opens a different path — a different sequence of elementary steps, with its own intermediates and its own transition states, whose highest point lies below the uncatalysed one. The catalyst is consumed in an early step and regenerated in a later one, which is why a trace can turn over millions of molecules. Because ΔG° depends only on initial and final states, a catalyst cannot shift an equilibrium: it accelerates the forward and reverse reactions by exactly the same factor, changing how quickly equilibrium is reached and never where it lies. This is also why enzymes are described as stabilising the transition state rather than the substrate — binding the reactant too tightly deepens a well and slows the reaction down.",
           ],
+          figure: "mech-arrhenius-plot",
         },
       ],
       simulation: {
@@ -175,6 +181,7 @@ export const kineticsTopics: Topic[] = [
             "That orbital is the reason backside attack is not a convention but a requirement. The large lobe of σ*(C–X) points directly away from X, so the nucleophile's filled orbital overlaps it best along the line 180° opposite the leaving group. Donating electrons into an antibonding orbital simultaneously forms the new bond and breaks the old one — which is precisely what a concerted substitution is.",
             "Two independent binary choices generate the four mechanisms. Concerted or stepwise: does the leaving group depart in the same step as the new bond forms, or first, generating a carbocation? Substitution or elimination: does the reagent attack carbon as a nucleophile, or abstract a β-hydrogen as a base? SN2 is concerted substitution, rate = k[RX][Nu⁻]. SN1 is stepwise substitution, rate = k[RX], with the nucleophile absent because it enters after the rate-determining ionisation. E2 is concerted elimination, rate = k[RX][base]. E1 is stepwise elimination, rate = k[RX], sharing SN1's carbocation and therefore its rate law exactly.",
           ],
+          figure: "org-sn2-backside",
         },
         {
           heading: "Leaving-group ability is conjugate-base stability in disguise",
@@ -183,6 +190,7 @@ export const kineticsTopics: Topic[] = [
             "Among the halides this gives I⁻ > Br⁻ > Cl⁻ ≫ F⁻, following the increasing size and polarisability that spread the charge out, and inversely following basicity. Sulfonates are better still: tosylate and especially triflate delocalise the negative charge over three oxygens, and triflate's conjugate acid has a pKa around −14, making it one of the best leaving groups in routine use.",
             "Hydroxide is a terrible leaving group — its conjugate acid, water, has pKa 15.7 — which is why alcohols do not undergo substitution directly. Protonating the alcohol converts the leaving group from HO⁻ to H₂O, whose conjugate acid H₃O⁺ has pKa −1.7, a swing of seventeen pKa units; converting it to a tosylate achieves the same thing without acid, and without the carbocation rearrangements strong acid invites. Amines are worse still and are usually exhaustively methylated to a quaternary ammonium first, so that a neutral amine leaves instead of an amide ion.",
           ],
+          figure: "org-leaving-group-pka",
         },
         {
           heading: "Carbocation stability decides whether the stepwise path exists at all",
@@ -191,6 +199,7 @@ export const kineticsTopics: Topic[] = [
             "Primary and methyl carbocations are so unstable that SN1 and E1 are simply unavailable to those substrates. That single fact does most of the work in predicting products: a primary halide reacts by SN2 or E2 or not at all, while a tertiary halide cannot react by SN2 because the crowded carbon blocks backside approach.",
             "A free carbocation also rearranges. A 1,2-hydride or 1,2-alkyl shift converts a less stable cation into a more stable one, and the migration is fast enough to compete with capture by the nucleophile. The consequence is diagnostic: if the product has a carbon skeleton different from the substrate's, a free carbocation existed, and the mechanism was SN1 or E1. Conversely, a substitution that returns a completely unrearranged skeleton where rearrangement would have been favourable is evidence against a free carbocation, and therefore evidence for a concerted path.",
           ],
+          figure: "org-carbocation-stability",
         },
         {
           heading: "Stereochemistry is the sharpest evidence of all",
@@ -199,6 +208,7 @@ export const kineticsTopics: Topic[] = [
             "SN1 racemises, because the planar carbocation has two equivalent faces. In practice the racemisation is rarely complete: product mixtures typically show a modest excess of the inverted product, because the leaving group lingers as an ion pair on the face it just vacated and partially shields it until solvent separates the pair. That excess is itself evidence — it establishes that the cation is captured before it has become fully free and symmetric.",
             "E2 imposes the strictest geometric demand of the four: the β-hydrogen and the leaving group must be anti-periplanar, dihedral angle 180°, so that the developing C–H σ orbital aligns with σ*(C–X) as the π bond forms. In a cyclohexane ring this means both must be axial, and the requirement can override everything else. Menthyl chloride has only one β-hydrogen that can become anti-periplanar to an axial chlorine, and it eliminates slowly to give the less substituted alkene exclusively; its diastereomer neomenthyl chloride, which can place the chlorine axial with two accessible anti-periplanar hydrogens, eliminates far faster and gives the more substituted product. Same atoms, different geometry, different answer.",
           ],
+          figure: "org-antiperiplanar-newman",
         },
         {
           heading: "Zaitsev, Hofmann, and the four variables that settle every case",
@@ -207,6 +217,7 @@ export const kineticsTopics: Topic[] = [
             "Four variables decide the competition. Substrate: methyl and primary can only do SN2 or E2; tertiary can do SN1, E1 or E2 but never SN2; secondary is the genuinely ambiguous case where the other three variables take over. Reagent: strong nucleophile that is a weak base favours substitution, strong base that is a poor nucleophile favours elimination, bulky base pushes elimination and pushes it toward Hofmann, and weak neutral species leave only the stepwise paths open. Solvent: polar aprotic media such as DMSO, DMF and acetone solvate the cation of a salt but leave the anion bare and hot, accelerating SN2 by orders of magnitude, while polar protic media such as water and alcohols hydrogen-bond the nucleophile into a cage and stabilise both the developing carbocation and the departing anion, favouring SN1 and E1. Temperature: elimination generates more particles and has the larger, less negative ΔS‡, so heating shifts the balance toward alkene.",
             "The explorer below puts all four on the same tetrahedral carbon in three dimensions, where the arguments above become geometry: the 180° trajectory SN2 requires and a tertiary carbon denies it, the flat carbocation SN1 and E1 share and attack from both faces, and the anti-periplanar alignment E2 will not proceed without.",
           ],
+          figure: "org-zaitsev-hofmann",
         },
       ],
     },
@@ -233,6 +244,7 @@ export const kineticsTopics: Topic[] = [
       theory: [
         {
           heading: "Entropy is a count of microstates, not a measure of untidiness",
+          figure: "thermo-microstate-count",
           body: [
             "Boltzmann's definition, S = k_B ln W, says entropy is the logarithm of W, the number of distinct microscopic arrangements — positions, momenta, and quantised energy distributions — consistent with the system's macroscopic state. Disorder is a loose analogy for this; counting is the actual content. The logarithm is not cosmetic either: microstate counts multiply when two systems are combined, and entropies must add, and only a logarithm converts one into the other.",
             "The definition delivers real numbers. For an ideal gas expanding into a vacuum, each molecule gains a factor V₂/V₁ in accessible positions, so W scales as (V₂/V₁)^N and ΔS = Nk_B ln(V₂/V₁) = nR ln(V₂/V₁). Nothing about heat or temperature enters — the gas expands because the expanded arrangement is overwhelmingly more numerous, and for a mole of gas 'overwhelmingly' means a ratio with Avogadro's number in the exponent.",
@@ -250,6 +262,7 @@ export const kineticsTopics: Topic[] = [
         {
           heading:
             "Why the enthalpy term is entropy in disguise, and why temperature can flip the sign",
+          figure: "thermo-spontaneity-quadrant",
           body: [
             "Read ΔG = ΔH − TΔS in the light of the identity above and the two terms stop looking like different kinds of quantity. −TΔS is the system's entropy change scaled by temperature; ΔH is the surroundings' entropy change scaled by the same temperature, with the sign flipped. Exothermic reactions are favoured not because energy is intrinsically good to lose, but because dumping heat into the surroundings increases the number of microstates available out there.",
             "Because temperature multiplies only one of the terms, it controls the balance. Both terms favourable (ΔH < 0, ΔS > 0) gives spontaneity at every temperature; both unfavourable gives spontaneity at none. When the signs match, there is a crossover temperature T = ΔH/ΔS at which ΔG = 0 and the direction reverses. Melting is the everyday case: for water, ΔH_fus = 6.01 kJ/mol and ΔS_fus = 22.0 J mol⁻¹ K⁻¹, so T = 6010/22.0 = 273 K, which is the melting point recovered from thermodynamic data alone. Above it the TΔS term wins and ice melts; below it the enthalpy term wins and water freezes.",
@@ -258,6 +271,7 @@ export const kineticsTopics: Topic[] = [
         },
         {
           heading: "ΔG° and ΔG are different quantities, and neither predicts a rate",
+          figure: "thermo-free-energy-well",
           body: [
             "ΔG° is a fixed number for a reaction at a given temperature: the free energy change when reactants in their standard states convert entirely to products in their standard states, 1 bar for gases and 1 M for solutes. ΔG is the instantaneous slope of free energy against extent of reaction at the composition the flask actually holds, and it changes continuously as the reaction proceeds. The two are related by ΔG = ΔG° + RT ln Q, and a reaction runs in whichever direction makes ΔG negative until ΔG reaches zero. That point is equilibrium, where Q = K and the relation collapses to ΔG° = −RT ln K. The derivation below builds that result from the combined first and second law rather than asserting it.",
             "A positive ΔG° therefore does not mean 'no reaction'. It means K < 1, so the equilibrium mixture is mostly reactants — but if Q is small enough, ΔG is still negative and the reaction proceeds. This is exactly how biochemical pathways run individually unfavourable steps: keep the product concentration low by consuming it immediately in the next step, and the step stays downhill.",

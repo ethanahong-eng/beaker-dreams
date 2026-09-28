@@ -91,6 +91,24 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+
+  /* Figure palette -- the series colours every explanatory diagram draws with.
+     Deliberately separate from --chart-*, which is shadcn scaffold: those slots
+     are too dark and low-chroma (chart-3 reads gray) or too light (chart-4 sits
+     at 1.68:1 on this cream surface) to carry data. These three were stepped to
+     pass all six categorical checks on the --card surface in both modes:
+     worst all-pairs CVD dE 11.4, worst normal-vision dE 18.1, all >= 3:1.
+     Cap categorical use at three; a fourth series should fold to "other". */
+  --fig-1: oklch(0.55 0.145 35);
+  --fig-2: oklch(0.55 0.145 245);
+  --fig-3: oklch(0.64 0.12 172);
+  /* Diverging pair for signed quantities (wavefunction phase, formal charge),
+     neutral midpoint is the card surface itself. Matches the orbital sim. */
+  --fig-pos: var(--fig-1);
+  --fig-neg: var(--fig-2);
+  /* Recessive furniture: gridlines sit below axes, which sit below marks. */
+  --fig-grid: oklch(0.88 0.02 80);
+  --fig-axis: oklch(0.7 0.028 78);
   --sidebar: oklch(0.984 0.003 247.858);
   --sidebar-foreground: oklch(0.129 0.042 264.695);
   --sidebar-primary: oklch(0.208 0.042 265.755);
@@ -126,6 +144,19 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+
+  /* Dark steps of the figure palette, chosen for the dark band rather than
+     flipped: L 0.48-0.67 on the dark --card, validated as a set (worst CVD
+     dE 8.5, worst normal-vision dE 16.0, all >= 3:1). No theme toggle ships
+     today, so these are currently unreachable -- they exist so a figure never
+     has to be revisited if one lands. */
+  --fig-1: oklch(0.64 0.145 35);
+  --fig-2: oklch(0.62 0.14 245);
+  --fig-3: oklch(0.66 0.12 172);
+  --fig-pos: var(--fig-1);
+  --fig-neg: var(--fig-2);
+  --fig-grid: oklch(1 0 0 / 12%);
+  --fig-axis: oklch(1 0 0 / 28%);
   --sidebar: oklch(0.208 0.042 265.755);
   --sidebar-foreground: oklch(0.984 0.003 247.858);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -144,7 +175,11 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    background-image: linear-gradient(to bottom, transparent 31px, color-mix(in oklab, var(--border) 22%, transparent) 32px);
+    background-image: linear-gradient(
+      to bottom,
+      transparent 31px,
+      color-mix(in oklab, var(--border) 22%, transparent) 32px
+    );
     background-size: 100% 32px;
     letter-spacing: 0;
   }

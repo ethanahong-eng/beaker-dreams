@@ -6,6 +6,7 @@ import { NextTopicNav } from "@/components/NextTopicNav";
 import { LessonBody } from "@/components/LessonBody";
 import { ReviewLevelToggle } from "@/components/ReviewLevelToggle";
 import { ReviewQuestions } from "@/components/ReviewQuestions";
+import { QversusK } from "@/components/figures/routes";
 import type { EasyContent, Level } from "@/lib/reviewContent";
 
 const sections = [
@@ -29,6 +30,7 @@ const EASY: EasyContent = {
     },
     {
       heading: "Qc vs. Kc: predicting which way a reaction shifts",
+      figure: "q-vs-k",
       body: [
         "Kc is the value of the reaction quotient once a reaction has settled into equilibrium — it's fixed for a given reaction at a given temperature. Qc is calculated the exact same way (products over reactants, each raised to its coefficient) but can be computed at any moment, not just at equilibrium.",
         "Comparing the two tells you which direction the reaction still needs to move: if Qc < Kc, there aren't enough products yet, so the reaction shifts forward to make more. If Qc > Kc, there are too many products, so it shifts in reverse to make more reactants. If Qc = Kc, the system is already at equilibrium and there's no net shift in either direction.",
@@ -253,6 +255,7 @@ function EquilibriumPage() {
                   the expression carries something the rule does not — how hard the system is being
                   pushed, and therefore how much work the reaction could still do.
                 </p>
+                <QversusK />
               </div>
             </section>
 
