@@ -1,5 +1,5 @@
 import type { TopicOverride } from "./types";
-import { MolecularOrbitalSim } from "@/components/MolecularOrbitalSim";
+import { DiatomicBondExplorer } from "@/components/DiatomicBondExplorer";
 
 export const bondingOverrides: Record<string, TopicOverride> = {
   "chemical-bonding": {
@@ -74,10 +74,10 @@ export const bondingOverrides: Record<string, TopicOverride> = {
   },
   "molecular-orbital-theory": {
     simulation: {
-      heading: "Build a molecular orbital diagram from any two atoms",
+      heading: "Watch a bond form between any two main-group atoms",
       caption:
-        "Pick two elements and a bond length: the diagram is built from real valence orbital energies and a numerically-solved secular equation, not drawn by hand. Click any level to see that exact molecular orbital's 3D shape — bonding, antibonding, σ or π.",
-      render: () => <MolecularOrbitalSim />,
+        "Pick any two main-group elements that form a diatomic molecule and watch the bond assemble: the atoms approach, their valence functions overlap into a σ molecular orbital, and the electron density settles — shifted toward the more electronegative partner when they differ. Drag to rotate. Bond length, bond energy and bond order are measured gas-phase values; the orbital shape is a two-centre LCAO model.",
+      render: () => <DiatomicBondExplorer />,
     },
     easy: {
       significance: [
