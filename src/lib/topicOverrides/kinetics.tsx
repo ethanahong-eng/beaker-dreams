@@ -31,6 +31,7 @@ export const kineticsOverrides: Record<string, TopicOverride> = {
             "Example: a first-order reaction has a half-life of 20 seconds, so k = 0.693/20 s = 0.0347 s⁻¹. Starting from 0.80 M, after 20 s you have 0.40 M, after 40 s you have 0.20 M, after 60 s you have 0.10 M. Sixty seconds is three half-lives, so 1/8 — that is 12.5% — of the original amount is left.",
             "Zero- and second-order reactions do not behave this way. A second-order reaction's half-lives get longer and longer as it proceeds; a zero-order reaction's get shorter. If a problem tells you the half-life is constant, it is telling you the reaction is first order.",
           ],
+          figure: "rate-half-life-by-order",
         },
         {
           heading: "The graph test tells you the order",
@@ -38,6 +39,7 @@ export const kineticsOverrides: Record<string, TopicOverride> = {
             "If you have concentration-versus-time data instead of initial rates, make three graphs and see which one is a straight line. Plot [A] against time: straight means zero order. Plot ln[A] against time: straight means first order. Plot 1/[A] against time: straight means second order.",
             "The slope of whichever line comes out straight gives you k — negative slope for zero and first order (so k is the magnitude of the slope), positive slope for second order. AP questions often hand you three graphs and ask which order the reaction is; you are just looking for the straight one.",
           ],
+          figure: "rate-linearized-plots",
         },
       ],
       reviewQuestions: [
@@ -107,6 +109,7 @@ export const kineticsOverrides: Record<string, TopicOverride> = {
             "If one step is much slower than the others, it acts like a single-lane bridge on a highway: nothing gets through faster than that step allows. It is called the rate-determining step, and when it comes first in the mechanism the overall rate law is just that step's rate law.",
             "Worked example. The reaction NO₂ + CO → NO + CO₂ is measured to follow rate = k[NO₂]² — notice CO is not in it at all. A proposed mechanism is: step 1 (slow) NO₂ + NO₂ → NO₃ + NO, step 2 (fast) NO₃ + CO → NO₂ + CO₂. Check the sum: NO₃ cancels and one NO₂ cancels, leaving NO₂ + CO → NO + CO₂, which is correct. Now check the rate law: step 1 is bimolecular in NO₂, so it predicts rate = k[NO₂]², which matches. CO is missing from the rate law because it only reacts after the bottleneck, so its concentration cannot affect how fast the reaction runs. NO₃ is the intermediate.",
           ],
+          figure: "mech-intermediate-profile",
         },
         {
           heading: "Activation energy, temperature and catalysts",
@@ -114,6 +117,7 @@ export const kineticsOverrides: Record<string, TopicOverride> = {
             "Every reaction has an energy hill to climb between reactants and products, called the activation energy, Ea. Only collisions with at least that much energy — and with the molecules lined up correctly — actually react. In a multi-step mechanism, the step with the tallest hill is the slow step.",
             "Raising the temperature speeds a reaction up because it increases the fraction of molecules with enough energy to clear the hill. A catalyst does something different: it provides a completely different route with a lower hill. A catalyst is not consumed, it speeds up the forward and reverse reactions equally, and it does not change ΔH or the position of equilibrium — it only gets you there sooner.",
           ],
+          figure: "mech-catalysed-path",
         },
       ],
       reviewQuestions: [
@@ -175,6 +179,7 @@ export const kineticsOverrides: Record<string, TopicOverride> = {
             "In an SN2 reaction, the incoming nucleophile attacks the carbon from the side directly opposite the leaving group, and the leaving group departs at the same moment the new bond forms — a single, one-step event. The other three groups on that carbon get pushed through to the other side, like an umbrella flipping inside-out in the wind.",
             "The result is that the molecule's 3D arrangement is inverted every time — this reaction happens best on carbons that aren't crowded with other groups, since a crowded carbon leaves no room for the nucleophile to approach from behind.",
           ],
+          figure: "org-sn2-backside",
         },
         {
           heading: "SN1: two steps, with a fork in the road",
@@ -182,6 +187,7 @@ export const kineticsOverrides: Record<string, TopicOverride> = {
             "An SN1 reaction happens in two separate steps. First, the leaving group leaves on its own, before the nucleophile ever gets involved, leaving behind a flat, positively charged carbon called a carbocation. Only after that does the nucleophile come in and bond to it.",
             "Because the carbocation is flat, the nucleophile can attack from either face with about equal ease, giving a mixture of both possible 3D arrangements rather than one clean inverted product. SN1 is favored on more crowded (more substituted) carbons, since those form more stable carbocations.",
           ],
+          figure: "org-sn1-sn2-profiles",
         },
         {
           heading: "E1 and E2: when a base wins out over substitution",
@@ -189,6 +195,7 @@ export const kineticsOverrides: Record<string, TopicOverride> = {
             "Elimination reactions compete with substitution: instead of a nucleophile swapping in for the leaving group, a base pulls off a hydrogen from a neighboring carbon, and the electrons from that C–H bond become a new double bond as the leaving group departs. E2 does this in one concerted step, like SN2; E1 does it in two steps through the same kind of carbocation intermediate SN1 forms.",
             "A strong, bulky base — one that's better at grabbing a proton than squeezing into a crowded carbon — tips the reaction toward elimination; a smaller, purely nucleophilic reagent favors substitution instead.",
           ],
+          figure: "org-antiperiplanar-newman",
         },
       ],
       reviewQuestions: [
