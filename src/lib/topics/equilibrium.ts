@@ -3,6 +3,65 @@ import type { Topic } from "./types";
 /** Unit: Equilibrium & Acid-Base Chemistry */
 export const equilibriumTopics: Topic[] = [
   {
+    slug: "thermodynamics",
+    index: "17",
+    unit: "Equilibrium & Acid-Base Chemistry",
+    title: "Thermodynamics: Entropy, Enthalpy & Gibbs Free Energy",
+    accent: "Gibbs Free Energy",
+    description:
+      "Whether a reaction happens at all — independent of how fast — is decided by one quantity, ΔG, that weighs energy released against disorder created. That same quantity is what ties kinetics back to the equilibrium constant.",
+    topics: [
+      "Second law of thermodynamics",
+      "ΔG = ΔH − TΔS",
+      "Boltzmann entropy (S = k_B ln W)",
+      "ΔG° = −RT ln K",
+    ],
+    lesson: {
+      significance: [
+        "Marcellin Berthelot spent the 1860s and 1870s insisting that every spontaneous reaction must release heat. The principle was appealing, widely adopted, and wrong: ammonium nitrate dissolving in water gets cold and dissolves anyway, and ice melts on a warm day while absorbing heat. Enthalpy alone was never a sufficient criterion, which is why the century needed a second state function. Josiah Willard Gibbs supplied it between 1875 and 1878, in a paper published in the Transactions of the Connecticut Academy — a journal so obscure that the work reached working chemists only after Maxwell championed it in Britain and Wilhelm Ostwald translated it into German in 1892.",
+        "Gibbs free energy is the quantity that finally connects thermodynamics to the equilibrium constant, closing a loop this curriculum has been building since kinetics began. It is also the currency of biochemistry: ATP hydrolysis is quoted at roughly −30 kJ/mol under cellular conditions not because that number is interesting in itself, but because coupling it to an unfavourable reaction is how cells make thermodynamically uphill chemistry run.",
+      ],
+      theory: [
+        {
+          heading: "Entropy is a count of microstates, not a measure of untidiness",
+          figure: "thermo-microstate-count",
+          body: [
+            "Boltzmann's definition, S = k_B ln W, says entropy is the logarithm of W, the number of distinct microscopic arrangements — positions, momenta, and quantised energy distributions — consistent with the system's macroscopic state. Disorder is a loose analogy for this; counting is the actual content. The logarithm is not cosmetic either: microstate counts multiply when two systems are combined, and entropies must add, and only a logarithm converts one into the other.",
+            "The definition delivers real numbers. For an ideal gas expanding into a vacuum, each molecule gains a factor V₂/V₁ in accessible positions, so W scales as (V₂/V₁)^N and ΔS = Nk_B ln(V₂/V₁) = nR ln(V₂/V₁). Nothing about heat or temperature enters — the gas expands because the expanded arrangement is overwhelmingly more numerous, and for a mole of gas 'overwhelmingly' means a ratio with Avogadro's number in the exponent.",
+            "It also fixes an absolute zero of entropy. A perfect crystal at 0 K has exactly one accessible arrangement, W = 1, so S = 0 — the third law. This is why tables report absolute standard entropies S° for elements and compounds alike, while enthalpies can only ever be reported as differences from an arbitrary reference.",
+          ],
+        },
+        {
+          heading: "ΔS_universe is the criterion; ΔG is that criterion rewritten",
+          body: [
+            "The second law applies to the universe, not to the reaction flask. A process is spontaneous when ΔS_universe = ΔS_system + ΔS_surroundings > 0, and the system's own entropy is free to fall as long as the surroundings gain more. Crystallisation, protein folding and the assembly of a snowflake all lower the system's entropy and happen anyway.",
+            "The surroundings' contribution is calculable. At constant temperature and pressure the heat the system releases is −ΔH, delivered to a reservoir so large that its temperature does not change, so ΔS_surroundings = −ΔH/T. Substituting gives ΔS_universe = ΔS_system − ΔH/T. Multiply through by −T, which reverses the inequality, and the right-hand side is ΔH − TΔS_system — that is, ΔG = −TΔS_universe.",
+            "That identity is the whole point of Gibbs free energy. ΔG < 0 is not a separate criterion sitting alongside the second law; it is the second law, restated entirely in terms of the system, so that an experimentalist who never measures anything outside the flask can still apply it. The price is the conditions under which the substitution holds: constant temperature and constant pressure. At constant temperature and volume the corresponding function is the Helmholtz energy A = U − TS, and ΔG loses its meaning as a spontaneity test.",
+          ],
+        },
+        {
+          heading:
+            "Why the enthalpy term is entropy in disguise, and why temperature can flip the sign",
+          figure: "thermo-spontaneity-quadrant",
+          body: [
+            "Read ΔG = ΔH − TΔS in the light of the identity above and the two terms stop looking like different kinds of quantity. −TΔS is the system's entropy change scaled by temperature; ΔH is the surroundings' entropy change scaled by the same temperature, with the sign flipped. Exothermic reactions are favoured not because energy is intrinsically good to lose, but because dumping heat into the surroundings increases the number of microstates available out there.",
+            "Because temperature multiplies only one of the terms, it controls the balance. Both terms favourable (ΔH < 0, ΔS > 0) gives spontaneity at every temperature; both unfavourable gives spontaneity at none. When the signs match, there is a crossover temperature T = ΔH/ΔS at which ΔG = 0 and the direction reverses. Melting is the everyday case: for water, ΔH_fus = 6.01 kJ/mol and ΔS_fus = 22.0 J mol⁻¹ K⁻¹, so T = 6010/22.0 = 273 K, which is the melting point recovered from thermodynamic data alone. Above it the TΔS term wins and ice melts; below it the enthalpy term wins and water freezes.",
+            "The same arithmetic governs industrial chemistry. Ammonia synthesis has ΔH < 0 and ΔS < 0, four moles of gas becoming two, so it is thermodynamically favoured only at low temperature — and kinetically hopeless there, which is the tension the Haber process resolves with a catalyst and 400–500 °C, accepting a lower equilibrium yield in exchange for reaching it at all.",
+          ],
+        },
+        {
+          heading: "ΔG° and ΔG are different quantities, and neither predicts a rate",
+          figure: "thermo-free-energy-well",
+          body: [
+            "ΔG° is a fixed number for a reaction at a given temperature: the free energy change when reactants in their standard states convert entirely to products in their standard states, 1 bar for gases and 1 M for solutes. ΔG is the instantaneous slope of free energy against extent of reaction at the composition the flask actually holds, and it changes continuously as the reaction proceeds. The two are related by ΔG = ΔG° + RT ln Q, and a reaction runs in whichever direction makes ΔG negative until ΔG reaches zero. That point is equilibrium, where Q = K and the relation collapses to ΔG° = −RT ln K. The derivation below builds that result from the combined first and second law rather than asserting it.",
+            "A positive ΔG° therefore does not mean 'no reaction'. It means K < 1, so the equilibrium mixture is mostly reactants — but if Q is small enough, ΔG is still negative and the reaction proceeds. This is exactly how biochemical pathways run individually unfavourable steps: keep the product concentration low by consuming it immediately in the next step, and the step stays downhill.",
+            "Thermodynamics says nothing whatever about rate. Diamond converting to graphite has ΔG° = −2.9 kJ/mol at 25 °C and is spontaneous as written; the barrier to reorganising a covalent lattice is so high that the process is unobservable on geological timescales. A stoichiometric mixture of hydrogen and oxygen has a strongly negative ΔG° and sits unchanged indefinitely until a spark supplies the activation energy. Spontaneous means thermodynamically downhill, nothing more — the height of the hill in between is a kinetics question, and the two disciplines answer entirely different questions about the same reaction.",
+          ],
+        },
+      ],
+    },
+  },
+  {
     slug: "equilibrium",
     index: "18",
     unit: "Equilibrium & Acid-Base Chemistry",
