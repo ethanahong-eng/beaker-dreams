@@ -7,6 +7,7 @@ import { NextTopicNav } from "@/components/NextTopicNav";
 import { LessonBody } from "@/components/LessonBody";
 import { ReviewLevelToggle } from "@/components/ReviewLevelToggle";
 import { ReviewQuestions } from "@/components/ReviewQuestions";
+import { MaxwellBoltzmannTail } from "@/components/figures/routes";
 import type { EasyContent, Level } from "@/lib/reviewContent";
 
 const sections = [
@@ -31,6 +32,7 @@ const EASY: EasyContent = {
     },
     {
       heading: "Why a small temperature increase causes a big rate increase",
+      figure: "mb-tail",
       body: [
         "At any given temperature, molecules in a sample have a range of kinetic energies — most have a moderate amount, and only a smaller fraction have enough to clear the activation energy barrier. Raising the temperature shifts that whole distribution toward higher energies.",
         "Because the number of molecules with 'enough' energy grows steeply rather than evenly as temperature rises, even a modest temperature increase can noticeably speed up a reaction. A useful rule of thumb: for a typical reaction near room temperature, a 10 °C rise roughly doubles the rate. That's not because every molecule got twice as fast — molecular speeds rise by less than 2% over that range — it's because the share of molecules that already clear the bar roughly doubles.",
@@ -234,6 +236,7 @@ function KineticsPage() {
                   all of this at once: Ea and T sit in an exponent, so they scale the rate rather
                   than nudging it.
                 </p>
+                <MaxwellBoltzmannTail />
               </div>
               <div>
                 <h2 className="mb-6 text-3xl font-bold italic">What a catalyst really does</h2>

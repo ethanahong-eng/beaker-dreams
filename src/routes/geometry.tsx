@@ -5,6 +5,7 @@ import { SectionNav } from "@/components/SectionNav";
 import { NextTopicNav } from "@/components/NextTopicNav";
 import { ReviewLevelToggle } from "@/components/ReviewLevelToggle";
 import { ReviewQuestions } from "@/components/ReviewQuestions";
+import { LonePairSqueeze } from "@/components/figures/routes";
 import type { EasyContent, Level } from "@/lib/reviewContent";
 
 const sections = [
@@ -126,6 +127,7 @@ function GeometryPage() {
                   </p>
                 ))}
             </div>
+            <LonePairSqueeze />
             <ReviewQuestions questions={EASY.reviewQuestions} />
           </>
         ) : (
@@ -164,6 +166,7 @@ function GeometryPage() {
                 observed squeeze: methane's 109.47° gives way to ammonia's 107.8° with one lone
                 pair, and to water's 104.5° with two.
               </p>
+              <LonePairSqueeze />
               <p className="leading-relaxed text-muted-foreground">
                 The same reasoning predicts a second, subtler effect. Swap a hydrogen for a more
                 electronegative substituent and the bonding density is pulled further from the
