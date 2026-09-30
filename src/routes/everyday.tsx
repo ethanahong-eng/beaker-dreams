@@ -5,6 +5,18 @@ import { NextTopicNav } from "@/components/NextTopicNav";
 import { ReviewLevelToggle } from "@/components/ReviewLevelToggle";
 import { ReviewQuestions } from "@/components/ReviewQuestions";
 import { EmissionsScrubbingSim } from "@/components/EmissionsScrubbingSim";
+import { OceanAcidificationSim } from "@/components/OceanAcidificationSim";
+import {
+  AutoxidationCycle,
+  BufferOpenSystem,
+  CarbonateLadder,
+  ChiralRecognition,
+  EnantiomerOutcomes,
+  MaillardArrheniusCurve,
+  MaxwellBoltzmannShift,
+  OzoneCatalyticCycle,
+  PlasticHydrolysisThreshold,
+} from "@/components/figures/world";
 import type { Level, ReviewQuestion } from "@/lib/reviewContent";
 
 export const Route = createFileRoute("/everyday")({
@@ -33,8 +45,12 @@ type Essay = {
   lede: string;
   body: string[];
   easyBody: string[];
+  /** Diagrams shown after the prose at both reading levels. */
+  figures?: () => ReactNode;
   /** Optional interactive embed rendered after the essay body. */
   sim?: () => ReactNode;
+  /** Give the sim the full page width rather than the text column. */
+  wideSim?: boolean;
 };
 
 const essays: Essay[] = [
@@ -54,6 +70,12 @@ const essays: Essay[] = [
       "Your body is handed too, and that is what makes the difference matter. Enzymes and receptors are pockets with a specific shape, and holding a molecule in place takes about three points of contact — which only one of the two mirror images can reach. That is why one form of a molecule smells like spearmint and its twin smells like caraway, and why one form of a drug can do the intended job while the other does little or, in rare and serious cases, causes harm.",
       "The thalidomide disaster of the late 1950s made the point unforgettable: the drug was sold as a mixture of both forms, and one of them caused severe birth defects in thousands of children. Today regulators require each mirror-image form of a new medicine to be tested as if it were a separate drug.",
     ],
+    figures: () => (
+      <>
+        <ChiralRecognition />
+        <EnantiomerOutcomes />
+      </>
+    ),
   },
   {
     tag: "Materials",
@@ -71,6 +93,12 @@ const essays: Essay[] = [
       "So instead of being digested, plastic gets taken apart physically. Sunlight and oxygen slowly chop the long chains into shorter ones, and wear and abrasion grind those into fragments smaller than five millimetres — microplastics — which are small enough to spread through water, soil, and living tissue instead of ever breaking down completely.",
       'A label that says "biodegradable" or "compostable" is describing conditions, not the plastic on its own. PLA, the common compostable plastic, comes apart well in an industrial composter held near 58 °C, because that heat is what lets water get into the material at all; in a cold ocean or a home compost bin the same plastic can last for years.',
     ],
+    figures: () => (
+      <>
+        <AutoxidationCycle />
+        <PlasticHydrolysisThreshold />
+      </>
+    ),
   },
   {
     tag: "Environment",
@@ -81,13 +109,16 @@ const essays: Essay[] = [
       "Add CO₂ to the atmosphere and the whole chain is pushed to the right, exactly the disturbance you can impose in the equilibrium simulation by raising a reactant concentration. Surface ocean pH has fallen by roughly 0.1 units since the industrial revolution, from about 8.2 to about 8.1. On a logarithmic scale that is a rise in hydrogen ion concentration of about 26 percent, since 10 to the power 0.1 is 1.26.",
       "But the damage is done by a reaction that gets missed if you only watch pH. Most of those new hydrogen ions do not stay free — they are mopped up by carbonate already in the water, so the net change is CO₂ + CO₃²⁻ + H₂O → 2 HCO₃⁻. Dissolving carbon dioxide consumes carbonate. And carbonate is precisely the raw material corals, molluscs and plankton use to precipitate calcium carbonate shells. The organisms are not being dissolved by acid in any dramatic sense; they are being starved of a building block by a shifted equilibrium.",
       "The quantitative version is the saturation state, Ω = [Ca²⁺][CO₃²⁻]/Ksp. Above 1, shell formation is thermodynamically downhill; below 1, existing shells begin to dissolve. Aragonite, the form of calcium carbonate corals and pteropods build with, is about 50% more soluble than calcite, so those organisms cross the threshold first — and cold polar water, which holds more dissolved CO₂, crosses it earliest of all.",
-      "This is also why the ocean is a carbon sink with a ceiling rather than an unlimited sponge. Because uptake works by consuming carbonate, every tonne absorbed leaves less carbonate to absorb the next. The bookkeeping is captured by the Revelle factor, around 10 in surface water today: a 1% increase in total dissolved carbon raises the CO₂ partial pressure by roughly 10%. The buffer is being spent.",
+      "This is also why the ocean is a carbon sink with a ceiling rather than an unlimited sponge. Because uptake works by consuming carbonate, every tonne absorbed leaves less carbonate to absorb the next. The bookkeeping is captured by the Revelle factor, around 10 in surface water today: a 1% increase in total dissolved carbon raises the CO₂ partial pressure by roughly 10%. The buffer is being spent. The simulation below solves this whole chain live — set the CO₂ and the water temperature, and follow the carbon from the air into the shell.",
     ],
     easyBody: [
       "When carbon dioxide dissolves in seawater, it reacts to form an acid, which releases hydrogen ions into the water. More CO₂ in the atmosphere means more of this reaction happening, and surface ocean pH has already fallen from about 8.2 to about 8.1 since before the industrial revolution — which sounds tiny, but pH is a logarithmic scale, so it means roughly 26% more hydrogen ions.",
       'Those extra hydrogen ions get mopped up by carbonate ions already dissolved in the water, converting them into bicarbonate. Carbonate is exactly the building block corals and shellfish need to make their shells, so it is less that these organisms are being "dissolved by acid" and more that the raw material is being used up before they can reach it.',
-      "This also puts a limit on how much CO₂ the ocean can keep absorbing. Every tonne it takes up consumes some of the carbonate that made absorbing the next tonne possible — it is a buffer being spent down, not an unlimited sponge.",
+      "This also puts a limit on how much CO₂ the ocean can keep absorbing. Every tonne it takes up consumes some of the carbonate that made absorbing the next tonne possible — it is a buffer being spent down, not an unlimited sponge. Try it yourself in the simulation below: turn up the CO₂ and watch where it goes.",
     ],
+    figures: () => <CarbonateLadder />,
+    sim: () => <OceanAcidificationSim />,
+    wideSim: true,
   },
   {
     tag: "Kinetics at home",
@@ -105,6 +136,12 @@ const essays: Essay[] = [
       "Cooking runs the same rule in reverse. Heat speeds up the Maillard reaction, a reaction between the amino acids in protein and the sugars in food that produces hundreds of new brown, savory compounds. It has a high activation energy, which makes it especially sensitive to temperature: barely running at 100 °C, and taking off above about 140 °C.",
       "That is why a seared steak tastes completely different from a boiled one, and the reason is not the water itself. While the surface is wet, evaporation pins it at 100 °C, because the incoming heat goes into turning water into steam instead of raising the temperature. Dry the surface off and the temperature is finally free to climb high enough to brown.",
     ],
+    figures: () => (
+      <>
+        <MaxwellBoltzmannShift />
+        <MaillardArrheniusCurve />
+      </>
+    ),
   },
   {
     tag: "Buffers",
@@ -121,6 +158,7 @@ const essays: Essay[] = [
       "What sets the pH is the ratio between the two, and in healthy blood there are about 20 bicarbonate ions for every dissolved carbonic acid. What makes the body's version far better than a buffer in a beaker is that both numbers are adjustable: your lungs breathe off the acid side as CO₂ within minutes, and your kidneys top the bicarbonate side back up over hours. A beaker's buffer eventually runs out of capacity; yours is continuously refilled.",
       "Push it too far and the ratio breaks anyway. Breathing too fast strips out CO₂ faster than the body makes it and the blood turns too basic; uncontrolled diabetes produces acid faster than the lungs and kidneys can clear it and the blood turns too acidic. Both are medical emergencies, which is a measure of how tightly that pH has to be held.",
     ],
+    figures: () => <BufferOpenSystem />,
   },
   {
     tag: "Policy",
@@ -137,6 +175,7 @@ const essays: Essay[] = [
       "A chlorine atom destroys an ozone molecule, and then the very next step hands the chlorine atom back unchanged so it can start over. That is what makes it a catalyst, and it is why a single atom can take out on the order of 100,000 ozone molecules, and why a relatively small amount of CFCs did so much damage.",
       "The damage shows up as a hole over Antarctica each spring rather than an even thinning everywhere, because the reaction needs two things that only line up there: the ice clouds that form in the extreme cold of the polar winter, which release the chlorine from storage, and returning sunlight to set it going. The Montreal Protocol of 1987 phased CFCs out, and the ozone layer is now measurably recovering — it is widely considered the most successful environmental treaty ever signed.",
     ],
+    figures: () => <OzoneCatalyticCycle />,
   },
   {
     tag: "Energy & Policy",
@@ -265,8 +304,10 @@ function EverydayPage() {
                   {p}
                 </p>
               ))}
-              {e.sim && <div className="mt-10">{e.sim()}</div>}
+              {e.figures && <div className="pt-2">{e.figures()}</div>}
+              {e.sim && !e.wideSim && <div className="mt-10">{e.sim()}</div>}
             </div>
+            {e.sim && e.wideSim && <div className="md:col-span-12">{e.sim()}</div>}
           </article>
         ))}
       </div>
