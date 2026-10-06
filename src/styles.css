@@ -226,3 +226,35 @@
 .drop-fall {
   animation: drop-fall 0.4s ease-out;
 }
+
+/* Haber–Bosch simulation (src/lib/haberSim.ts). The sim ships a light palette
+   on .hbs; these remap it for the site's dark theme. The 3D stage is a lit
+   scene on a pale ground, so it keeps the light palette in both themes and the
+   labels and cards floating over it stay legible. */
+.hbs .hbs-stage {
+  --hbs-ink: #16181b;
+  --hbs-muted: #5b6066;
+  --hbs-line: #dedbd3;
+  --hbs-card: #fff;
+  --hbs-accent: #c4501f;
+  color: var(--hbs-ink);
+}
+.dark .hbs {
+  --hbs-ink: #f1f5f9;
+  --hbs-muted: #94a3b8;
+  --hbs-line: #2a3447;
+  --hbs-panel: #0b1324;
+  --hbs-card: #0f172a;
+  --hbs-accent: #ee8153;
+  --hbs-good: #4fb87a;
+  --hbs-bad: #f2766d;
+}
+.dark .hbs .hbs-chip.on,
+.dark .hbs .hbs-seg button.on,
+.dark .hbs .hbs-btn.pri,
+.dark .hbs .hbs-steps button.on {
+  color: #0f172a;
+}
+.dark .hbs .hbs-steps button:hover {
+  background: rgba(255, 255, 255, 0.06);
+}

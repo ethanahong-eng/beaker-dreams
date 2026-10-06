@@ -6,6 +6,7 @@ import { ReviewLevelToggle } from "@/components/ReviewLevelToggle";
 import { ReviewQuestions } from "@/components/ReviewQuestions";
 import { EmissionsScrubbingSim } from "@/components/EmissionsScrubbingSim";
 import { OceanAcidificationSim } from "@/components/OceanAcidificationSim";
+import { HaberBoschSim } from "@/components/HaberBoschSim";
 import {
   AutoxidationCycle,
   BufferOpenSystem,
@@ -191,6 +192,24 @@ const essays: Essay[] = [
     ],
     sim: () => <EmissionsScrubbingSim />,
   },
+  {
+    tag: "Industry & Food",
+    title: "Half the nitrogen in your body passed through a reactor",
+    lede: "Making ammonia from air is a fight between equilibrium and kinetics, and the compromise feeds billions of people.",
+    body: [
+      "Air is 78% nitrogen, and almost none of it is usable. The two atoms in N₂ are held by a triple bond of 945 kJ/mol, so plants and animals cannot break it, and for most of history the nitrogen available to crops was whatever lightning, legumes and manure supplied. The Haber–Bosch process, demonstrated by Fritz Haber in 1909 and scaled up by Carl Bosch at BASF by 1913, makes ammonia directly: N₂ + 3H₂ ⇌ 2NH₃, ΔH = −92 kJ per mole of N₂. Roughly half the nitrogen in the proteins of a typical person today has passed through one of these reactors.",
+      "Le Chatelier's principle and the rate law disagree about how to run it. Four moles of gas become two, so high pressure pushes the equilibrium toward ammonia. The reaction is exothermic, so low temperature does too. At 1 bar and 450 °C the equilibrium mixture holds well under 1% ammonia, which is why plants run near 200 bar. But cooling is no way out: without a catalyst, N₂ will not react at any temperature where the equilibrium is favourable, because the triple bond never breaks. Promoted iron gives nitrogen a surface on which it dissociates, which is the slow step of the whole mechanism, and that makes the reaction fast enough at 400–500 °C. The plant is a compromise: hot enough to be fast, yet cool and pressurised enough to go a useful distance.",
+      "Even then, one pass through the reactor converts only about 15% of the feed, because the catalyst lowers the barrier in both directions and cannot move the equilibrium. The gas leaving is cooled until the ammonia condenses to a liquid, and the unreacted nitrogen and hydrogen go back to the front of the loop. The loop repeats until nearly everything has been converted, with a small purge to stop argon and methane from building up. The hydrogen comes mostly from natural gas, which makes the process responsible for something like 1–2% of the world's energy use and a comparable share of its CO₂ emissions.",
+      "The fertiliser it makes follows the same law of diminishing returns. Early kilograms of nitrogen raise grain yield sharply; later ones barely register, while the surplus the crop does not take up is washed out of the soil as nitrate, or escapes as N₂O, a greenhouse gas about 270 times more potent than CO₂ per molecule. Nitrate in rivers feeds algal blooms whose decay strips lakes and coastal water of oxygen. The simulation below lets you run all three stages — the plant, the iron surface, and the field — and see where each compromise comes from.",
+    ],
+    easyBody: [
+      "Nitrogen makes up most of the air, but plants can't use it because its two atoms are joined by one of the strongest bonds there is. The Haber–Bosch process, invented in the early 1900s, forces nitrogen and hydrogen to react and make ammonia, which is the starting point for most fertiliser. Roughly half the nitrogen in the protein in your body has passed through one of these plants.",
+      "The tricky part is that the conditions that make the reaction fast and the conditions that make it go far enough pull in opposite directions. High pressure helps because four gas molecules become two. But the reaction gives off heat, so low temperature helps — and at low temperature it is far too slow. An iron catalyst makes it fast enough at around 450 °C, and very high pressure does the rest. Even so, only about a sixth of the gas reacts per pass, so the ammonia is cooled into a liquid and removed, and the rest is sent round again.",
+      "The same pattern shows up on the farm. The first bit of fertiliser boosts the crop a lot, and each extra bit does less. What the crop doesn't absorb washes into rivers as nitrate, where it feeds algae that can use up the oxygen in a lake. Use the simulation below to change the plant, look at what happens on the catalyst, and follow the nitrogen into a field.",
+    ],
+    sim: () => <HaberBoschSim />,
+    wideSim: true,
+  },
 ];
 
 const REVIEW_QUESTIONS: ReviewQuestion[] = [
@@ -238,6 +257,22 @@ const REVIEW_QUESTIONS: ReviewQuestion[] = [
       "It reacts the SO₂ with a limestone (calcium carbonate) slurry to form solid calcium sulfate (gypsum) instead of letting the SO₂ escape into the atmosphere.",
     explanation:
       "Without a scrubber, that same SO₂ would oxidize in the atmosphere to SO₃ and dissolve in water vapor to form sulfuric acid — acid rain. The scrubber redirects the sulfur into a solid, useful byproduct instead.",
+  },
+  {
+    question:
+      "The Haber–Bosch reaction (N₂ + 3H₂ ⇌ 2NH₃) is exothermic and reduces the number of gas molecules. Why is it run at high pressure but not at low temperature?",
+    answer:
+      "High pressure favours the side with fewer gas molecules (ammonia). Low temperature would favour the exothermic direction too, but the reaction would then be far too slow, so the plant uses a catalyst and a moderate temperature of around 400–500 °C as a compromise.",
+    explanation:
+      "Le Chatelier's principle tells you where the equilibrium sits, but not how fast you get there. A catalyst speeds up the forward and reverse reactions equally, so it makes a lower temperature usable without changing the equilibrium itself.",
+  },
+  {
+    question:
+      "A catalyst is added to a Haber–Bosch reactor. Does it increase the equilibrium yield of ammonia?",
+    answer:
+      "No. It lowers the activation energy in both directions, so equilibrium is reached faster, but the equilibrium composition at a given temperature and pressure is unchanged.",
+    explanation:
+      "That is why the plant still needs high pressure and removes ammonia as it forms: the catalyst only decides how quickly the reaction approaches the limit that temperature and pressure set.",
   },
   {
     question:
